@@ -1,4 +1,4 @@
-# Organizador Inteligente de Contenido Técnico
+# G9-LATAM-Team-34-TechMind
 
 Solución para la organización inteligente de contenido técnico mediante técnicas de Ciencia de Datos. La aplicación procesa documentos técnicos, identifica información relevante y expone los resultados a través de una API REST en formato JSON, integrándose con Oracle Cloud Infrastructure (OCI).
 
