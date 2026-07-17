@@ -1,0 +1,1476 @@
+[
+  {
+    "id":1,
+    "title":"Introduction to Python",
+    "description":"Python is a general-purpose programming language that is becoming ever more popular for data science. Companies worldwide are using Python to harvest insights from their data and gain a competitive edge. Unlike other Python tutorials, this course focuses on Python specifically for data science. In our Introduction to Python course, you\u2019ll learn about powerful ways to store and manipulate data, and helpful data science tools to begin conducting your own analyses. Start DataCamp\u2019s online Python curriculum now. The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":2,
+    "title":"Understanding Artificial Intelligence",
+    "description":"Artificial Intelligence (AI) is without any doubt the most breakthrough and omnipresent discipline in today's economy, media, industry, and society at large. This non-technical course will expose you to the basic elements of the rapidly evolving field of AI. Through plenty of hands-on activities and without any coding required, we will uncover together those jargon terms everyone keeps talking about, such as machine learning, deep learning, explainable AI, natural language processing, generative models, and more. We'll also explore a variety of AI applications in everyday life and the AI techniques behind the scenes, how can organizations become AI-driven, and what are the key lessons learned, challenges, and societal implications of AI's unstoppable progress. The videos contain live transcripts you can reveal by clicking \"Show transcript\" at the bottom left of the videos. The course glossary, promotional material and detailed learning objectives can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":3,
+    "title":"Intermediate Python",
+    "description":"Learning Python is crucial for any aspiring data science practitioner. Learn to visualize real data with Matplotlib\u2019s functions and get acquainted with data structures such as the dictionary and pandas DataFrame. This four-hour intermediate course will help you to build on your existing Python skills and explore new Python applications and functions that expand your repertoire and help you work more efficiently. You'll discover how dictionaries offer an alternative to Python lists, and why the pandas dataframe is the most popular way of working with tabular data. In the second chapter of this course, you\u2019ll find out how you can create and manipulate datasets, and how to access them using these structures. Hands-on practice throughout the course will build your confidence in each area. As you progress, you\u2019ll look at logic, control flow, filtering and loops. These functions work to control decision-making in Python programs and help you to perform more operations with your data, including repeated statements. You\u2019ll finish the course by applying all of your new skills by using hacker statistics to calculate your chances of winning a bet. Once you\u2019ve completed all of the chapters, you\u2019ll be ready to apply your new skills in your job, new career, or personal project, and be prepared to move onto more advanced Python learning. The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":4,
+    "title":"Understanding Prompt Engineering",
+    "description":"Embark on an immersive journey to master ChatGPT, the groundbreaking conversational language model, and revolutionize your business and creative processes. This comprehensive course covers the essentials of prompt engineering, teaching you to construct clear, specific, and open-ended prompts, and advances into sophisticated techniques like zero-shot, one-shot, and few-shot learning. Furthermore, you'll develop skills to evaluate ChatGPT's responses, ensuring accuracy and relevance critically. This all-encompassing course is your gateway to unlocking the full potential of ChatGPT, enhancing your workflow, and staying ahead in the world of generative AI The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":5,
+    "title":"Data Manipulation with pandas",
+    "description":"pandas is the world's most popular Python library, used for everything from data manipulation to data analysis. In this course, you'll learn how to manipulate DataFrames, as you extract, filter, and transform real-world datasets for analysis. Using pandas you\u2019ll explore all the core data science concepts. Using real-world data, including Walmart sales figures and global temperature time series, you\u2019ll learn how to import, clean, calculate statistics, and create visualizations\u2014using pandas to add to the power of Python! The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":6,
+    "title":"Understanding ChatGPT",
+    "description":"Get ready to take your workflows and business processes to the next level with the groundbreaking conversational language model, ChatGPT! In this course, you'll dive headfirst into the exciting world of generative artificial intelligence (AI) and discover how to wield ChatGPT like a pro. From text summarization, explaining complex concepts, drafting engaging marketing content, and generating and explaining code, you'll learn about the most common applications of ChatGPT. Plus, you\u2019ll be equipped with a framework to evaluate new use cases and determine if ChatGPT is the right solution for your needs. Finally, you'll explore the legal and ethical considerations that come with implementing ChatGPT in various situations. Don't miss out on this opportunity to unlock the full potential of ChatGPT and revolutionize the way you work! The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":7,
+    "title":"Understanding Data Science",
+    "description":"What is data science, why is it so popular, and why did the Harvard Business Review hail it as the \u201csexiest job of the 21st century\u201d? In this non-technical course, you\u2019ll be introduced to everything you were ever too afraid to ask about this fast-growing and exciting field, without needing to write a single line of code. Through hands-on exercises, you\u2019ll learn about the different data scientist roles, foundational topics like A\/B testing, time series analysis, and machine learning, and how data scientists extract knowledge and insights from real-world data. So don\u2019t be put off by the buzzwords. Start learning, gain skills in this hugely in-demand field, and discover why data science is for everyone! The videos contain live transcripts you can reveal by clicking \"Show transcript\" at the bottom left of the videos. The course glossary, promotional material and detailed learning objectives can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":8,
+    "title":"Introduction to AI Agents",
+    "description":"Unlock the power of AI agents and transform how you work with agentic systems. This beginner-friendly course is designed for anyone eager to understand the core concepts behind agentic AI systems, without writing a single line of code. You'll learn how AI agents differ from traditional automation tools and chatbots, explore their key components like memory, tool use, and orchestration, and discover when and how to implement agent-based solutions for real-world problems. From customer support agents to coding assistants, this course uses relatable examples to demystify what makes AI systems agentic, how they reason, and how to use and build AI agents responsibly. Enroll now, and take your first step toward engaging with the next frontier of AI. The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":9,
+    "title":"Supervised Learning with scikit-learn",
+    "description":"Grow your machine learning skills with scikit-learn and discover how to use this popular Python library to train models using labeled data. In this course, you'll learn how to make powerful predictions, such as whether a customer is will churn from your business, whether an individual has diabetes, and even how to tell classify the genre of a song. Using real-world datasets, you'll find out how to build predictive models, tune their parameters, and determine how well they will perform with unseen data.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":10,
+    "title":"Introduction to Python for Developers",
+    "description":"Are you eager to dive into the world of programming but don't know where to start? This course is for you, designed specifically for beginners with zero prior experience in programming. Python, is a versatile and powerful language, perfect for software development! This course introduces you to key concepts, from creating code comments and performing calculations to discovering Python's built-in data types including floats, strings, integers, and boolean values! You'll learn how to store information in variables using a variety of data structures such as lists, dictionaries, sets, and tuples. You'll progress into comparison operators, using them to develop a customized workflow to conditionally execute code depending on whether conditions are met. The course wraps up by introducing for and while loops, which are essential for iterating over data and executing tasks!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":11,
+    "title":"Understanding Data Engineering",
+    "description":"In 2019, the average salary for data engineers overtook data scientists. How did this happen? Companies wanting to find the gold within their data realized it wasn\u2019t possible if they hadn\u2019t yet built the mine. Data engineers lay the foundations that make data science possible. In this course, you\u2019ll learn about a data engineer\u2019s core responsibilities, how they differ from data scientists, and facilitate the flow of data through an organization. Through hands-on exercises you\u2019ll follow Spotflix, a fictional music streaming company, to understand how their data engineers collect, clean, and catalog their data. By the end of the course, you\u2019ll understand what your company's data engineers do, be ready to have a conversation with a data engineer, and have a solid foundation to start your own data engineer journey. The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":12,
+    "title":"Working with the OpenAI API",
+    "description":"Over recent years, OpenAI has emerged as a market leader in creating AI models, such as GPT-4o, and releasing them to the wider community in applications like ChatGPT. These models can transform not only the way you work but also the products and services that businesses provide to customers. To begin extracting business value from OpenAI's models, you'll need to learn to work with their Application Programming Interface, or API. In this course, you'll gain hands-on experience working with the OpenAI API in Python, and will explore the wide range of functionality that the API provides. By the end of the course, you'll have the skills and knowledge needed to leverage the power of the OpenAI API to develop solutions to real-world problems. The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":13,
+    "title":"Generative AI Concepts",
+    "description":"Artificial Intelligence (AI) is reshaping our world like never before. Generative AI is a type of AI that can create new content from text, images, and more. In this no-coding course, you'll learn about the exciting concepts in this emerging field and how to prepare for a future where AI becomes widely adopted. You'll start by comprehending how these models create content, where they fit into the machine learning landscape, and how they are developed. Given the power of generative AI, you will also consider how laws and ethics play with these models, learning how to avoid bias and use generative AI responsibly. Finally, you\u2019ll look at the future of generative AI and how we can leverage and collaborate effectively with these tools. After this course, you, too, will be able to unlock the creative capabilities of generative AI. Let's go! The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":14,
+    "title":"Introduction to Data",
+    "description":"Data is an exciting and growing field that plays a significant role in all our lives, even in artificial intelligence. Whether you're just starting or curious about how data shapes the world around you, this course is your gateway to understanding it all. From exploring the basics of data, including types, structures, and how valuable it can be in decision-making, to learning about the DIKW framework used to describe the relationship between data, information, knowledge, and wisdom, his course will guide you through the essential concepts that shape today's data-driven world. You'll wrap up the course with a discussion on data ethics and common data mistakes. You'll leave with a better understanding of how data works, why it matters, and how to navigate it responsibly\u2014whether in your studies, work, or everyday life.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":15,
+    "title":"Understanding Data Visualization",
+    "description":"Visualizing data using charts, graphs, and maps is one of the most impactful ways to communicate complex data. In this course, you\u2019ll learn how to choose the best visualization for your dataset, and how to interpret common plot types like histograms, scatter plots, line plots and bar plots. You'll also learn about best practices for using colors and shapes in your plots, and how to avoid common pitfalls. Through hands-on exercises, you'll visually explore over 20 datasets including global life expectancies, Los Angeles home prices, ESPN's 100 most famous athletes, and the greatest hip-hop songs of all time. The videos contain live transcripts, which can be accessed by clicking \"Show transcript\" at the bottom left of the videos. The course glossary can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":16,
+    "title":"Large Language Models (LLMs) Concepts",
+    "description":"In this course, you\u2019ll journey through the world of Large Language Models (LLMs) and discover how they are reshaping the AI landscape. You\u2019ll see how they revolutionize businesses and everyday life with real-world examples and learn about their building block. As you progress, you\u2019ll gain insights into the training methodologies too. Finally, you\u2019ll tackle the critical ethical and environmental considerations for LLMs and see what the future of LLMs could look like. By the end of this course, you'll have a comprehensive understanding of LLMs, their capabilities, applications, and challenges.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":17,
+    "title":"AI Ethics",
+    "description":"This introductory course on AI ethics provides a comprehensive overview of ethical considerations in the fast-paced domain of artificial intelligence. The course spans industry, policy-making, academia, and society at large, covering principles of AI ethics, strategies to foster fair and equitable AI systems, approaches to minimize biases, and methods to address key issues and establish user trust. Throughout the course, you will learn about the core principles of ethical AI and expand your understanding of common challenges and opportunities in the field of AI ethics. Through hands-on exercises, you will build your skills to craft ethical AI by design. Begin Learning today! The videos contain live transcripts you can reveal by clicking \"Show transcript\" at the bottom left of the videos. The course glossary, promotional material and detailed learning objectives can be found on the right in the resources section. To obtain CPE credits you need to complete the course and reach a score of 70% on the qualified assessment. You can navigate to the assessment by clicking on the CPE credits callout on the right.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":18,
+    "title":"Introduction to Statistics in Python",
+    "description":"Statistics is the study of how to collect, analyze, and draw conclusions from data. It\u2019s a hugely valuable tool that you can use to bring the future into focus and infer the answer to tons of questions. For example, what is the likelihood of someone purchasing your product, how many calls will your support team receive, and how many jeans sizes should you manufacture to fit 95% of the population? In this course, you'll discover how to answer questions like these as you grow your statistical skills and learn how to calculate averages, use scatterplots to show the relationship between numeric values, and calculate correlation. You'll also tackle probability, the backbone of statistical reasoning, and learn how to use Python to conduct a well-designed study to draw your own conclusions from data.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":19,
+    "title":"Understanding Machine Learning",
+    "description":"What's behind the machine learning hype? In this non-technical course, you\u2019ll learn everything you\u2019ve been too afraid to ask about machine learning. There\u2019s no coding required. Hands-on exercises will help you get past the jargon and learn how this exciting technology powers everything from self-driving cars to your personal Amazon shopping suggestions. How does machine learning work, when can you use it, and what is the difference between AI and machine learning? They\u2019re all covered. Gain skills in this hugely in-demand and influential field, and discover why machine learning is for everyone!",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":20,
+    "title":"Exploratory Data Analysis in Python",
+    "description":"So you\u2019ve got some interesting data - where do you begin your analysis? This course will cover the process of exploring and analyzing data, from understanding what\u2019s included in a dataset to incorporating exploration findings into a data science workflow. Using data on unemployment figures and plane ticket prices, you\u2019ll leverage Python to summarize and validate data, calculate, identify and replace missing values, and clean both numerical and categorical values. Throughout the course, you\u2019ll create beautiful Seaborn visualizations to understand variables and their relationships. For example, you\u2019ll examine how alcohol use and student performance are related. Finally, the course will show how exploratory findings feed into data science workflows by creating new features, balancing categorical features, and generating hypotheses from findings. By the end of this course, you\u2019ll have the confidence to perform your own exploratory data analysis (EDA) in Python.You\u2019ll be able to explain your findings visually to others and suggest the next steps for gathering insights from your data!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":21,
+    "title":"Joining Data with pandas",
+    "description":"Being able to combine and work with multiple datasets is an essential skill for any aspiring Data Scientist. pandas is a crucial cornerstone of the Python data science ecosystem, with Stack Overflow recording 5 million views for pandas questions. Learn to handle multiple DataFrames by combining, organizing, joining, and reshaping them using pandas. You'll work with datasets from the World Bank and the City Of Chicago. You will finish the course with a solid skillset for data-joining in pandas.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":22,
+    "title":"Introduction to Importing Data in Python",
+    "description":"As a data scientist, you will need to clean data, wrangle and munge it, visualize it, build predictive models, and interpret these models. Before you can do so, however, you will need to know how to get data into Python. In this course, you'll learn the many ways to import data into Python: from flat files such as .txt and .csv; from files native to other software such as Excel spreadsheets, Stata, SAS, and MATLAB files; and from relational databases such as SQLite and PostgreSQL.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":23,
+    "title":"Introduction to Data Visualization with Matplotlib",
+    "description":"Visualizing data in plots and figures exposes the underlying patterns in the data and provides insights. Good visualizations also help you communicate your data to others, and are useful to data analysts and other consumers of the data. In this course, you will learn how to use Matplotlib, a powerful Python data visualization library. Matplotlib provides the building blocks to create rich visualizations of many different kinds of datasets. You will learn how to create visualizations for different kinds of data and how to customize, automate, and share these visualizations.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":24,
+    "title":"Introduction to Deep Learning with PyTorch",
+    "description":"Deep learning is everywhere, from smartphone cameras to voice assistants or self-driving cars. In this course, you will discover this powerful technology and learn how to leverage it using PyTorch, one of the most popular deep learning libraries. By the end of this course, you will be able to leverage PyTorch to solve classification and regression problems using deep learning.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":25,
+    "title":"Cleaning Data in Python",
+    "description":"It's commonly said that data scientists spend 80% of their time cleaning and manipulating data and only 20% of their time analyzing it. The time spent cleaning is vital since analyzing dirty data can lead you to draw inaccurate conclusions. Data cleaning is an essential task in data science. Without properly cleaned data, the results of any data analysis or machine learning model could be inaccurate. In this course, you will learn how to identify, diagnose, and treat a variety of data cleaning problems in Python, ranging from simple to advanced. You will deal with improper data types, check that your data is in the correct range, handle missing data, perform record linkage, and more!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":26,
+    "title":"Introduction to Data Visualization with Seaborn",
+    "description":"Seaborn is a powerful Python library that makes it easy to create informative and attractive data visualizations. This 4-hour course provides an introduction to how you can use Seaborn to create a variety of plots, including scatter plots, count plots, bar plots, and box plots, and how you can customize your visualizations. You\u2019ll explore this library and create Seaborn plots based on a variety of real-world data sets, including exploring how air pollution in a city changes through the day and looking at what young people like to do in their free time. This data will give you the opportunity to find out about Seaborn\u2019s advantages first hand, including how you can easily create subplots in a single figure and how to automatically calculate confidence intervals. By the end of this course, you\u2019ll be able to use Seaborn in various situations to explore your data and effectively communicate the results of your data analysis to others. These skills are highly sought-after for data analysts, data scientists, and any other job that may involve creating data visualizations. If you\u2019d like to continue your learning, this course is part of several tracks, including the Data Visualization track, where you can add more libraries and techniques to your skillset.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":27,
+    "title":"Introduction to Functions in Python",
+    "description":"It's time to push forward and develop your Python chops even further. Python has tons of fantastic functions and a module ecosystem. However, as a data professional or developer, you'll constantly need to write your own functions to solve problems that are dictated by your data. You will learn the art of function writing in this first course. You'll come out of this course being able to write your very own custom functions, complete with multiple parameters and multiple return values, along with default arguments and variable-length arguments. You'll gain insight into scoping in Python, be able to write lambda functions and handle errors in your function writing practice. You'll wrap up each chapter by using your new skills to write functions that analyze Twitter data.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":28,
+    "title":"Prompt Engineering with the OpenAI API",
+    "description":"ChatGPT is a powerful language model that can generate human-like text for different applications. However, it is only as good as the prompts you provide. You need to know how to write effective prompts, and this is where prompt engineering comes in. In this course, you'll dive deep into the principles and best practices of prompt engineering. By the end, you'll have the skills and knowledge to write effective prompts to solve real-world problems and business applications.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":29,
+    "title":"Python Toolbox",
+    "description":"In this Python Toolbox course, you'll continue to build more advanced Python skills. First, you'll learn about iterators, objects you have already encountered in the context of for loops. You'll then learn about list comprehensions, which are extremely handy tools for all data professionals and developers working in Python. You'll end the course by working through a case study in which you'll apply all the techniques you learned in both parts of this course.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":30,
+    "title":"Introduction to PySpark",
+    "description":"This course is designed for data engineers, data scientists, and machine learning practitioners looking to work with large datasets using PySpark. You'll explore Apache Spark's speed and scalability, learn to create Spark sessions, work with RDDs, and manipulate DataFrames through hands-on exercises. The course also covers PySpark SQL, teaching you how to query data with SQL, handle schemas and complex data types, and optimize performance in distributed environments. By the end, you'll have the foundational skills to process and analyze big data, setting the stage for advanced applications like machine learning and big data analytics.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":31,
+    "title":"Building Scalable Agentic Systems",
+    "description":"Why do so many agentic systems fail to traverse the gap between development and production? In this course, you'll find out! Learn how to design and develop AI agents with scalability in mind, following the three pillars of agentic scalability: robust infrastructure and tooling, modular design architecture, and continuous evaluation and feedback loops. You'll learn about how agentic frameworks like the Model Context Protocol (MCP) and the Agent-to-Agent protocol (A2A) enable cleaner and faster integrations between data sources and agents. Finally, learn about the tests and deployment strategies to set your agent up to deliver value.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":32,
+    "title":"Working with Hugging Face",
+    "description":"Hugging Face is a vital platform for accessing machine learning and AI functionality. In this course, you'll explore the Hugging Face Hub to the most appropriate models and datasets for your tasks. You'll utilize Hugging Face's API to search its model repository by task, author, or popularity. You'll use pipelines, a fundamental Hugging Face component, to perform a whole host of AI tasks using a simple and intuitive syntax. You'll learn to classify text into categories, generate impactful and accurate summaries, and even have conversations with documents. Join the AI revolution and learn about Hugging Face today!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":33,
+    "title":"Developing LLM Applications with LangChain",
+    "description":"Revolutionize your applications by harnessing the power of the LangChain framework for creating applications based on large language models (LLMs)! One of the major challenges for developing applications in the age of generative AI is integrating models, data sources, prompts, and other components from different providers into a single application. The LangChain framework provides a single, unified syntax for putting all these pieces together to allow you to integrate LLMs more seamlessly into your projects. Whether you're a seasoned developer or just getting started, this course will equip you with the knowledge and skills to build dynamic and intelligent applications that leverage the limitless capabilities of LangChain. Join us on this transformative journey and redefine how you create applications powered by language models.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":34,
+    "title":"Data Communication Concepts",
+    "description":"You\u2019ve analyzed your data, run your model, and made your predictions. Now, it's time to bring your data to life! Presenting findings to stakeholders so they can make data-driven decisions is an essential skill for all data scientists. In this course, you\u2019ll learn how to use storytelling to connect with your audience and help them understand the content of your presentation\u2014so they can make the right decisions. Through hands-on exercises, you\u2019ll learn the advantages and disadvantages of oral and written formats. You\u2019ll also improve how you translate technical results into compelling stories, using the correct data, visualizations, and in-person presentation techniques. Start learning and improve your data storytelling today.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":35,
+    "title":"Unsupervised Learning in Python",
+    "description":"Say you have a collection of customers with a variety of characteristics such as age, location, and financial history, and you wish to discover patterns and sort them into clusters. Or perhaps you have a set of texts, such as Wikipedia pages, and you wish to segment them into categories based on their content. This is the world of unsupervised learning, called as such because you are not guiding, or supervising, the pattern discovery by some prediction task, but instead uncovering hidden structure from unlabeled data. Unsupervised learning encompasses a variety of techniques in machine learning, from clustering to dimension reduction to matrix factorization. In this course, you'll learn the fundamentals of unsupervised learning and implement the essential algorithms using scikit-learn and SciPy. You will learn how to cluster, transform, visualize, and extract insights from unlabeled datasets, and end the course by building a recommender system to recommend popular musical artists.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":36,
+    "title":"Machine Learning with Tree-Based Models in Python",
+    "description":"Decision trees are supervised learning models used for problems involving classification and regression. Tree models present a high flexibility that comes at a price: on one hand, trees are able to capture complex non-linear relationships; on the other hand, they are prone to memorizing the noise present in a dataset. By aggregating the predictions of trees that are trained differently, ensemble methods take advantage of the flexibility of trees while reducing their tendency to memorize noise. Ensemble methods are used across a variety of fields and have a proven track record of winning many machine learning competitions. In this course, you'll learn how to use Python to train decision trees and tree-based models with the user-friendly scikit-learn machine learning library. You'll understand the advantages and shortcomings of trees and demonstrate how ensembling can alleviate these shortcomings, all while practicing on real-world datasets. Finally, you'll also understand how to tune the most influential hyperparameters in order to get the most out of your models.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":37,
+    "title":"Introduction to APIs in Python",
+    "description":"Dive into the exciting world of APIs as we introduce you to the basics of consuming and working with Web APIs using Python. This course is designed to demystify the concepts and practical applications of APIs. It offers you a hands-on introduction where you'll learn how to interact with a REST API and integrate it into your applications or workflows. By the end of this course, you'll have a comprehensive understanding of APIs and the confidence to apply your knowledge in real-world scenarios.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":38,
+    "title":"Introduction to GitHub Concepts",
+    "description":"Do you ever struggle to keep track of everything going on in a project? Or confuse GitHub with Git? In this course, you'll learn how to leverage the power of GitHub, become a successful collaborator, and recognize the differences between GitHub and Git. Building on the topics covered in Introduction to Version Control with Git, this conceptual course enables you to navigate the user interface of GitHub effectively. You will perform everyday tasks, including creating public and private repositories, creating and modifying files, branches, and issues, assigning tasks, tagging users, reviewing pull requests, and merging branches. You will also discover how to clone and fork repositories and generate private access tokens (PAT). By the end of this course, you'll be able to take these new skills and apply them to any coding or data project, making you feel on track and in control. Everyone will want to collaborate with you on GitHub!",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":39,
+    "title":"Hypothesis Testing in Python",
+    "description":"Hypothesis testing lets you answer questions about your datasets in a statistically rigorous way. In this course, you'll grow your Python analytical skills as you learn how and when to use common tests like t-tests, proportion tests, and chi-square tests. Working with real-world data, including Stack Overflow user feedback and supply-chain data for medical supply shipments, you'll gain a deep understanding of how these tests work and the key assumptions that underpin them. You'll also discover how non-parametric tests can be used to go beyond the limitations of traditional hypothesis tests.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":40,
+    "title":"Introduction to LLMs in Python",
+    "description":"Large Language Models (LLMs) have become pivotal tools driving some of the most stunning advancements and applications in today's AI landscape. This hands-on course will equip you with the practical knowledge and skills needed to understand, build, and harness the power of LLMs for solving complex language tasks such as translation, language generation, question-answering, and more. Through iteractive coding exercises, you will learn to work with transformers. You'll also explore pre-trained language models and datasets from Hugging Face. By the end of this course, you will be able to fine-tune and evaluate pre-trained LLMs using specialized metrics. You will also gain an understanding of the key challenges and ethical considerations of enabling real-world LLM applications.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":41,
+    "title":"Software Engineering Principles in Python",
+    "description":"Data scientists can experience huge benefits by learning concepts from the field of software engineering, allowing them to more easily reutilize their code and share it with collaborators. In this course, you'll learn all about the important ideas of modularity, documentation, & automated testing, and you'll see how they can help you solve Data Science problems quicker and in a way that will make future you happy. You'll even get to use your acquired software engineering chops to write your very own Python package for performing text analytics.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":42,
+    "title":"Introduction to Regression with statsmodels in Python",
+    "description":"Linear regression and logistic regression are two of the most widely used statistical models. They act like master keys, unlocking the secrets hidden in your data. In this course, you\u2019ll gain the skills you need to fit simple linear and logistic regressions. Through hands-on exercises, you\u2019ll explore the relationships between variables in real-world datasets, including motor insurance claims, Taiwan house prices, fish sizes, and more. By the end of this course, you\u2019ll know how to make predictions from your data, quantify model performance, and diagnose problems with model fit.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":43,
+    "title":"LLMOps Concepts",
+    "description":"Embark on a journey into Large Language Model Operations (LLMOps). This course, designed for enthusiasts and professionals alike, guides you through the basics, from ideation to operational deployment. Delving into the LLM application lifecycle will reveal its pivotal role in organizations. You will gain insights into the challenges and considerations at each stage and how to refine development and ensure smooth deployment while embracing data governance and security. By the end of the course, you'll have a solid grasp of LLMOps concepts and know how to apply them to your applications.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":44,
+    "title":"Sampling in Python",
+    "description":"Sampling in Python is the cornerstone of inference statistics and hypothesis testing. It's a powerful skill used in survey analysis and experimental design to draw conclusions without surveying an entire population. In this Sampling in Python course, you\u2019ll discover when to use sampling and how to perform common types of sampling\u2014from simple random sampling to more complex methods like stratified and cluster sampling. Using real-world datasets, including coffee ratings, Spotify songs, and employee attrition, you\u2019ll learn to estimate population statistics and quantify uncertainty in your estimates by generating sampling distributions and bootstrap distributions.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":45,
+    "title":"Writing Functions in Python",
+    "description":"You've done your analysis, built your report, and trained a model. What's next? Well, if you want to deploy your model into production, your code will need to be more reliable than exploratory scripts in a Jupyter notebook. Writing Functions in Python will give you a strong foundation in writing complex and beautiful functions so that you can contribute research and engineering skills to your team. You'll learn useful tricks, like how to write context managers and decorators. You'll also learn best practices around how to write maintainable reusable functions with good documentation. They say that people who can do good research and write high-quality code are unicorns. Take this course and discover the magic!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":46,
+    "title":"Developing AI Systems with the OpenAI API",
+    "description":"Get your AI applications ready for production with this OpenAI API course. You\u2019ll discover best practices for developing applications on the OpenAI API, including moderation and validation, testing, and practices for improved safety. You\u2019ll also learn how to connect your application with external systems and APIs through function calling. This course builds on core OpenAI functionalities introduced in Working with the OpenAI API and prompt writing best practices from Prompt Engineering with the OpenAI API to help you elevate your projects from proof of concept to production-ready systems.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":47,
+    "title":"Preprocessing for Machine Learning in Python",
+    "description":"This course covers the basics of how and when to perform data preprocessing. This essential step in any machine learning project is when you get your data ready for modeling. Between importing and cleaning your data and fitting your machine learning model is when preprocessing comes into play. You'll learn how to standardize your data so that it's in the right form for your model, create new features to best leverage the information in your dataset, and select the best features to improve your model fit. Finally, you'll have some practice preprocessing by getting a dataset on UFO sightings ready for modeling.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":48,
+    "title":"Object-Oriented Programming in Python",
+    "description":"Object-oriented programming (OOP) is a widely used programming paradigm that reduces development times\u2014making it easier to read, reuse, and maintain your code. OOP shifts the focus from thinking about code as a sequence of actions to looking at your program as a collection of objects that interact with each other. In this course, you\u2019ll learn how to create classes, which act as the blueprints for every object in Python. You\u2019ll then leverage principles called inheritance and polymorphism to reuse and optimize code. Dive in and learn how to create beautiful code that\u2019s clean and efficient!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":49,
+    "title":"Introduction to Object-Oriented Programming in Python",
+    "description":"Embark on a journey into the heart of Python programming with our comprehensive course offering a foundation in the principles and practices of object-oriented programming (OOP). Through a series of hands-on exercises and real-world examples, learners will gain proficiency in leveraging the power of Python's OOP paradigm to create efficient, modular, and reusable code. Foundations of OOP Delve into the fundamental concepts that form the foundation of object-oriented programming. You'll discover the core principles of classes and objects, learn how to define and instantiate objectives in Python and explore how to assign attributes during instantiation. Inheritance Expand your knowledge by mastering inheritance and creating subclasses that build on functionality defined in other classes. You'll distinguish between class-level and instance-level data, implement class methods, and customize the functionality of subclasses! Equality, Exception Handling, and Best Practices Explore the versatility of Python in handling object comparisons and discover techniques for effective string representation of objects, enabling human-readable outputs. Learn how to fortify your code against unexpected errors and enhance its reliability through exception handling. Understand the importance of error detection and graceful error recovery, ensuring a smoother execution of your programs. Acquire best practices for writing clean, maintainable, and Pythonic code that adheres to OOP principles.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":50,
+    "title":"Introduction to Data Privacy",
+    "description":"What is data privacy, why is it so important, and how does it impact you daily? Answer all these questions and more in this course, introducing you to the basics of data privacy. This non-technical course focuses on providing a solid foundation of privacy principles and relating them with other critical concepts within the interconnected data landscape. You\u2019ll start by looking at the relationship between security, privacy, and data and why they matter in the modern world.Through hands-on exercises, you\u2019ll learn about the importance of privacy by design and additional privacy topics. Data privacy is essential to everyone. Start leveling up your data privacy skills and uncover a new way to look at the data around you.",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":51,
+    "title":"Introduction to Natural Language Processing in Python",
+    "description":"In this course, you'll learn natural language processing (NLP) basics, such as how to identify and separate words, how to extract topics in a text, and how to build your own fake news classifier. You'll also learn how to use basic libraries such as NLTK, alongside libraries which utilize deep learning to solve common NLP problems. This course will give you the foundation to process and parse text as you move forward in your Python learning.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":52,
+    "title":"Introduction to Embeddings with the OpenAI API",
+    "description":"Text embedding models create numerical representations from text inputs. This ability to encode text and capture its semantic meaning means that embedding models underpin many types of AI applications, like semantic search engines and recommendation engines. In this course, you'll learn how to harness OpenAI's Embeddings model via the OpenAI API to create embeddings from text datasets and begin developing real-world applications. You'll also take a big step towards creating production-ready applications by learning about vector databases to efficiently store and query embedded texts.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":53,
+    "title":"Working with Dates and Times in Python",
+    "description":"You'll probably never have a time machine, but how about a machine for analyzing time? As soon as time enters any analysis, things can get weird. It's easy to get tripped up on day and month boundaries, time zones, daylight saving time, and all sorts of other things that can confuse the unprepared. If you're going to do any kind of analysis involving time, you\u2019ll want to use Python to sort it out. Working with data sets on hurricanes and bike trips, we\u2019ll cover counting events, figuring out how much time has elapsed between events and plotting data over time. You'll work in both standard Python and in Pandas, and we'll touch on the dateutil library, the only timezone library endorsed by the official Python documentation. After this course, you'll confidently handle date and time data in any format like a champion.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":54,
+    "title":"Retrieval Augmented Generation (RAG) with LangChain",
+    "description":"Large Language Models (LLMs) are being integrated into computers, phones, and software applications, but they do have one drawback: their knowledge is limited by their training data, which is slow and costly. Enter Retrieval Augmented Generation (RAG)! RAG enables you to integrate external data with LLMs. In this course, you'll learn state-of-the-art techniques for loading, processing, and retrieving external data for LLMs! You'll utilize vector databases, the latest LLMs, including GPT-4o-Mini, and the LangChain framework to create RAG applications. This course concludes with a chapter on Graph RAG, a twist on traditional RAG that uses graph databases for more reliable data retrieval.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":55,
+    "title":"Intermediate Deep Learning with PyTorch",
+    "description":"Deep learning is a rapidly evolving field of artificial intelligence (AI) that revolutionized the field of machine learning, enabling breakthroughs in areas such as computer vision, natural language processing, and speech recognition. In this course, you'll develop robust deep learning models with PyTorch for a range of applications, including image and sequence models. You'll become familiar with core network architectures, such as convolutional neural networks (CNNs) and recurrent neural networks (RNNs), including Long Short-Term Memory (LSTM) networks and Gated Recurrent Units (GRUs).",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":56,
+    "title":"Linear Classifiers in Python",
+    "description":"In this course you'll learn all about using linear classifiers, specifically logistic regression and support vector machines, with scikit-learn. Once you've learned how to apply these methods, you'll dive into the ideas behind them and find out what really makes them tick. At the end of this course you'll know how to train, test, and tune these linear classifiers in Python. You'll also have a conceptual foundation for understanding many other machine learning algorithms.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":57,
+    "title":"Working with Categorical Data in Python",
+    "description":"Being able to understand, use, and summarize non-numerical data\u2014such as a person\u2019s blood type or marital status\u2014is a vital component of being a data scientist. In this course, you\u2019ll learn how to manipulate and visualize categorical data using pandas and seaborn. Through hands-on exercises, you\u2019ll get to grips with pandas' categorical data type, including how to create, delete, and update categorical columns. You\u2019ll also work with a wide range of datasets including the characteristics of adoptable dogs, Las Vegas trip reviews, and census data to develop your skills at working with categorical data.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":58,
+    "title":"Designing Agentic Systems with LangChain",
+    "description":"Every day, intelligent systems are transforming industries\u2014whether it's through automated customer support, personalized recommendations, or dynamic data processing. Agentic workflows, which integrate language models and tools to perform complex tasks, are at the forefront of this transformation. This course breaks down the essential components of agentic workflows and explains how to build, customize, and optimize them. You'll learn the key principles behind LangChain agents, including configuring prompts, integrating tools, and managing complex workflows with LangGraph. By the end of this course, you'll be equipped to build intelligent systems that automate complex tasks, enhance productivity, and provide dynamic solutions tailored to specific business needs.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":59,
+    "title":"Vector Databases for Embeddings with Pinecone",
+    "description":"Discover how the Pinecone vector database is revolutionizing AI application development. Pinecone is a fully-managed, ultra-low query latency vector database solution that is cornering the market. In this course, you'll learn to ingest, manipulate, and query vectors from Pinecone indexes. You'll use these skills, along with other fundamental concepts such as Retrieval Augmented Generation (RAG) to enable AI applications such as semantic search engines and context-aware chatbots. Finally, you'll learn to optimize your production databases by looking at techniques for tuning performance, optimizing storage, and improving query latency.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":60,
+    "title":"Working with Llama 3",
+    "description":"Open-source large language models like Llama can run on your own computer, helping you keep data private and reduce costs. In this course, you'll learn how to set up and use Llama locally. You'll explore simple techniques like adjusting prompts to get better responses, building conversations that remember context, and adapting outputs to fit your project's needs - whether that means generating structured data or refining responses for clarity. This course is designed for learners with experience working with Python.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":61,
+    "title":"Web Scraping in Python",
+    "description":"The ability to build tools capable of retrieving and parsing information stored across the internet has been and continues to be valuable in many veins of data science. In this course, you will learn to navigate and parse html code, and build tools to crawl websites automatically. Although our scraping will be conducted using the versatile Python library scrapy, many of the techniques you learn in this course can be applied to other popular Python libraries as well, including BeautifulSoup and Selenium. Upon the completion of this course, you will have a strong mental model of html structure, will be able to build tools to parse html code and access desired information, and create a simple scrapy spiders to crawl the web at scale.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":62,
+    "title":"Experimental Design in Python",
+    "description":"Discover how to design experiments and conduct statistical analyses to begin making precise conclusions! In this course, you'll learn how different experimental design setups, including randomized block designs and factorial designs, can be implemented to measure treatment effects. You'll deep-dive into performing statistical analyses on experimental data, including selecting the correct statistical tests for the situation, conducting post-hoc analysis, and measuring effect size and minimum sample size with Cohen's d and power analysis. Finally, you'll learn how to extract insights from complex experimental data and communicate your findings to different stakeholders, address complexities like interactions, heteroscedasticity, and confounding, and implement nonparametric methods when data doesn't meet the assumptions of parametric tests.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":63,
+    "title":"Manipulating Time Series Data in Python",
+    "description":"In this course you'll learn the basics of manipulating time series data. Time series data are data that are indexed by a sequence of dates or times. You'll learn how to use methods built into Pandas to work with this index. You'll also learn how resample time series to change the frequency. This course will also show you how to calculate rolling and cumulative values for times series. Finally, you'll use all your new skills to build a value-weighted stock index from actual stock data.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":64,
+    "title":"Cluster Analysis in Python",
+    "description":"You have probably come across Google News, which automatically groups similar news articles under a topic. Have you ever wondered what process runs in the background to arrive at these groups? In this course, you will be introduced to unsupervised learning through clustering using the SciPy library in Python. This course covers pre-processing of data and application of hierarchical and k-means clustering. Through the course, you will explore player statistics from a popular football video game, FIFA 18. After completing the course, you will be able to quickly apply various clustering algorithms on data, visualize the clusters formed and analyze results.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":65,
+    "title":"Extreme Gradient Boosting with XGBoost",
+    "description":"Do you know the basics of supervised learning and want to use state-of-the-art models on real-world datasets? Gradient boosting is currently one of the most popular techniques for efficient modeling of tabular datasets of all sizes. XGboost is a very fast, scalable implementation of gradient boosting, with models using XGBoost regularly winning online data science competitions and being used at scale across different industries. In this course, you'll learn how to use this powerful library alongside pandas and scikit-learn to build and tune supervised learning models. You'll work with real-world datasets to solve classification and regression problems.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":66,
+    "title":"Multi-Agent Systems with LangGraph",
+    "description":"Design and build your own agents with LangGraph! LangGraph is a core part of the LangChain ecosystem, and it's used to build production-ready AI agents with a high degree of customizability. You'll use LangGraph to build an agentic assistant to gather information and stock performance data on Fortune 500 companies, and analyze it using visualizations! Discover state-of-the-art multi-agent architectures, including swarm (or decentralized) multi-agents and supervisor mult-agents. Become a builder of AI agent systems today!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":67,
+    "title":"Intermediate GitHub Concepts",
+    "description":"Take your GitHub skills to the next level with this intermediate course, building on the foundations of our introductory course. You'll dive deeper into GitHub Projects, automation with GitHub Actions, and advanced security features. By the end, you'll be able to manage complex workflows, enhance team collaboration, and secure your projects more effectively. This course is perfect for those who already know the basics and want to streamline their data or software project management further!",
+    "tags":[
+      "r"
+    ]
+  },
+  {
+    "id":68,
+    "title":"Intermediate Object-Oriented Programming in Python",
+    "description":"Ready to unlock the power of object-oriented programming? You\u2019re in the right place! In this course, you\u2019ll build on the foundations of object-oriented programming to develop and hone the skills you need to write robust, production-ready code with Python. Apply the basic principles of inheritance to create classes that inherit functionality from more than a single parent. Unlock a new array of capabilities with method overloading to create your own implementations of built-in operators, enabling your classes to be used in new and exciting ways. Take your skills to the next-level with type hinting, and watch as your code becomes easier to read, write, and troubleshoot. Customize the way an attribute is set, accessed, and deleted using descriptors and other Python-native techniques. Learn to build your own custom iterators to navigate a collection or generate a stream of data. Discover the power of abstract base classes, and how they can be used to create \"blueprints\" for similar classes. Practice building formal and informal interfaces to create and implement contracts between classes. Finally, wrap up the course by architecting and building classes using the factory method design pattern.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":69,
+    "title":"Introduction to Deep Learning in Python",
+    "description":"Deep learning is the machine learning technique behind the most exciting capabilities in diverse areas like robotics, natural language processing, image recognition, and artificial intelligence, including the famous AlphaGo. In this course, you'll gain hands-on, practical knowledge of how to use deep learning with Keras 2.0, the latest version of a cutting-edge library for deep learning in Python.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":70,
+    "title":"Natural Language Processing (NLP) in Python",
+    "description":"Unlock the power of Natural Language Processing (NLP) and take your text analysis skills to the next level! This course equips you with essential tools to process, analyze, and extract insights from text data. Start with the fundamentals of text processing, such as tokenization, lemmatization, and stemming, to extracting meaningful numerical features from text using bag-of-words (BoW), TF-IDF, and embeddings. Finally, harness the power of state-of-the-art transformer models using Hugging Face. Perform sentiment analysis, classify content, analyze question-answer relationships, assess grammatical acceptability, and generate text using the latest models.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":71,
+    "title":"Model Validation in Python",
+    "description":"Machine learning models are easier to implement now more than ever before. Without proper validation, the results of running new data through a model might not be as accurate as expected. Model validation allows analysts to confidently answer the question, how good is your model? We will answer this question for classification models using the complete set of tic-tac-toe endgame scenarios, and for regression models using fivethirtyeight\u2019s ultimate Halloween candy power ranking dataset. In this course, we will cover the basics of model validation, discuss various validation techniques, and begin to develop tools for creating validated and high performing models.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":72,
+    "title":"Explainable AI in Python",
+    "description":"Explainable AI is critical for data scientists and machine learning practitioners. This course will equip you with the skills to interpret AI model behaviors using Python. You'll use Python's Scikit-learn library and tools like SHAP and LIME to visualize and gain insights on model behavior. By the end of the course, you'll be able to build more transparent, trustworthy, and accountable AI systems.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":73,
+    "title":"Reinforcement Learning with Gymnasium in Python",
+    "description":"Embark on an exhilarating exploration of Reinforcement Learning (RL), a pivotal branch of machine learning. This interactive course takes you on a comprehensive journey through the core principles of RL where you'll master the art of training intelligent agents, teaching them to make strategic decisions and maximize rewards. Your agents will learn to navigate a whole host of different environments from OpenAI's gym toolkit, including navigating frozen lakes and mountains.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":74,
+    "title":"Machine Learning for Time Series Data in Python",
+    "description":"Time series data is ubiquitous. Whether it be stock market fluctuations, sensor data recording climate change, or activity in the brain, any signal that changes over time can be described as a time series. Machine learning has emerged as a powerful method for leveraging complexity in data in order to generate predictions and insights into the problem one is trying to solve. This course is an intersection between these two worlds of machine learning and time series data, and covers feature engineering, spectograms, and other advanced techniques in order to classify heartbeat sounds and predict stock prices.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":75,
+    "title":"Image Processing in Python",
+    "description":"Images are everywhere! We live in a time where images contain lots of information, which is sometimes difficult to obtain. This is why image pre-processing has become a highly valuable skill, applicable in many use cases. In this course, you will learn to process, transform, and manipulate images at your will, even when they come in thousands. You will also learn to restore damaged images, perform noise reduction, smart-resize images, count the number of dots on a dice, apply facial detection, and much more, using scikit-image. After completing this course, you will be able to apply your knowledge to different domains such as machine learning and artificial intelligence, machine and robotic vision, space and medical image analysis, retailing, and many more. Take the step and dive into the wonderful world that is computer vision!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":76,
+    "title":"Introduction to Deep Learning with Keras",
+    "description":"Deep learning is here to stay! It's the go-to technique to solve complex problems that arise with unstructured data and an incredible tool for innovation. Keras is one of the frameworks that make it easier to start developing deep learning models, and it's versatile enough to build industry-ready models in no time. In this course, you will learn regression and save the earth by predicting asteroid trajectories, apply binary classification to distinguish between real and fake dollar bills, use multiclass classification to decide who threw which dart at a dart board, learn to use neural networks to reconstruct noisy images and much more. Additionally, you will learn how to better control your models during training and how to tune them to boost their performance.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":77,
+    "title":"Feature Engineering for Machine Learning in Python",
+    "description":"Every day you read about the amazing breakthroughs in how the newest applications of machine learning are changing the world. Often this reporting glosses over the fact that a huge amount of data munging and feature engineering must be done before any of these fancy models can be used. In this course, you will learn how to do just that. You will work with Stack Overflow Developers survey, and historic US presidential inauguration addresses, to understand how best to preprocess and engineer features from categorical, continuous, and unstructured data. This course will give you hands-on experience on how to prepare any data for your own machine learning models.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":78,
+    "title":"Natural Language Processing with spaCy",
+    "description":"Learn spaCy, the fast-growing industry-standard NLP library, for tasks like tokenization, parsing, and named entity recognition. Master core operations, use classes like Doc and Token, and train models. Extract terms with pattern matching, create custom pipeline components, and handle real-world examples for your NLP projects.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":79,
+    "title":"Dimensionality Reduction in Python",
+    "description":"High-dimensional datasets can be overwhelming and leave you not knowing where to start. Typically, you\u2019d visually explore a new dataset first, but when you have too many dimensions the classical approaches will seem insufficient. Fortunately, there are visualization techniques designed specifically for high dimensional data and you\u2019ll be introduced to these in this course. After exploring the data, you\u2019ll often find that many features hold little information because they don\u2019t show any variance or because they are duplicates of other features. You\u2019ll learn how to detect these features and drop them from the dataset so that you can focus on the informative ones. In a next step, you might want to build a model on these features, and it may turn out that some don\u2019t have any effect on the thing you\u2019re trying to predict. You\u2019ll learn how to detect and drop these irrelevant features too, in order to reduce dimensionality and thus complexity. Finally, you\u2019ll learn how feature extraction techniques can reduce dimensionality for you through the calculation of uncorrelated principal components.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":80,
+    "title":"Deep Reinforcement Learning in Python",
+    "description":"Embark on a journey to empower machines through Deep Reinforcement Learning (DRL). This course offers hands-on experience with powerful algorithms using PyTorch and Gymnasium. Start with DRL foundations and traditional Reinforcement Learning, then implement Deep Q-Networks (DQN) with advanced refinements like Prioritized Experience Replay. Advance your skills with policy-based methods and explore industry-standard algorithms like Proximal Policy Optimization (PPO) before optimizing your models using Optuna.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":81,
+    "title":"Transformer Models with PyTorch",
+    "description":"Dive deeper into LLMs and discover how the transformer architecture has revolutionized deep learning and enabled the generative AI boom! In this course, you'll learn to create your own transformer architecture from the ground up, component by component. You'll learn how to encode token positions, perform attention mechanism calculations, and build modular transformer components to give you greater control over your transformer's inner workings. Go from zero to LLM hero today!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":82,
+    "title":"Deep Learning for Images with PyTorch",
+    "description":"In this course, you'll use PyTorch to discover image classification, object recognition, segmentation, and image generation. You'll work with both binary and multi-class image classification models, utilize pre-trained models for deep learning tasks, and master object detection with bounding boxes. Additionally, you'll delve into image segmentation, including semantic, instance, and panoptic types, with real-world applications. Finally, you'll explore Generative Adversarial Networks (GANs) and learn to assess the quality and diversity of the generated images.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":83,
+    "title":"Multi-Modal Systems with the OpenAI API",
+    "description":"Bored of text generation yet? If so, you've come to the right course! OpenAI provides models far beyond text generation. In this course, you'll learn how to use OpenAI's speech-to-text and text-to-speech models, and also perform content moderation to detect inappropriate content. You'll wrap up the course with a case study where you'll build your own end-to-end smooth-talking customer support chatbot that can respond to customer inquiries with spoken audio in their native language!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":84,
+    "title":"Introduction to SQL with AI",
+    "description":"Learn SQL fundamentals using AI. In this beginner course, you\u2019ll learn to write prompts to generate SQL queries, understand the resulting code, and explore databases effectively. You'll start with SELECT statements and progress through tables, data types, counting, and finding unique values. You\u2019ll focus on practicing real-world skills such as writing clear prompts, understanding SQL syntax, and knowing when to adjust what AI generates. By the end of the course, you'll confidently retrieve data and answer business questions with SQL using AI.",
+    "tags":[
+      "sql"
+    ]
+  },
+  {
+    "id":85,
+    "title":"Machine Learning with PySpark",
+    "description":"Spark is a powerful, general purpose tool for working with Big Data. Spark transparently handles the distribution of compute tasks across a cluster. This means that operations are fast, but it also allows you to focus on the analysis rather than worry about technical details. In this course you'll learn how to get data into Spark and then delve into the three fundamental Spark Machine Learning algorithms: Linear Regression, Logistic Regression\/Classifiers, and creating pipelines. Along the way you'll analyse a large dataset of flight delays and spam text messages. With this background you'll be ready to harness the power of Spark and apply it on your own Machine Learning projects!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":86,
+    "title":"Hyperparameter Tuning in Python",
+    "description":"Building powerful machine learning models depends heavily on the set of hyperparameters used. But with increasingly complex models with lots of options, how do you efficiently find the best settings for your particular problem? In this course you will get practical experience in using some common methodologies for automated hyperparameter tuning in Python using Scikit Learn. These include Grid Search, Random Search & advanced optimization methodologies including Bayesian & Genetic algorithms . You will use a dataset predicting credit card defaults as you build skills to dramatically increase the efficiency and effectiveness of your machine learning model building.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":87,
+    "title":"Feature Engineering for NLP in Python",
+    "description":"In this course, you will learn techniques that will allow you to extract useful information from text and process them into a format suitable for applying ML models. More specifically, you will learn about POS tagging, named entity recognition, readability scores, the n-gram and tf-idf models, and how to implement them using scikit-learn and spaCy. You will also learn to compute how similar two documents are to each other. In the process, you will predict the sentiment of movie reviews and build movie and Ted Talk recommenders. Following the course, you will be able to engineer critical features out of any text and solve some of the most challenging problems in data science!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":88,
+    "title":"Deep Learning for Text with PyTorch",
+    "description":"Embark on an exciting journey into deep learning for text with PyTorch. This course will equip you with the skills to tackle various text-related challenges. You'll dive into the principles of text processing with encoding and embedding. You\u2019ll apply various models, including CNNs, RNNs, GANs, and pre-trained models, using text data. Finally, you'll delve into advanced topics, including transfer learning techniques, attention mechanisms, and how to protect your models from adversarial attacks. By the end of this course, you'll have the skills to build powerful deep learning models for text.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":89,
+    "title":"Ensemble Methods in Python",
+    "description":"Continue your machine learning journey by diving into the wonderful world of ensemble learning methods! These are an exciting class of machine learning techniques that combine multiple individual algorithms to boost performance and solve complex problems at scale across different industries. Ensemble techniques regularly win online machine learning competitions as well! In this course, you\u2019ll learn all about these advanced ensemble techniques, such as bagging, boosting, and stacking. You\u2019ll apply them to real-world datasets using cutting edge Python machine learning libraries such as scikit-learn, XGBoost, CatBoost, and mlxtend.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":90,
+    "title":"Winning a Kaggle Competition in Python",
+    "description":"Kaggle is the most famous platform for Data Science competitions. Taking part in such competitions allows you to work with real-world datasets, explore various machine learning problems, compete with other participants and, finally, get invaluable hands-on experience. In this course, you will learn how to approach and structure any Data Science competition. You will be able to select the correct local validation scheme and to avoid overfitting. Moreover, you will master advanced feature engineering together with model ensembling approaches. All these techniques will be practiced on Kaggle competitions datasets.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":91,
+    "title":"Biomedical Image Analysis in Python",
+    "description":"The field of biomedical imaging has exploded in recent years - but for the uninitiated, even loading data can be a challenge! In this introductory course, you'll learn the fundamentals of image analysis using NumPy, SciPy, and Matplotlib. You'll navigate through a whole-body CT scan, segment a cardiac MRI time series, and determine whether Alzheimer\u2019s disease changes brain structure. Even if you have never worked with images before, you will finish the course with a solid toolkit for entering this dynamic field.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":92,
+    "title":"Reinforcement Learning from Human Feedback (RLHF)",
+    "description":"Combine the efficiency of Generative AI with the understanding of human expertise in this course on Reinforcement Learning from Human Feedback. You\u2019ll learn how to make GenAI models truly reflect human values and preferences while getting hands-on experience with LLMs. You\u2019ll also navigate the complexities of reward models and learn how to build upon LLMs to produce AI that not only learns but also adapts to real-world scenarios.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":93,
+    "title":"Fine-Tuning with Llama 3",
+    "description":"Fine-tune the Llama open-source LLM to optimize its performance for specialized applications. Learn how to use TorchTune's recipe-based system and Hugging Face\u2019s SFTTrainer to run fine-tuning loops, preparing your models with custom datasets. Finally, experiment with parameter-efficient techniques like LoRA and apply quantization to decrease model memory usage and run your tasks more efficiently.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":94,
+    "title":"Sentiment Analysis in Python",
+    "description":"Have you left a review to express how you feel about a product or a service? And do you have a habit of checking a product\u2019s reviews online before you buy it? This kind of information is valuable not only for you but also for companies. In this course, you will learn how to make sense of the sentiment expressed in various documents. You will use real-world datasets featuring tweets, movie and product reviews, and use Python\u2019s nltk and scikit-learn packages. By the end of the course, you will be able to carry an end-to-end sentiment analysis task based on how US airline passengers expressed their feelings on Twitter.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":95,
+    "title":"Image Modeling with Keras",
+    "description":"Image modeling often requires deep learning methods that use data to train neural network algorithms for various machine learning tasks. Convolutional neural networks (CNNs) are particularly powerful neural networks that you'll use to classify different types of objects for the analysis of images. This four-hour course will teach you how to construct, train, and evaluate CNNs using Keras.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":96,
+    "title":"Multi-Modal Models with Hugging Face",
+    "description":"Text generation is so 2024! In this course, we'll combine data modalities to generate images, audio, and even videos! We'll use Hugging Face models and datasets, to perform computer vision tasks like image classification, object detection, and segmentation. We'll denoise audio and generate music using models from Meta, and we'll use prompts to edit images and generate video. Join us on this generative AI journey today!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":97,
+    "title":"Recurrent Neural Networks (RNNs) for Language Modeling with Keras",
+    "description":"Machine Learning models are based on numerical values to make predictions\/classification, but how can computers deal with text data? With the huge increase of available text data, applications such as automatic document classification, text generation, and neural machine translation became possible. In this course, you will learn how to use Recurrent Neural Networks to classify text (binary and multiclass), generate phrases simulating the character Sheldon from The Big Bang Theory TV Show, and translate Portuguese sentences into English. Are you ready to start your journey into Language Models using Keras and Python? Dive in!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":98,
+    "title":"Spoken Language Processing in Python",
+    "description":"We learn to speak far before we learn to read. Even in the digital age, our main method of communication is speech. Spoken Language Processing with Python will help you load, transform and transcribe audio files. You'll start by seeing what raw audio looks like in Python. And then finish by working through an example business use case, transcribing and classifying phone call data.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":99,
+    "title":"Advanced NLP with spaCy",
+    "description":"If you're working with a lot of text, you'll eventually want to know more about it. For example, what's it about? What do the words mean in context? Who is doing what to whom? What companies and products are mentioned? Which texts are similar to each other? In this course, you'll learn how to use spaCy, a fast-growing industry standard library for NLP in Python, to build advanced natural language understanding systems, using both rule-based and machine learning approaches.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":100,
+    "title":"Advanced Deep Learning with Keras",
+    "description":"This course shows you how to solve a variety of problems using the versatile Keras functional API. You will start with simple, multi-layer dense networks (also known as multi-layer perceptrons), and continue on to more complicated architectures. The course will cover how to build models with multiple inputs and a single output, as well as how to share weights between layers in a model. We will also cover advanced topics such as category embeddings and multiple-output networks. If you've ever wanted to train a network that does both classification and regression, then this course is for you!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":101,
+    "title":"Machine Translation with Keras",
+    "description":"The need to pack a bilingual dictionary for your European holiday or keeping one on your desk to complete your foreign language homework is a thing of the past. You just hop on the internet and make use of a language translation service to quickly understand what the street sign means or finding out how to greet and thank a foreigner in their language. Behind the language translation services are complex machine translation models. Have you ever wondered how these models work? This course will allow you to explore the inner workings of a machine translation model. You will use Keras, a powerful Python-based deep learning library, to implement a translation model. You will then train the model to perform an English to French translation, and you will be shown techniques to improve your model. At the end of this course, you would have developed an in-depth understanding of machine translation models and appreciate them even more!",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":102,
+    "title":"Graph RAG with LangChain and Neo4j",
+    "description":"Are you bored of vectors, embeddings, and vector RAG applications yet? Look no further! In this course, you'll discover how Graph RAG can greatly improve the accuracy and reliability of RAG applications by storing and querying information in the form of nodes and relationships. Combine Neo4j graph databases with LangChain and you get a truly awesome way of retrieving and integrating external data with LLMs.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":103,
+    "title":"Introduction to TensorFlow in Python",
+    "description":"Not long ago, cutting-edge computer vision algorithms couldn\u2019t differentiate between images of cats and dogs. Today, a skilled data scientist equipped with nothing more than a laptop can classify tens of thousands of objects with greater accuracy than the human eye. In this course, you will use TensorFlow 2.6 to develop, train, and make predictions with the models that have powered major advances in recommendation systems, image classification, and FinTech. You will learn both high-level APIs, which will enable you to design and train deep learning models in 15 lines of code, and low-level APIs, which will allow you to move beyond off-the-shelf routines. You will also learn to accurately predict housing prices, credit card borrower defaults, and images of sign language gestures.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":104,
+    "title":"Introduction to Optimization in Python",
+    "description":"This course transforms beginners into skilled optimizers, teaching you to convert and solve real-world problems using mathematical modeling in Python with SciPy and PuLP. Starting with the basics of optimization and its applications, you'll employ SymPy for analytical solutions without manually calculating derivatives, and utilize SciPy for numerical answers. You'll progress to tackling linear programming, constrained convex optimization, and mixed integer optimization with SciPy and PuLP, focusing on practical issues like manufacturing, profit maximization, and resource allocation.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":105,
+    "title":"End-to-End Machine Learning",
+    "description":"Dive into the world of machine learning and discover how to design, train, and deploy end-to-end models with this comprehensive course. Through engaging, real-world examples and hands-on exercises, you'll learn to tackle complex data problems and build powerful ML models. By the end of this course, you'll be equipped with the skills needed to create, monitor, and maintain high-performing models that deliver actionable insights.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":106,
+    "title":"Introduction to MLflow",
+    "description":"Managing the end-to-end lifecycle of a Machine Learning application can be a daunting task for data scientists, engineers, and developers. Machine Learning applications are complex and have a proven track record of being difficult to track, hard to reproduce, and problematic to deploy. In this course, you will learn what MLflow is and how it attempts to simplify the difficulties of the Machine Learning lifecycle such as tracking, reproducibility, and deployment. After learning MLflow, you will have a better understanding of how to overcome the complexities of building Machine Learning applications and how to navigate different stages of the Machine Learning lifecycle.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":107,
+    "title":"CI\/CD for Machine Learning",
+    "description":"The course will empower you to streamline your machine learning development processes, enhancing efficiency, reliability, and reproducibility in your projects. Throughout the course, you'll develop a comprehensive understanding of CI\/CD workflows and YAML syntax, utilizing GitHub Actions (GA) for automation, training models in a pipeline, versioning datasets with DVC, and performing hyperparameter tuning. You'll be introduced to the fundamental concepts of CI\/CD and YAML, and gain an understanding of the software development life cycle and key terms like build, test, and deploy. You'll define Continuous Integration, Continuous Delivery, and Continuous Deployment while examining their distinctions. You'll also explore the utility of CI\/CD in machine learning and experimentation. You'll learn about GA, a powerful platform for implementing CI\/CD workflows. You'll discover the various elements of GA, including events, actions, jobs, steps, runners, and context. You'll learn how to define workflows triggered by events such as push and pull requests and customize runner machines. You'll also gain practical experience by setting up basic CI pipelines and understanding the GA log. You'll delve deep into Data Version Control (DVC) for versioning datasets, initializing DVC, and tracking datasets. Using DVC pipelines, you'll learn how to train classification models and generate metrics in a reproducible manner. You'll then focus on model performance analysis and hyperparameter tuning and gain practical skills in comparing metrics and plots across branches to track changes in model performance. You'll learn how to perform hyperparameter tuning using scikit-learn's GridSearchCV. Additionally, you'll explore automating pull requests with the best model configuration.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":108,
+    "title":"Importing and Managing Financial Data in Python",
+    "description":"If you want to apply your new 'Python for Data Science' skills to real-world financial data, then this course will give you some very valuable tools. First, you will learn how to get data out of Excel into pandas and back. Then, you will learn how to pull stock prices from various online APIs like Google or Yahoo! Finance, macro data from the Federal Reserve, and exchange rates from OANDA. Finally, you will learn how to calculate returns for various time horizons, analyze stock performance by sector for IPOs, and calculate and summarize correlations.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":109,
+    "title":"Machine Learning for Finance in Python",
+    "description":"Time series data is all around us; some examples are the weather, human behavioral patterns as consumers and members of society, and financial data. In this course, you'll learn how to calculate technical indicators from historical stock data, and how to create features and targets out of the historical stock data. You'll understand how to prepare our features for linear models, xgboost models, and neural network models. We will then use linear models, decision trees, random forests, and neural networks to predict the future price of stocks in the US markets. You will also learn how to evaluate the performance of the various models we train in order to optimize them, so our predictions have enough accuracy to make a stock trading strategy profitable.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":110,
+    "title":"Efficient AI Model Training with PyTorch",
+    "description":"Do you want your machine learning models to train in a fraction of the time? Distributed training allows you to train models across multiple devices, making it possible to scale your AI projects and reduce training times. In this course, you'll learn how to use the Hugging Face Accelerator library and PyTorch to prepare models for distributed training on your device. You'll explore data sharding, model replication, and parameter synchronization while gaining hands-on experience applying these techniques to real-world workflows, whether working on image, text, or audio models.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":111,
+    "title":"Scalable AI Models with PyTorch Lightning",
+    "description":"In this course, you'll explore the principles, tools, and techniques for building scalable AI systems. Using PyTorch Lightning as the primary framework, you'll get hands-on experience in developing and optimizing AI models by building modular neural network components, managing data pipelines, and applying advanced optimization techniques. By the end of the course, you will be equipped with the skills needed to build, scale, and deploy robust AI solutions.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":112,
+    "title":"Time Series Analysis in Python",
+    "description":"From stock prices to climate data, time series data are found in a wide variety of domains, and being able to effectively work with such data is an increasingly important skill for data scientists. This course will introduce you to time series analysis in Python. After learning about what a time series is, you'll learn about several time series models ranging from autoregressive and moving average models to cointegration models. Along the way, you'll learn how to estimate, forecast, and simulate these models using statistical libraries in Python. You'll see numerous examples of how these models are used, with a particular emphasis on applications in finance.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":113,
+    "title":"Visualizing Time Series Data in Python",
+    "description":"Time series data is omnipresent in the field of Data Science. Whether it is analyzing business trends, forecasting company revenue or exploring customer behavior, every data scientist is likely to encounter time series data at some point during their work. To get you started on working with time series data, this course will provide practical knowledge on visualizing time series data using Python.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":114,
+    "title":"ARIMA Models in Python",
+    "description":"Have you ever tried to predict the future? What lies ahead is a mystery which is usually only solved by waiting. In this course, you will stop waiting and learn to use the powerful ARIMA class models to forecast the future. You will learn how to use the statsmodels package to analyze time series, to build tailored models, and to forecast under uncertainty. How will the stock market move in the next 24 hours? How will the levels of CO2 change in the next decade? How many earthquakes will there be next year? You will learn to solve all these problems and more.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":115,
+    "title":"Case Study: Building Software in Python",
+    "description":"Learn to build a real-world application\u2014a mortgage calculator\u2014while mastering core software engineering principles. You\u2019ll design modular Python code, use inheritance to expand functionality, and ensure quality through best practices like the DRY principle, PEP 8 compliance, and automated testing with pytest. By the end, you\u2019ll have the skills to create efficient, maintainable, and scalable software solutions for real-world challenges.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":116,
+    "title":"Intermediate Regression with statsmodels in Python",
+    "description":"Linear regression and logistic regression are the two most widely used statistical models and act like master keys, unlocking the secrets hidden in datasets. In this course, you\u2019ll build on the skills you gained in \"Introduction to Regression in Python with statsmodels\", as you learn about linear and logistic regression with multiple explanatory variables. Through hands-on exercises, you\u2019ll explore the relationships between variables in real-world datasets, Taiwan house prices and customer churn modeling, and more. By the end of this course, you\u2019ll know how to include multiple explanatory variables in a model, discover how interactions between variables affect predictions, and understand how linear and logistic regression work.",
+    "tags":[
+      "python"
+    ]
+  },
+  {
+    "id":117,
+    "title":"4 Tiny Mistakes That Secretly Destroy App Performance",
+    "description":"Ok, I\u2019m back from my short vacation and returning with some useful content \ud83d\ude04 As you know, from time...",
+    "tags":[
+      "javascript",
+      "angular",
+      "react",
+      "frontend"
+    ]
+  },
+  {
+    "id":118,
+    "title":"React is Overkill: Why Python + HTMX is Dominating in 2026",
+    "description":"Last year I spent forty minutes setting up a React project for an internal admin dashboard. Just the...",
+    "tags":[
+      "python",
+      "react",
+      "javascript",
+      "discuss"
+    ]
+  },
+  {
+    "id":119,
+    "title":"onclick is great, actually",
+    "description":"A few thoughts on `onclick` and how my opinion on it has changed.",
+    "tags":[
+      "javascript",
+      "html"
+    ]
+  },
+  {
+    "id":120,
+    "title":"HTMX or React? Why I chose a Third Way",
+    "description":"If you've been following web development news lately, you couldn't have missed the great debate of...",
+    "tags":[
+      "javascript",
+      "purescript",
+      "htmx",
+      "react"
+    ]
+  },
+  {
+    "id":121,
+    "title":"How I rebuilt my SaaS landing page in 6 weeks: Essential lessons for developer founders",
+    "description":"How I rebuilt my SaaS landing page in 6 weeks and what every developer founder should know about it",
+    "tags":[
+      "showdev",
+      "privacy",
+      "webdev",
+      "javascript"
+    ]
+  },
+  {
+    "id":122,
+    "title":"Stop Storing JWTs in localStorage: A Security Guide for Web Developers",
+    "description":"When I first learned about JSON Web Tokens (JWTs), I thought I had authentication figured out. The...",
+    "tags":[
+      "javascript",
+      "websecurity",
+      "jwt",
+      "authentication"
+    ]
+  },
+  {
+    "id":123,
+    "title":"Introducing Golt: A Lightweight TypeScript Runtime Powered by Go",
+    "description":"Golt is a small Go-native runtime for TypeScript and JavaScript backend scripting, with built-in HTTP, DB, FS, fetch, crypto and JWT APIs.",
+    "tags":[
+      "typescript",
+      "go",
+      "javascript",
+      "docker"
+    ]
+  },
+  {
+    "id":124,
+    "title":"Where can I publish an interactive visualization online?",
+    "description":"Quick answer: ArcadeLab hosts any single-file HTML interactive content \u2014 not just games. Physics...",
+    "tags":[
+      "webdev",
+      "javascript",
+      "datavisualization",
+      "showdev"
+    ]
+  },
+  {
+    "id":125,
+    "title":"\"I Stopped Letting My AI Assistant Hijack Every Message\"",
+    "description":"Splitting direct runtime chat from assistant orchestration made our local AI gateway much more predictable for real coding workflows.",
+    "tags":[
+      "discuss",
+      "webdev",
+      "ai",
+      "javascript"
+    ]
+  },
+  {
+    "id":126,
+    "title":"Deterministic OCR in JavaScript: PaddleOCR for Node, Bun, Deno, and the Browser",
+    "description":"A fast, lightweight PaddleOCR SDK that runs in every JavaScript runtime. Built on PP-OCRv5 and ONNX Runtime, with WebGPU acceleration, INT8 quantization, and 40+ languages.",
+    "tags":[
+      "ocr",
+      "javascript",
+      "webdev",
+      "ai"
+    ]
+  },
+  {
+    "id":127,
+    "title":"I Was Tired of Writing the Same Firebase Auth Boilerplate in Every React Native App \u2014 So I Built FireGuard",
+    "description":"How I went from copying and pasting 300 lines of auth code across projects to a single npm...",
+    "tags":[
+      "javascript",
+      "productivity",
+      "reactnative",
+      "showdev"
+    ]
+  },
+  {
+    "id":128,
+    "title":"I built a \"Tab Hibernator\" to save my RAM (and my sanity)",
+    "description":"We\u2019ve all been there. You start your day with one tab for documentation. Three hours later, you have...",
+    "tags":[
+      "javascript",
+      "webdev",
+      "productivity"
+    ]
+  },
+  {
+    "id":129,
+    "title":"Stop Reviewing Code Like It's 2020: I Built a Multi-Agent AI Code Reviewer",
+    "description":"Meet NodeGuard, an open-source, multi-agent AI code review pipeline for Node.js built with...",
+    "tags":[
+      "ai",
+      "node",
+      "opensource",
+      "javascript"
+    ]
+  },
+  {
+    "id":130,
+    "title":"Unity begone",
+    "description":"Here is a challenge. Search for \"web gaming portal\" on Google or any other search engine of your...",
+    "tags":[
+      "gamedev",
+      "unity3d",
+      "javascript",
+      "react"
+    ]
+  },
+  {
+    "id":131,
+    "title":"What Field Data Tells You That Lighthouse Can't",
+    "description":"A Lighthouse 95 on a marketing page. CrUX showing 68% of real users experiencing \"Poor\" LCP. Both...",
+    "tags":[
+      "react",
+      "performance",
+      "webdev",
+      "javascript"
+    ]
+  },
+  {
+    "id":132,
+    "title":"Stop Shipping 700KB of JavaScript for a Button",
+    "description":"Modern web apps often feel slow not because JavaScript is bad, but because we ship too much of it. Here is a practical checklist for reducing bundle size, hydration cost, and interaction delay.",
+    "tags":[
+      "webdev",
+      "performance",
+      "javascript",
+      "frontend"
+    ]
+  },
+  {
+    "id":133,
+    "title":"Stop Fighting AI Formatting: How I Built a \"Sanitizer\" for Messy AI Markdown",
+    "description":"The Problem: The \"AI-to-Doc\" Friction We\u2019ve all been there. You ask an AI like ChatGPT,...",
+    "tags":[
+      "webdev",
+      "javascript",
+      "react",
+      "ai"
+    ]
+  },
+  {
+    "id":134,
+    "title":"The Empty Quadrant: Mapping the Design Space of Frontend PDF Extraction",
+    "description":"A user asked me a sharp question yesterday: Looking at your extraction pipeline, pdfjs +...",
+    "tags":[
+      "javascript",
+      "pdf",
+      "architecture",
+      "opensource"
+    ]
+  },
+  {
+    "id":135,
+    "title":"Taking Permissions a Step Further in Node.js (The Fall of Spaghetti Code)",
+    "description":"So you scaffolded a blog post and handled permissions in a clean way\u2026 Perhaps\u2026 const...",
+    "tags":[
+      "architecture",
+      "javascript",
+      "node",
+      "security"
+    ]
+  },
+  {
+    "id":136,
+    "title":"I built a privacy-first image compressor that runs entirely in your browser",
+    "description":"The Problem Every time I needed to compress an image before deploying, I had to choose...",
+    "tags":[
+      "webdev",
+      "showdev",
+      "javascript",
+      "tools"
+    ]
+  },
+  {
+    "id":137,
+    "title":"useMemo in React \u2014 Why It Exists and How to Use It Simply",
+    "description":"Hey! Let me ask you something first. Every time state changes in React \u2014 what happens? The...",
+    "tags":[
+      "react",
+      "javascript",
+      "beginners",
+      "webdev"
+    ]
+  },
+  {
+    "id":138,
+    "title":"I Almost Quit React Native on Day One. Here's What Changed.",
+    "description":"I picked up React Native a few weeks ago, and I almost quit on day one. Not because of the code....",
+    "tags":[
+      "javascript",
+      "react",
+      "reactnative",
+      "nextjs"
+    ]
+  },
+  {
+    "id":139,
+    "title":"Next.js vs Remix: What's the Difference?",
+    "description":"This blog was originally published on Descope. Anyone who's worked with React knows it's easy to get...",
+    "tags":[
+      "javascript",
+      "nextjs",
+      "react",
+      "webdev"
+    ]
+  },
+  {
+    "id":140,
+    "title":"Documenting JavaScript the Easy Way",
+    "description":"Ever been in a situation where you\u2019re under a lot of pressure or chasing a deadline, so you thought,...",
+    "tags":[
+      "webdev",
+      "productivity",
+      "javascript",
+      "learning"
+    ]
+  },
+  {
+    "id":141,
+    "title":"I built a desktop Cat Gatekeeper because the Chrome extension kept getting bypassed",
+    "description":"Cat Gatekeeper went viral in April 2026. Millions of people installed it. Then they opened a new tab...",
+    "tags":[
+      "javascript",
+      "opensource",
+      "productivity",
+      "showdev"
+    ]
+  },
+  {
+    "id":142,
+    "title":"OpenCV.js Without the Memory Leaks: Chainable Image Processing for Every JavaScript Runtime",
+    "description":"ppu-ocv wraps OpenCV.js in a chainable TypeScript pipeline that handles Mat lifecycle for you, with four entry points that let you drop OpenCV entirely when you don't need it. Runs in Node, Bun, browsers, browser extensions, and service workers.",
+    "tags":[
+      "opencv",
+      "javascript",
+      "typescript",
+      "webdev"
+    ]
+  },
+  {
+    "id":143,
+    "title":"Detecting YouTube SPA Navigation in a Chrome Extension Content Script",
+    "description":"How to reliably run code on every new YouTube video \u2014 not just on the first page load \u2014 using MutationObserver and a URL change guard.",
+    "tags":[
+      "chrome",
+      "javascript",
+      "webdev",
+      "tutorial"
+    ]
+  },
+  {
+    "id":144,
+    "title":"Converting JSON to CSV: How to Flatten Nested Data for Spreadsheets",
+    "description":"JSON and CSV both represent tabular data, but they handle structure very differently. JSON can nest...",
+    "tags":[
+      "javascript",
+      "webdev",
+      "beginners",
+      "tools"
+    ]
+  },
+  {
+    "id":145,
+    "title":"How to Build a Traffic Dashboard with Road511 + Leaflet",
+    "description":"Let's build a real-time traffic dashboard from scratch. By the end, you'll have a map showing live...",
+    "tags":[
+      "javascript",
+      "webdev",
+      "tutorial",
+      "api"
+    ]
+  },
+  {
+    "id":146,
+    "title":"Learn React useMemo the Right Way \u2014 Re-Renders, Optimization,Dependencies & useEffect",
+    "description":"Welcome back to \u201cLet\u2019s Master React Hooks Together\u201d \u2014 the series where we learn React hooks step by...",
+    "tags":[
+      "react",
+      "javascript",
+      "webdev",
+      "beginners"
+    ]
+  },
+  {
+    "id":147,
+    "title":"Learning Progress Pt.8",
+    "description":"Daily learning part eight Today I started learning at 17:00 and finished at 21:40. Started by...",
+    "tags":[
+      "javascript",
+      "cisco",
+      "cybersecurity",
+      "productivity"
+    ]
+  },
+  {
+    "id":148,
+    "title":"I Built a Small Browser Workspace for HTML, CSS and JavaScript Prototypes",
+    "description":"I have been working on a small tool called Orivo. The idea came from a very simple problem I kept...",
+    "tags":[
+      "webdev",
+      "javascript",
+      "frontend",
+      "productivity"
+    ]
+  },
+  {
+    "id":149,
+    "title":"You know way more JavaScript than you think you do",
+    "description":"You're likely a much better JavaScript developer than you give yourself credit for. Seriously. We...",
+    "tags":[
+      "javascript",
+      "webdev",
+      "frontend",
+      "developer"
+    ]
+  },
+  {
+    "id":150,
+    "title":"Base64 is not encryption - here's what it actually does",
+    "description":"Base64 comes up constantly - in JWTs, email attachments, data URIs, API payloads. Most developers...",
+    "tags":[
+      "webdev",
+      "programming",
+      "security",
+      "javascript"
+    ]
+  },
+  {
+    "id":151,
+    "title":"I Built a Zero-Dependency Browser Storage Encryption Library \u2014 Here's Why",
+    "description":"A few months ago I found myself auditing a side project and noticed something uncomfortable: I was...",
+    "tags":[
+      "security",
+      "javascript",
+      "webdev",
+      "typescript"
+    ]
+  },
+  {
+    "id":152,
+    "title":"How I built a real-money 1v1 SDK for web games",
+    "description":"What Challenge does Devs drop a single &lt;script&gt; tag into their web game. Players...",
+    "tags":[
+      "webdev",
+      "javascript",
+      "ai",
+      "showdev"
+    ]
+  },
+  {
+    "id":153,
+    "title":"Basic about react components,Jsx rules, React folder structure.",
+    "description":"React components : \u25feComponents are like functions that return HTML elements. \u25feComponents are...",
+    "tags":[
+      "webdev",
+      "programming",
+      "javascript",
+      "beginners"
+    ]
+  },
+  {
+    "id":154,
+    "title":"React Basics 2",
+    "description":"What is JSX and its rule? JSX is the abbreviation of JavaScript XML. XML is the short form of...",
+    "tags":[
+      "beginners",
+      "javascript",
+      "react",
+      "tutorial"
+    ]
+  },
+  {
+    "id":155,
+    "title":"5 Hidden DevTools Features You Wish You Knew Sooner",
+    "description":"Let me guess. You mostly use your browser DevTools to inspect elements, tweak a bit of CSS and maybe...",
+    "tags":[
+      "webdev",
+      "software",
+      "productivity",
+      "javascript"
+    ]
+  },
+  {
+    "id":156,
+    "title":"Scraping is Dead: How AI Replaced My Brittle Regex and BeautifulSoup Scripts",
+    "description":"Introduction We've all been there. You have a folder full of PDFs, a list of URLs, or...",
+    "tags":[
+      "ai",
+      "webdev",
+      "productivity",
+      "javascript"
+    ]
+  },
+  {
+    "id":157,
+    "title":"## How I Built a Free Age & Date Calculator Hub \u2014 From Zero to 1,500 Visits\/Week in 2 Weeks",
+    "description":"I recently launched QuickAgeCalc.com \u2014 a free collection of age, date, and pregnancy calculators. Two...",
+    "tags":[
+      "ai",
+      "webdev",
+      "javascript",
+      "seo"
+    ]
+  },
+  {
+    "id":158,
+    "title":"Why I used shadow DOM instead of iframes for inline tooltips",
+    "description":"Building an on-page tooltip that doesn't break the host page turns out to have one real decision...",
+    "tags":[
+      "css",
+      "frontend",
+      "javascript",
+      "webdev"
+    ]
+  },
+  {
+    "id":159,
+    "title":"Basic Learnings in REACT",
+    "description":"*1. React Components * Components are the building blocks of react app Reusable pieces of UI =&gt;...",
+    "tags":[
+      "beginners",
+      "javascript",
+      "react",
+      "webdev"
+    ]
+  },
+  {
+    "id":160,
+    "title":"\ud83c\udfa4Come creare un assistente vocale nel browser con JavaScript e Web Speech API",
+    "description":"\ud83e\udde0 TITOLO Come creare un assistente vocale nel browser con JavaScript e Web Speech API \ud83d\udcdd ARTICOLO...",
+    "tags":[
+      "javascript",
+      "webdev",
+      "programming"
+    ]
+  },
+  {
+    "id":161,
+    "title":"Reducing Multi-Model AI Integration Risk with an OpenAI-Compatible Gateway",
+    "description":"When a prototype uses only one model, the integration feels simple. You add an SDK, set one API key,...",
+    "tags":[
+      "ai",
+      "api",
+      "javascript",
+      "programming"
+    ]
+  },
+  {
+    "id":162,
+    "title":"How I built one Manifest V3 extension that runs on Chrome, Edge, and Firefox",
+    "description":"A single manifest, no build step, and a few tricks for catching short-form video feeds, re-muting hostile sites, and surviving Firefox's MV3 host-permission model.",
+    "tags":[
+      "webextensions",
+      "javascript",
+      "chrome",
+      "firefox"
+    ]
+  },
+  {
+    "id":163,
+    "title":"I built a free Unix timestamp tool that works offline and has zero ads",
+    "description":"Hey r\/webdev, I built a simple tool that does one thing well: Live Unix timestamp (updates every...",
+    "tags":[
+      "javascript",
+      "showdev",
+      "sideprojects",
+      "webdev"
+    ]
+  },
+  {
+    "id":164,
+    "title":"BuildFlow vs NoCodeForge vs AppCraft: Which No-Code Platform Really Delivers?",
+    "description":"BuildFlow vs NoCodeForge vs AppCraft: Which No-Code Platform Really Delivers? No-code...",
+    "tags":[
+      "automation",
+      "productivity",
+      "startup",
+      "javascript"
+    ]
+  },
+  {
+    "id":165,
+    "title":"JavaScript Variables",
+    "description":"var Old way of declaring variables Scope is function-based (not limited to blocks) Can...",
+    "tags":[
+      "javascript",
+      "typescript",
+      "webdev",
+      "frontend"
+    ]
+  },
+  {
+    "id":166,
+    "title":"Discovering JavaScript Functions Through the Lens of Go",
+    "description":"I recently started learning JavaScript, and I didn't come in blind. I had Go in my head \u2014 how it...",
+    "tags":[
+      "go",
+      "javascript",
+      "beginners",
+      "programming"
+    ]
+  }
+]
