@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiTree - Buscador Inteligente de Cursos</title>
+    <!-- Vinculación del archivo CSS externo -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <!-- Contenedor del encabezado de la marca -->
+    <div class="brand-header">
+        <h1>LogiTree</h1>
+        <p class="tagline">Encontrá tu rumbo de aprendizaje con lógica</p>
+    </div>
+
+    <!-- Selectores que activan el Árbol de Decisión -->
+    <div class="filter-container">
+            <div class="brand-header">
+        <img src="img/logitree-logo.png" alt="LogiTree Isologotipo" class="brand-logo">
+        <p class="tagline">Encontrá tu rumbo de aprendizaje con lógica</p>
+    </div>
+
+        <div class="filter-group">
+            <label for="idioma">Idioma</label>
+            <select id="idioma" onchange="filtrarCursos()">
+                <option value="Todos">Todos</option>
+                <option value="Español">Español</option>
+                <option value="Inglés">Inglés</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="nivel">Nivel</label>
+            <select id="nivel" onchange="filtrarCursos()">
+                <option value="Todos">Todos</option>
+                <option value="Principiante">Principiante</option>
+                <option value="Intermedio">Intermedio</option>
+                <option value="Avanzado">Avanzado</option>
+            </select>
+        </div>
+    </div>
