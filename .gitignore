@@ -6,4 +6,9 @@
 *.iml
 *.ipr
 
-
+###  ###
+.env
+*.pem
+*.key
+/data/
+/backend/data/
