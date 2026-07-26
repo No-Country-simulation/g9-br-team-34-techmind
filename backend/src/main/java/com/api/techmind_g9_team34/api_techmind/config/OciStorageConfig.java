@@ -1,53 +1,66 @@
 package com.api.techmind_g9_team34.api_techmind.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuración para Oracle Cloud Infrastructure (OCI) Object Storage.
+ *
+ * Carga automáticamente las propiedades definidas con el prefijo
+ * "techmind.oci" utilizando @ConfigurationProperties.
+ *
+ * Esta configuración será utilizada posteriormente para crear el
+ * AuthenticationDetailsProvider y el ObjectStorageClient.
+ */
 @Configuration
+@ConfigurationProperties(prefix = "techmind.oci")
+@Getter
+@Setter
 public class OciStorageConfig {
 
-    @Value("${techmind.oci.auth-method}")
+    /**
+     * Método de autenticación.
+     * Valores soportados:
+     * - config_file
+     * - env_vars
+     */
     private String authMethod;
 
-    @Value("${techmind.oci.namespace}")
+    /** Namespace del Object Storage. */
     private String namespace;
 
-    @Value("${techmind.oci.bucket-name}")
+    /** Nombre del bucket donde se almacenan los modelos. */
     private String bucketName;
 
-    @Value("${techmind.oci.region}")
+    /** Región de Oracle Cloud Infrastructure. */
     private String region;
 
-    @Value("${techmind.oci.config-file}")
+    /**
+     * Configuración utilizada cuando authMethod = "config_file".
+     */
     private String configFile;
-
-    @Value("${techmind.oci.config-profile}")
     private String configProfile;
 
-    @Value("${techmind.oci.user-ocid}")
+    /**
+     * Configuración utilizada cuando authMethod = "env_vars".
+     */
     private String userOcid;
-
-    @Value("${techmind.oci.tenancy-ocid}")
     private String tenancyOcid;
-
-    @Value("${techmind.oci.fingerprint}")
     private String fingerprint;
-
-    @Value("${techmind.oci.private-key-path}")
     private String privateKeyPath;
-
-    @Value("${techmind.oci.private-key-passphrase}")
     private String privateKeyPassphrase;
 
     /*
-     * TODO:
-     * Integrar el SDK oficial de Oracle Cloud Infrastructure.
+     * Próximos pasos:
      *
-     * Pendiente:
-     * - Crear AuthenticationDetailsProvider.
-     * - Soportar auth-method=config_file.
-     * - Soportar auth-method=env_vars.
-     * - Crear ObjectStorageClient.
-     * - Registrar el cliente como Bean de Spring.
+     * - Crear el AuthenticationDetailsProvider.
+     * - Soportar autenticación mediante:
+     *     - config_file
+     *     - env_vars
+     * - Crear el ObjectStorageClient.
+     * - Registrar los Beans de Spring.
+     * - Validar la conexión con OCI Object Storage.
      */
 }
