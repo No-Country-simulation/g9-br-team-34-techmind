@@ -1,4 +1,4 @@
-package com.logitree.api.dto.request;
+package com.techmind.api.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
