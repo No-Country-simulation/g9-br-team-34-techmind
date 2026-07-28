@@ -1,8 +1,8 @@
 # Contrato REST/JSON — Backend ↔ Servicio de Inferencia
 
 **Ticket:** TM-006
-**Versión:** 1.1
-**Estado:** Contenido acordado con Ciencia de Datos — pendiente de revisión formal del data-analyst (regreso de viaje)
+**Versión:** 1.0
+**Estado:** ACORDADO — aprobado por Backend y Ciencia de Datos
 **Referencia:** Requerimientos_TechMind.docx §6.14, §7.1 · Arquitectura_TechMind.docx §6
 
 > Este documento es un **acuerdo entre dos áreas**, no una decisión unilateral de Backend.
@@ -58,7 +58,7 @@ conviene divergir de un artefacto que los jurados van a mirar directamente.
 |---|---|
 | Método | `POST` |
 | Ruta | `/predict` |
-| URL base | Externalizada en `application.yml` → `techmind.inferencia.base-url` |
+| URL base | Externalizada en `application.properties` → `techmind.inference-service.base-url` |
 | `Content-Type` | `application/json` |
 | `Accept` | `application/json` |
 | Autenticación | Ninguna (servicio no expuesto a internet — §6.18) |
@@ -138,6 +138,11 @@ al cliente final (§6.11).
 | Reintentos | **1**, solo ante conexión rechazada o HTTP 5xx | — |
 | Reintento ante timeout | **NO** | Duplicaría el tiempo y garantizaría incumplir RNF-01 |
 
+> **Discrepancia con el código actual:** `application.properties` ya define
+> `techmind.inference-service.timeout-ms=5000` (5 s). Ese valor incumple el RNF-01
+> (respuesta total < 3 s) y debe reducirse a 2500 ms antes de TM-031 (integración real).
+> Escalar a TM-058 (verificación de rendimiento).
+>
 > **Corrección respecto de §6.14:** el documento de requerimientos sugiere timeout de 5 s
 > con reintento. Combinado da ~10 s en el peor caso, contra un RNF-01 de 3 s. Los valores
 > de esta tabla son los que rigen. Escalar a TM-058 (verificación de rendimiento).
@@ -202,7 +207,6 @@ POST /predict
 
 ## 10. Firma
 
-| Área | Responsable | Fecha | Estado |
-|---|---|---|---|
-| Backend | _(pendiente)_ | | |
-| Ciencia de Datos | _(pendiente)_ | | |
+| Área             | Responsable    | Fecha       | Estado     |
+| Backend          | Esteban        | 2026-07-28  | Aprobado   |
+| Ciencia de Datos | [Luigi Huánuco ,Sofia Alferez, JorgeM ] | 2026-07-28  | Aprobado   |
