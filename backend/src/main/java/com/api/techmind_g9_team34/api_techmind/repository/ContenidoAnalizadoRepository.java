@@ -61,4 +61,27 @@ public interface ContenidoAnalizadoRepository extends JpaRepository<ContenidoAna
     @Override
     @EntityGraph(attributePaths = "palabrasClave")
     List<ContenidoAnalizado> findAll();
+
+    /**
+     * Lista los contenidos de una categoría, con sus palabras clave ya cargadas.
+     *
+     * <p>Consumidor previsto: TM-037, que expone el filtro opcional
+     * {@code GET /api/v1/contenidos?categoria=...}.
+     *
+     * <p>Spring Data deriva la consulta del nombre del método: {@code findBy} +
+     * el nombre del atributo de la entidad. No hace falta escribir SQL ni JPQL.
+     * Por eso el parámetro debe llamarse igual que el campo {@code categoria};
+     * si el campo se renombra, este método deja de resolver y falla al arrancar
+     * el contexto, no en tiempo de ejecución.
+     *
+     * <p>La comparación es sensible a mayúsculas y minúsculas, y espera uno de
+     * los valores acordados con Ciencia de Datos en TM-006. Una categoría
+     * inexistente devuelve lista vacía, no error: quien exponga el endpoint
+     * decide si eso es un 200 con lista vacía o un 404.
+     *
+     * @param categoria categoría exacta a filtrar
+     * @return contenidos de esa categoría; lista vacía si no hay ninguno
+     */
+    @EntityGraph(attributePaths = "palabrasClave")
+    List<ContenidoAnalizado> findByCategoria(String categoria);
 }
