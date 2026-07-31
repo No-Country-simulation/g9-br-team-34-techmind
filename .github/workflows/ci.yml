@@ -1,0 +1,228 @@
+# Integracion continua de TechMind.
+#
+# Se ejecuta en cada push y en cada pull request contra main. Su objetivo es que
+# nadie tenga que preguntar "¿compila?" ni "¿pasan las pruebas?": si el check
+# esta en verde, la respuesta ya esta dada.
+#
+# Los tres primeros jobs corren EN PARALELO porque son independientes entre si.
+# El job de imagenes espera a los otros: construir un contenedor con codigo que
+# ni siquiera compila es tiempo de runner desperdiciado.
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  # Permite lanzarlo a mano desde la pestana Actions, util para depurar la
+  # propia canalizacion sin ensuciar el historial con commits vacios.
+  workflow_dispatch:
+
+# Si se empuja dos veces seguidas a la misma rama, cancela la corrida anterior:
+# los minutos de runner son limitados y el resultado viejo ya no le importa a
+# nadie. En main no se cancela, porque ahi cada corrida es la que habilita el
+# despliegue.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+
+  # =========================================================================
+  # Backend Java - compilacion y pruebas
+  # =========================================================================
+  backend:
+    name: Backend (Java 17 / Maven)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          # Cachea ~/.m2 entre corridas. Sin esto, cada build vuelve a descargar
+          # Spring Boot entero y el job tarda varios minutos de mas.
+          cache: 'maven'
+
+      # Se usa el wrapper del repositorio y no el Maven del runner, para que CI
+      # compile con exactamente la misma version de Maven (3.9.16) que usa el
+      # equipo en local. Un "en mi maquina funciona" menos.
+      - name: Dar permiso de ejecucion al wrapper
+        working-directory: backend
+        run: chmod +x mvnw
+
+      - name: Compilar y ejecutar pruebas
+        working-directory: backend
+        run: ./mvnw -B --no-transfer-progress verify
+
+      # Se conserva el .jar aunque el despliegue no lo use (la imagen se compila
+      # sola): sirve para descargar y reproducir localmente el binario exacto de
+      # una corrida concreta cuando algo falla solo en CI.
+      - name: Publicar el artefacto compilado
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          retention-days: 7
+          if-no-files-found: error
+
+  # =========================================================================
+  # Servicio de inferencia - lint, entrenamiento y pruebas
+  # =========================================================================
+  ml-service:
+    name: ML Service (Python 3.11)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ml-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ml-service/requirements-dev.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check app train tests
+
+      # El modelo se entrena aqui porque las pruebas necesitan un artefacto real
+      # que cargar. De paso, esto verifica en cada commit que el entrenamiento
+      # sigue siendo reproducible y que el dataset no se rompio.
+      - name: Entrenar el modelo
+        run: python -m train.train
+
+      - name: Ejecutar pruebas
+        run: pytest -v
+
+      # Las metricas quedan descargables desde la pestana Actions. Es la forma
+      # mas simple de responder "¿mejoro o empeoro el modelo con este cambio?"
+      # sin tener que reentrenar en local.
+      - name: Publicar metricas del modelo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-metrics
+          path: ml-service/models/metrics.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Construccion de imagenes - valida que los Dockerfile funcionen
+  # =========================================================================
+  docker:
+    name: Construccion de imagenes
+    runs-on: ubuntu-latest
+    needs: [backend, ml-service]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # cache-from/to type=gha reutiliza las capas entre corridas. En la practica
+      # es la diferencia entre reinstalar scikit-learn en cada push o no hacerlo.
+      - name: Construir la imagen del backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: false
+          load: true
+          tags: techmind/backend:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Construir la imagen del ml-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ml-service
+          push: false
+          load: true
+          tags: techmind/ml-service:ci
+          cache-from: type=gha,scope=ml-service
+          cache-to: type=gha,mode=max,scope=ml-service
+
+      # Validar la sintaxis del compose aqui evita el escenario clasico: las dos
+      # imagenes construyen bien, el despliegue arranca, y falla por una comilla
+      # mal puesta en el YAML.
+      - name: Validar los archivos de compose
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+          echo "docker-compose.yml valido"
+
+  # =========================================================================
+  # Prueba de humo - levanta el sistema completo y lo interroga
+  # =========================================================================
+  smoke-test:
+    name: Prueba de humo (extremo a extremo)
+    runs-on: ubuntu-latest
+    needs: [docker]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Levantar el sistema completo
+        run: docker compose up --build --detach --wait --wait-timeout 300
+
+      # --wait hace que el comando anterior solo retorne cuando los healthchecks
+      # pasan. Si el ml-service no logra cargar el modelo, el job falla aqui y no
+      # tres pasos mas adelante con un error confuso de conexion rechazada.
+
+      - name: Verificar el estado del ml-service
+        run: |
+          respuesta=$(curl --silent --fail http://localhost:8000/health)
+          echo "$respuesta"
+          echo "$respuesta" | grep -q '"modelo_cargado":true'
+
+      # Los tres ejemplos de uso que exige el brief del hackathon, ejecutados
+      # contra el sistema real en cada corrida. Documentacion que no puede
+      # quedar desactualizada, porque si dejara de funcionar, CI se pondria rojo.
+      - name: Ejemplo 1 - contenido de Backend
+        run: |
+          curl --silent --fail -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"titulo":"Introduccion a Spring Boot","texto":"En este contenido se presentan los conceptos basicos para la creacion de APIs REST utilizando Java y Spring Boot."}' \
+            | tee /dev/stderr | grep -q '"categoria"'
+
+      - name: Ejemplo 2 - contenido de DevOps
+        run: |
+          curl --silent --fail -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"titulo":"Tutorial de Docker","texto":"Introduccion a la contenerizacion de aplicaciones con Docker, escritura de un Dockerfile, construccion de imagenes y ejecucion de contenedores."}' \
+            | tee /dev/stderr | grep -q '"informacion_adicional"'
+
+      - name: Ejemplo 3 - contenido de Ciencia de Datos
+        run: |
+          curl --silent --fail -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"titulo":"Analisis exploratorio con Pandas","texto":"Carga, limpieza y exploracion de conjuntos de datos tabulares usando Pandas, tratamiento de valores nulos y calculo de estadisticas descriptivas."}' \
+            | tee /dev/stderr | grep -q '"probabilidad"'
+
+      - name: Verificar que el backend responde
+        run: curl --silent --fail http://localhost:8080/v3/api-docs > /dev/null
+
+      # `if: always()` es lo que hace util a este paso: los logs se necesitan
+      # justamente cuando algun paso anterior fallo.
+      - name: Logs de los contenedores
+        if: always()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Apagar
+        if: always()
+        run: docker compose down --volumes

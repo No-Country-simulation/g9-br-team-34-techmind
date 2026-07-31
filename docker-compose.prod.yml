@@ -1,0 +1,114 @@
+# TechMind - sobrescritura para PRODUCCION (OCI Compute).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Docker Compose fusiona ambos archivos: lo que esta aca reemplaza o agrega
+# sobre docker-compose.yml. Se mantiene como archivo separado, y no como un
+# compose de produccion independiente, para que la topologia de servicios este
+# definida en un solo lugar y no pueda divergir entre entornos.
+#
+# REQUISITO: Docker Compose v2.24 o superior. Las etiquetas `!reset` que se usan
+# mas abajo para anular claves del archivo base se incorporaron en esa version.
+# Verificar en la VM con `docker compose version` antes del primer despliegue.
+#
+# Diferencias respecto a desarrollo:
+#   - Se usan imagenes ya construidas y publicadas en OCIR (no se compila en la VM).
+#   - El ml-service deja de publicar puerto: pasa a ser estrictamente interno.
+#   - El modelo se descarga de OCI Object Storage en vez de viajar en la imagen.
+#   - Se fijan limites de memoria y rotacion de logs.
+
+name: techmind
+
+services:
+
+  ml-service:
+    # `build` se anula: en la VM no hay codigo fuente ni conviene compilar.
+    # Construir en produccion haria que el despliegue dependiera de la red y del
+    # CPU de la instancia, y que la imagen desplegada no fuera bit a bit la
+    # misma que se probo en CI.
+    build: !reset null
+    image: ${OCIR_REGISTRY}/${OCI_NAMESPACE}/techmind/ml-service:${IMAGE_TAG:-latest}
+
+    environment:
+      MODEL_SOURCE: oci
+      MODEL_PATH: /app/models/model.joblib
+
+      # instance_principal: la VM se autentica ante OCI con su propia identidad,
+      # mediante un dynamic group y una policy. No hay claves privadas en disco
+      # ni secretos que rotar, que es justamente lo que se quiere en un servidor.
+      OCI_AUTH_METHOD: instance_principal
+      OCI_NAMESPACE: ${OCI_NAMESPACE}
+      OCI_BUCKET_NAME: ${OCI_BUCKET_NAME:-techmind-models}
+      OCI_REGION: ${OCI_REGION}
+      OCI_OBJECT_NAME: ${OCI_MODEL_OBJECT:-model.joblib}
+
+      LOG_LEVEL: info
+
+    # Anula la publicacion de puerto del archivo base. El ml-service solo debe
+    # ser alcanzable por el backend a traves de la red interna; publicarlo en la
+    # VM lo dejaria expuesto a Internet sin ninguna autenticacion delante.
+    ports: !reset null
+
+    volumes:
+      # El modelo descargado persiste entre reinicios: si Object Storage no
+      # responde en un reinicio, el servicio arranca igual con la ultima copia
+      # buena en lugar de quedarse sin modelo.
+      - ml-models:/app/models
+
+    deploy:
+      resources:
+        limits:
+          # scikit-learn y numpy cargados en memoria rondan los 300-400 MB. El
+          # limite existe para que un pico en este servicio no deje sin memoria
+          # a la JVM del backend en la misma VM.
+          memory: 768M
+
+    logging:
+      driver: json-file
+      options:
+        # Sin rotacion, los logs crecen hasta llenar el disco de la instancia y
+        # tumban todo el servidor. Es una de las formas mas comunes de perder
+        # una VM pequena.
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build: !reset null
+    image: ${OCIR_REGISTRY}/${OCI_NAMESPACE}/techmind/backend:${IMAGE_TAG:-latest}
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+
+      INFERENCE_SERVICE_URL: http://ml-service:8000
+      INFERENCE_SERVICE_TIMEOUT_MS: ${INFERENCE_SERVICE_TIMEOUT_MS:-8000}
+
+      # El perfil prod declara ${DB_USERNAME} y ${DB_PASSWORD} SIN valor por
+      # defecto, asi que ambas son obligatorias: si faltan, Spring no arranca.
+      DB_USERNAME: ${DB_USERNAME:?falta DB_USERNAME en el .env de la VM}
+      DB_PASSWORD: ${DB_PASSWORD:?falta DB_PASSWORD en el .env de la VM}
+      DB_FILE_PATH: /app/data/techmind
+
+      TECHMIND_API_KEY: ${TECHMIND_API_KEY:?falta TECHMIND_API_KEY en el .env de la VM}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+
+    ports:
+      # Se enlaza a todas las interfaces porque este es el unico servicio que
+      # debe ser publico. Quien controla el acceso real es la Security List de
+      # la VCN mas el firewall de la instancia (ver el runbook).
+      - "${BACKEND_PORT:-8080}:8080"
+
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  ml-models:
+    driver: local

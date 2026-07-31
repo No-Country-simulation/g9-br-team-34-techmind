@@ -1,0 +1,33 @@
+# Todo lo que no entra al contexto de build.
+#
+# Esto no es solo cosmetica: el contexto se transfiere entero al daemon de
+# Docker antes de empezar a construir, y un .venv local puede pesar mas que la
+# imagen resultante.
+
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Las pruebas corren en CI, no dentro de la imagen desplegada.
+tests/
+requirements-dev.txt
+
+# El modelo se entrena dentro de la imagen. Copiar el artefacto local aqui haria
+# que la imagen dependiera de lo que cada persona tenga en su maquina.
+models/
+
+.env
+.env.*
+!.env.example
+
+.git/
+.gitignore
+README.md
+Dockerfile
+.dockerignore

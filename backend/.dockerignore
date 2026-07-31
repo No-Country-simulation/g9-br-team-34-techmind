@@ -1,0 +1,35 @@
+# Contexto de build del backend.
+#
+# `target/` es lo importante de esta lista: si se colara al contexto, el .jar
+# compilado en la maquina de alguien podria terminar dentro de la imagen y
+# convivir con el que compila Maven, con resultados impredecibles.
+
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+
+# Datos locales y secretos
+data/
+*.db
+*.mv.db
+*.trace.db
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+.git/
+.gitignore
+.gitattributes
+Dockerfile
+.dockerignore
