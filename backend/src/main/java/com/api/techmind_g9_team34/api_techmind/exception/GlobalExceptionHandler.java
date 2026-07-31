@@ -24,15 +24,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidation(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
-
         List<ErrorResponseDTO.CampoInvalido> errores = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(fe -> new ErrorResponseDTO.CampoInvalido(
-                        fe.getField(),
-                        fe.getDefaultMessage()))
+                .map(fe -> new ErrorResponseDTO.CampoInvalido(fe.getField(), fe.getDefaultMessage()))
                 .toList();
-
         return ResponseEntity
                 .badRequest()
                 .body(ErrorResponseDTO.deValidacion(
@@ -44,7 +40,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ValidacionException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidacion(
             ValidacionException ex, HttpServletRequest request) {
-
         return ResponseEntity
                 .badRequest()
                 .body(ErrorResponseDTO.of(
@@ -56,7 +51,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ContenidoNoEncontradoException.class)
     public ResponseEntity<ErrorResponseDTO> handleNoEncontrado(
             ContenidoNoEncontradoException ex, HttpServletRequest request) {
-
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponseDTO.of(
@@ -68,7 +62,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ContenidoNoProcesableException.class)
     public ResponseEntity<ErrorResponseDTO> handleNoProcesable(
             ContenidoNoProcesableException ex, HttpServletRequest request) {
-
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ErrorResponseDTO.of(
@@ -80,7 +73,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ProcesamientoException.class)
     public ResponseEntity<ErrorResponseDTO> handleProcesamiento(
             ProcesamientoException ex, HttpServletRequest request) {
-
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ErrorResponseDTO.of(
@@ -92,7 +84,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ModeloServiceException.class)
     public ResponseEntity<ErrorResponseDTO> handleModeloService(
             ModeloServiceException ex, HttpServletRequest request) {
-
         return ResponseEntity
                 .status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(ErrorResponseDTO.of(
@@ -104,7 +95,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneral(
             Exception ex, HttpServletRequest request) {
-
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponseDTO.of(
