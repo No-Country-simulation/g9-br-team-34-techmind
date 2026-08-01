@@ -6,6 +6,7 @@ import com.oracle.bmc.auth.SimpleAuthenticationDetailsProvider;
 import com.oracle.bmc.objectstorage.ObjectStorageClient;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ import java.util.Base64;
  */
 @Configuration
 @ConfigurationProperties(prefix = "techmind.oci")
+@ConditionalOnProperty(name = "techmind.oci.enabled", matchIfMissing = true)
 @Getter
 @Setter
 public class OciStorageConfig {

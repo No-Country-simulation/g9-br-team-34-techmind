@@ -9,6 +9,7 @@ import com.oracle.bmc.objectstorage.responses.GetObjectResponse;
 import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -21,6 +22,7 @@ import java.nio.charset.StandardCharsets;
  * antes de que otros componentes dependan de esta integración.
  */
 @Service
+@ConditionalOnProperty(name = "techmind.oci.enabled", matchIfMissing = true)
 public class OciBucketService {
 
     private static final Logger log = LoggerFactory.getLogger(OciBucketService.class);

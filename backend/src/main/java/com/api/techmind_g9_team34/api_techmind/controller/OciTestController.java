@@ -2,6 +2,7 @@ package com.api.techmind_g9_team34.api_techmind.controller;
 
 import com.api.techmind_g9_team34.api_techmind.service.OciBucketService;
 import com.oracle.bmc.model.BmcException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import java.util.Map;
  * antes de que otros componentes dependan de esta integración.
  */
 @RestController
+@ConditionalOnProperty(name = "techmind.oci.enabled", matchIfMissing = true)
 public class OciTestController {
 
     private final OciBucketService ociBucketService;
