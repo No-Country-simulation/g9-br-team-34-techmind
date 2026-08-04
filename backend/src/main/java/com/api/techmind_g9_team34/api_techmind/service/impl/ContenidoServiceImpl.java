@@ -14,7 +14,6 @@ import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
 import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -71,11 +70,7 @@ public class ContenidoServiceImpl implements ContenidoService {
         Specification<ContenidoAnalizado> spec =
                 combinar(porCategoria(categoria), porPalabraClave(palabraClave));
 
-        // TM-037: la paginación real llega en TM-062; mientras tanto se trae
-        // todo en una sola página para no acotar resultados por defecto.
-        Pageable efectivo = PageRequest.of(0, Integer.MAX_VALUE);
-
-        Page<ContenidoAnalizado> page = contenidoRepository.findAll(spec, efectivo);
+        Page<ContenidoAnalizado> page = contenidoRepository.findAll(spec, pageable);
         return PaginaDTO.de(page.map(mapper::toResumenDTO));
     }
 

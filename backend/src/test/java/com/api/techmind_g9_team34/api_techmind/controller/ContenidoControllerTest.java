@@ -208,6 +208,54 @@ class ContenidoControllerTest {
                 .andExpect(jsonPath("$.totalElements").value(3));
     }
 
+    @Test
+    void deberiaPaginacionConTituloTotalElementsYTotalPages() throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            contenido("Titulo " + i, "Backend", 0.5);
+        }
+
+        mockMvc.perform(get("/api/v1/contenidos")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(10))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(12))
+                .andExpect(jsonPath("$.totalPages").value(2));
+    }
+
+    @Test
+    void deberiaRechazarSizeMayorA50() throws Exception {
+        mockMvc.perform(get("/api/v1/contenidos").param("size", "51"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deberiaRechazarSortNoPermitido() throws Exception {
+        mockMvc.perform(get("/api/v1/contenidos").param("sort", "probabilidad,desc"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deberiaOrdenarPorTituloAscendente() throws Exception {
+        contenido("Zeta", "Backend", 0.5);
+        contenido("Alfa", "Backend", 0.5);
+        contenido("Beta", "Backend", 0.5);
+
+        mockMvc.perform(get("/api/v1/contenidos").param("sort", "titulo,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].titulo").value("Alfa"));
+    }
+
+    @Test
+    void deberiaRechazarPageOSizeNegativos() throws Exception {
+        mockMvc.perform(get("/api/v1/contenidos").param("page", "-1"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/v1/contenidos").param("size", "-5"))
+                .andExpect(status().isBadRequest());
+    }
+
     private ContenidoAnalizado contenido(String titulo, String categoria, double probabilidad) {
         return contenido(titulo, categoria, probabilidad,
                 "Texto de prueba con más de veinte caracteres válidos.");
