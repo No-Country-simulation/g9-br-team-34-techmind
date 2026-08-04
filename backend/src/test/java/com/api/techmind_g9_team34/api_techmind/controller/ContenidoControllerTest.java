@@ -167,20 +167,20 @@ class ContenidoControllerTest {
     }
 
     @Test
-    void deberiaBuscarPorKeywordInsensibleAMayusculas() throws Exception {
+    void deberiaBuscarPorPalabraClaveInsensibleAMayusculas() throws Exception {
         contenido("Introducción a Spring", "Backend", 0.9);
         contenido("Docker en producción", "DevOps", 0.8,
                 "Guía rápida sobre contenedores con spring y docker compose.");
         contenido("Bases de datos relacionales", "Backend", 0.7);
 
-        mockMvc.perform(get("/api/v1/contenidos").param("keyword", "spring"))
+        mockMvc.perform(get("/api/v1/contenidos").param("palabraClave", "spring"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.totalElements").value(2));
     }
 
     @Test
-    void deberiaCombinarCategoriaYKeywordConAnd() throws Exception {
+    void deberiaCombinarCategoriaYPalabraClaveConAnd() throws Exception {
         contenido("Introducción a Spring", "Backend", 0.9);
         contenido("Integración continua", "Backend", 0.85,
                 "Pipeline con despliegue automatizado a un entorno de pruebas.");
@@ -188,11 +188,24 @@ class ContenidoControllerTest {
 
         mockMvc.perform(get("/api/v1/contenidos")
                         .param("categoria", "Backend")
-                        .param("keyword", "spring"))
+                        .param("palabraClave", "spring"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].titulo").value("Introducción a Spring"))
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void deberiaIgnorarElParametroKeywordAntiguo() throws Exception {
+        contenido("Introducción a Spring", "Backend", 0.9);
+        contenido("Docker en producción", "DevOps", 0.8,
+                "Guía rápida sobre contenedores con docker compose.");
+        contenido("Bases de datos relacionales", "Backend", 0.7);
+
+        mockMvc.perform(get("/api/v1/contenidos").param("keyword", "spring"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.totalElements").value(3));
     }
 
     private ContenidoAnalizado contenido(String titulo, String categoria, double probabilidad) {

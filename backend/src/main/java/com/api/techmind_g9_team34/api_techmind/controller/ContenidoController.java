@@ -70,7 +70,7 @@ public class ContenidoController {
     @GetMapping
     public ResponseEntity<PaginaDTO<ContenidoResumenDTO>> listarContenidos(
             @RequestParam(name = "categoria", required = false) String categoria,
-            @RequestParam(name = "keyword", required = false) String palabraClave,
+            @RequestParam(name = "palabraClave", required = false) String palabraClave,
             Pageable pageable,
             HttpServletRequest httpRequest) {
 
