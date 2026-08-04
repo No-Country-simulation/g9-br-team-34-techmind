@@ -5,6 +5,7 @@ import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientRequ
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
+import com.api.techmind_g9_team34.api_techmind.exception.ContenidoNoEncontradoException;
 import com.api.techmind_g9_team34.api_techmind.exception.ModeloServiceException;
 import com.api.techmind_g9_team34.api_techmind.mapper.ContenidoMapper;
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
@@ -12,6 +13,8 @@ import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepo
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 public class ContenidoServiceImpl implements ContenidoService {
@@ -43,5 +46,14 @@ public class ContenidoServiceImpl implements ContenidoService {
         ContenidoAnalizado entity = mapper.toEntity(request, clientResponse);
         ContenidoAnalizado persistido = contenidoRepository.save(entity);
         return mapper.toResponseDTO(persistido);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ContenidoResponseDTO obtenerContenido(UUID id) {
+        ContenidoAnalizado entity = contenidoRepository.findById(id)
+                .orElseThrow(() -> new ContenidoNoEncontradoException(
+                        "No existe un contenido procesado con el id indicado."));
+        return mapper.toResponseDTO(entity);
     }
 }

@@ -1,0 +1,125 @@
+package com.api.techmind_g9_team34.api_techmind.controller;
+
+import com.api.techmind_g9_team34.api_techmind.client.ModeloInferenciaClient;
+import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
+import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
+import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@TestPropertySource(properties = "techmind.oci.enabled=false")
+class ContenidoControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ContenidoAnalizadoRepository repository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private ModeloInferenciaClient modeloInferenciaClient;
+
+    @BeforeEach
+    void configurarMock() {
+        when(modeloInferenciaClient.predecir(any()))
+                .thenReturn(new ModelPredictClientResponseDto(
+                        "Backend", 0.89, List.of("Java", "Spring Boot", "API REST")));
+    }
+
+    @BeforeEach
+    void limpiarBase() {
+        repository.deleteAll();
+    }
+
+    @Test
+    void deberiaResponder201ConIdYLocationAlProcesar() throws Exception {
+        mockMvc.perform(post("/api/v1/contenidos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"titulo": "Introducción a Spring Boot",
+                                 "texto": "En este contenido se presentan las bases para crear APIs REST con Java y Spring Boot."}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.categoria").value("Backend"))
+                .andExpect(jsonPath("$.informacion_adicional[0]").value("Java"));
+    }
+
+    @Test
+    void deberiaPersistirLaFilaEnBase() throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/v1/contenidos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"titulo": "Persistencia",
+                                 "texto": "Este contenido tiene un texto válido de más de veinte caracteres."}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        UUID id = UUID.fromString(body.get("id").asText());
+        var existente = repository.findById(id);
+        org.assertj.core.api.Assertions.assertThat(existente).isPresent();
+    }
+
+    @Test
+    void deberiaDevolver200ConContenidoCompletoPorId() throws Exception {
+        ContenidoAnalizado entity = repository.save(ContenidoAnalizado.builder()
+                .titulo("Título")
+                .texto("Texto con más de veinte caracteres.")
+                .categoria("Backend")
+                .probabilidad(0.95)
+                .palabrasClave(List.of("Java", "SPRING"))
+                .build());
+        UUID id = entity.getId();
+
+        mockMvc.perform(get("/api/v1/contenidos/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id.toString()))
+                .andExpect(jsonPath("$.titulo").value("Título"))
+                .andExpect(jsonPath("$.categoria").value("Backend"))
+                .andExpect(jsonPath("$.probabilidad").value(0.95))
+                .andExpect(jsonPath("$.informacion_adicional[0]").value("Java"));
+    }
+
+    @Test
+    void deberiaDevolver404ParaIdInexistente() throws Exception {
+        mockMvc.perform(get("/api/v1/contenidos/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
+    void deberiaDevolver400ParaIdQueNoEsUuid() throws Exception {
+        mockMvc.perform(get("/api/v1/contenidos/no-es-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+}
