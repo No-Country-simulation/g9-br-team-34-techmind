@@ -12,3 +12,27 @@
 *.key
 /data/
 /backend/data/
+
+### DevOps: agregado al incorporar contenedores y el servicio de inferencia ###
+
+# Compilacion de Java
+/backend/target/
+
+# Python / ml-service
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Artefactos del modelo. NO se versionan: son binarios que cambian en cada
+# entrenamiento y harian crecer el repositorio sin aportar nada revisable.
+# El modelo de produccion vive en OCI Object Storage; el de local se genera
+# con `make train`.
+/ml-service/models/
+
+# Variantes del .env por entorno (.env.prod, .env.local, ...). El patron `.env`
+# de arriba no las cubre.
+.env.*
+!.env.example

@@ -21,14 +21,21 @@ HOST="${1:-localhost}"
 BASE_ML="${BASE_ML:-http://${HOST}:8000}"
 BASE_API="${BASE_API:-http://${HOST}:8080}"
 
-VERDE='\033[0;32m'; ROJO='\033[0;31m'; AZUL='\033[0;34m'; GRIS='\033[0;90m'; FIN='\033[0m'
+VERDE='\033[0;32m'; ROJO='\033[0;31m'; AZUL='\033[0;34m'
+AMARILLO='\033[0;33m'; GRIS='\033[0;90m'; FIN='\033[0m'
 
 fallos=0
+pendientes=0
 
 titulo()  { printf "\n${AZUL}== %s ==${FIN}\n" "$1"; }
 correcto(){ printf "  ${VERDE}OK${FIN}   %s\n" "$1"; }
 fallo()   { printf "  ${ROJO}FALLA${FIN} %s\n" "$1"; fallos=$((fallos + 1)); }
 detalle() { printf "       ${GRIS}%s${FIN}\n" "$1"; }
+
+# Estado intermedio: algo que todavia no esta hecho pero que NO es un error.
+# Se cuenta aparte para poder informarlo sin que el script devuelva fallo: una
+# pieza que aun no existe no es lo mismo que una pieza rota.
+aviso_pendiente() { printf "  ${AMARILLO}PEND${FIN} %s\n" "$1"; pendientes=$((pendientes + 1)); }
 
 # Formatea JSON con jq si esta disponible; si no, lo imprime tal cual. No se
 # exige jq porque no viene instalado por defecto en la VM de OCI.
@@ -106,6 +113,78 @@ probar_ejemplo "Ejemplo 2: DevOps" \
 probar_ejemplo "Ejemplo 3: Ciencia de Datos" \
   "Analisis exploratorio de datos con Pandas" \
   "Carga, limpieza y exploracion de conjuntos de datos tabulares usando Pandas, tratamiento de valores nulos, agrupaciones y calculo de estadisticas descriptivas."
+
+# --------------------------------------------------------------------------
+titulo "Integracion extremo a extremo (backend -> ml-service)"
+
+# Esta es la comprobacion que detecta el fallo de integracion mas probable del
+# proyecto: que el backend llame a una ruta del servicio de inferencia distinta
+# de /predict. Si eso pasa, todo lo demas se ve perfecto —ambos contenedores
+# arrancan, los healthchecks pasan— y la API devuelve 500 solo cuando alguien la
+# usa de verdad.
+#
+# Se distingue entre "todavia no implementado" y "implementado pero roto":
+#   404  -> el endpoint aun no existe. Se informa, NO se falla.
+#   2xx  -> funciona. Se valida la forma de la respuesta.
+#   5xx  -> el endpoint existe pero la integracion esta rota. FALLA.
+
+ENDPOINT_API="${BASE_API}/api/v1/contenidos"
+
+cuerpo_prueba='{"titulo":"Introduccion a Spring Boot","texto":"En este contenido se presentan los conceptos basicos para la creacion de APIs REST utilizando Java y Spring Boot."}'
+
+# La API key solo hace falta cuando el equipo implemente AuthenticationFilter.
+cabecera_auth=()
+if [ -n "${TECHMIND_API_KEY:-}" ]; then
+  cabecera_auth=(-H "X-API-Key: ${TECHMIND_API_KEY}")
+fi
+
+archivo_respuesta=$(mktemp)
+codigo_api=$(curl --silent --max-time 20 \
+  --output "$archivo_respuesta" --write-out '%{http_code}' \
+  -X POST "$ENDPOINT_API" \
+  -H 'Content-Type: application/json' \
+  ${cabecera_auth[@]+"${cabecera_auth[@]}"} \
+  -d "$cuerpo_prueba" 2>/dev/null)
+
+respuesta_api=$(cat "$archivo_respuesta")
+rm -f "$archivo_respuesta"
+
+case "$codigo_api" in
+  200|201)
+    if echo "$respuesta_api" | grep -q '"categoria"' \
+       && echo "$respuesta_api" | grep -q '"informacion_adicional"'; then
+      correcto "POST /api/v1/contenidos responde con la forma correcta"
+      echo "$respuesta_api" | formatear | sed 's/^/       /'
+    else
+      fallo "POST /api/v1/contenidos devolvio ${codigo_api} pero con una forma inesperada"
+      detalle "Se esperaban las claves: categoria, probabilidad, informacion_adicional"
+      detalle "$respuesta_api"
+    fi
+    ;;
+  404)
+    aviso_pendiente "POST /api/v1/contenidos todavia no existe (404)"
+    detalle "Normal mientras el equipo de backend no implemente ContenidoController."
+    detalle "El resto de la infraestructura no depende de esto."
+    ;;
+  401|403)
+    aviso_pendiente "POST /api/v1/contenidos requiere autenticacion (${codigo_api})"
+    detalle "Reintenta exportando la clave: TECHMIND_API_KEY=<clave> $0 ${HOST}"
+    ;;
+  5*)
+    fallo "POST /api/v1/contenidos devolvio ${codigo_api}: el endpoint existe pero la integracion esta rota"
+    detalle "Causa mas probable: ModeloInferenciaClient no esta llamando a POST /predict."
+    detalle "Debe usar la URL de INFERENCE_SERVICE_URL y la ruta /predict, no otra."
+    detalle "$respuesta_api"
+    detalle "Revisar tambien: docker compose logs backend"
+    ;;
+  000)
+    fallo "El backend no acepto la conexion en ${ENDPOINT_API}"
+    ;;
+  *)
+    fallo "POST /api/v1/contenidos devolvio un codigo inesperado: ${codigo_api}"
+    detalle "$respuesta_api"
+    ;;
+esac
 
 # --------------------------------------------------------------------------
 titulo "Validacion de entradas"

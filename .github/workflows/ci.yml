@@ -217,6 +217,20 @@ jobs:
       - name: Verificar que el backend responde
         run: curl --silent --fail http://localhost:8080/v3/api-docs > /dev/null
 
+      # Comprueba el camino completo: cliente -> backend -> ml-service.
+      #
+      # Mientras ContenidoController siga vacio, el endpoint devuelve 404 y el
+      # script lo reporta como PENDIENTE sin fallar. En cuanto el equipo de
+      # backend lo implemente, este paso empieza a validarlo de verdad y falla
+      # si la integracion esta mal cableada (por ejemplo, si el cliente llama a
+      # una ruta distinta de /predict).
+      #
+      # Sin este paso, ese fallo no lo detectaria nada: los contenedores
+      # arrancan sanos, los healthchecks pasan, y el error solo aparece cuando
+      # alguien usa la API a mano.
+      - name: Integracion extremo a extremo
+        run: bash scripts/smoke-test.sh localhost
+
       # `if: always()` es lo que hace util a este paso: los logs se necesitan
       # justamente cuando algun paso anterior fallo.
       - name: Logs de los contenedores
