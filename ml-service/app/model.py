@@ -16,7 +16,6 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple
 
 import joblib
 import numpy as np
@@ -39,7 +38,7 @@ STEP_CLF = "clf"
 class InferenceResult:
     categoria: str
     probabilidad: float
-    palabras_clave: List[str]
+    palabras_clave: list[str]
 
 
 class ClassifierModel:
@@ -50,13 +49,13 @@ class ClassifierModel:
     cambio queda contenido aca dentro.
     """
 
-    def __init__(self, pipeline, categorias: List[str], origen: str) -> None:
+    def __init__(self, pipeline, categorias: list[str], origen: str) -> None:
         self._pipeline = pipeline
         self._categorias = categorias
         self._origen = origen
 
     @property
-    def categorias(self) -> List[str]:
+    def categorias(self) -> list[str]:
         return list(self._categorias)
 
     @property
@@ -81,7 +80,7 @@ class ClassifierModel:
             palabras_clave=palabras_clave,
         )
 
-    def _clasificar(self, documento: str) -> Tuple[str, float]:
+    def _clasificar(self, documento: str) -> tuple[str, float]:
         probabilidades = self._pipeline.predict_proba([documento])[0]
         indice = int(np.argmax(probabilidades))
 
@@ -93,7 +92,7 @@ class ClassifierModel:
 
         return categoria, probabilidad
 
-    def _extraer_palabras_clave(self, documento: str) -> List[str]:
+    def _extraer_palabras_clave(self, documento: str) -> list[str]:
         """Devuelve los terminos con mayor peso TF-IDF dentro del documento.
 
         Se reutiliza el vectorizador ya entrenado en vez de contar frecuencias:
@@ -111,7 +110,7 @@ class ClassifierModel:
 
         nombres = vectorizador.get_feature_names_out()
         pares = sorted(
-            zip(fila.col, fila.data),
+            zip(fila.col, fila.data, strict=False),
             key=lambda par: par[1],
             reverse=True,
         )
@@ -181,8 +180,33 @@ def cargar_modelo() -> ClassifierModel:
     destino = settings.model_path
 
     if settings.model_source == "oci":
-        _descargar_desde_oci(destino)
-        origen = f"oci://{settings.oci_bucket_name}/{settings.oci_object_name}"
+        try:
+            _descargar_desde_oci(destino)
+            origen = f"oci://{settings.oci_bucket_name}/{settings.oci_object_name}"
+        except Exception as exc:  # noqa: BLE001 - cualquier fallo de red/credenciales
+            # Si Object Storage no responde pero el volumen conserva la ultima
+            # copia buena, el servicio arranca con ella en vez de quedarse sin
+            # modelo. Un incidente de OCI, un token vencido o una policy mal
+            # puesta no deberian dejar la API caida cuando el artefacto que hace
+            # falta ya esta en disco.
+            #
+            # Si NO hay copia previa no hay nada que servir, y entonces si
+            # conviene propagar: /health devolvera 503 con la causa exacta y el
+            # backend no llegara a arrancar contra un servicio inutil.
+            if not destino.exists():
+                raise
+
+            logger.warning(
+                "Fallo la descarga desde Object Storage (%s: %s). "
+                "Se usa la copia local previa de %s.",
+                type(exc).__name__,
+                exc,
+                destino,
+            )
+            # El origen lo reporta /health: quien mire el estado tiene que poder
+            # distinguir "modelo recien bajado" de "modelo viejo porque OCI no
+            # respondio", que son dos situaciones muy distintas.
+            origen = f"local-fallback://{destino}"
     else:
         origen = f"local://{destino}"
 

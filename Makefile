@@ -41,10 +41,11 @@ env: ## Crea el archivo .env a partir del ejemplo (no sobrescribe el existente)
 up: ## Levanta el sistema completo (backend + ml-service)
 	$(COMPOSE) up --build --detach --wait
 	@echo ""
-	@echo "  API REST   -> http://localhost:8080"
-	@echo "  Swagger    -> http://localhost:8080/swagger-ui/index.html"
-	@echo "  Inferencia -> http://localhost:8000/docs"
-	@echo "  Salud      -> http://localhost:8000/health"
+	@echo "  API REST     -> http://localhost:8080"
+	@echo "  Swagger      -> http://localhost:8080/swagger-ui/index.html"
+	@echo "  Salud API    -> http://localhost:8080/actuator/health"
+	@echo "  Inferencia   -> http://localhost:8000/docs"
+	@echo "  Salud modelo -> http://localhost:8000/health"
 	@echo ""
 
 down: ## Detiene los contenedores (conserva los datos)
@@ -82,8 +83,12 @@ shell-backend: ## Abre una shell dentro del contenedor del backend
 
 test: test-ml test-backend ## Ejecuta todas las pruebas
 
-test-ml: ## Pruebas del servicio de inferencia
+test-ml: train ## Pruebas del servicio de inferencia
 	cd ml-service && pytest -v
+
+# Depende de `train` porque las pruebas cargan el artefacto real: sin
+# ml-service/models/model.joblib, todas fallan con un 503 que no dice nada sobre
+# el codigo. Entrenar tarda segundos con el dataset semilla.
 
 test-backend: ## Pruebas del backend
 	cd backend && ./mvnw -B test

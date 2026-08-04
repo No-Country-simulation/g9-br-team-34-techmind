@@ -136,6 +136,37 @@ jobs:
       - name: Configurar Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Guarda contra un fallo que este job NO detectaria de otro modo: aqui se
+      # construye para la arquitectura del runner (amd64), pero el CD despliega
+      # en linux/arm64, porque la VM Always Free de OCI es Ampere A1.
+      #
+      # Si una imagen base no tiene variante para esa arquitectura, la
+      # compilacion sale en verde aqui y revienta en el despliegue con
+      # "no match for platform in manifest: not found". Paso exactamente eso con
+      # eclipse-temurin:17-jre-alpine, que Temurin publica SOLO para amd64.
+      #
+      # Comprobar los manifiestos cuesta segundos; descubrirlo en produccion,
+      # un despliegue fallido.
+      - name: Verificar que las imagenes base existen para la plataforma de despliegue
+        env:
+          PLATAFORMA: ${{ vars.TARGET_PLATFORM || 'linux/arm64' }}
+        run: |
+          arquitectura="${PLATAFORMA#linux/}"
+          faltantes=0
+
+          for imagen in $(grep -rhoE '^FROM +[^ ]+' backend/Dockerfile ml-service/Dockerfile \
+                            | awk '{print $2}' | sort -u); do
+            if docker manifest inspect "$imagen" 2>/dev/null \
+                 | grep -q "\"architecture\": \"${arquitectura}\""; then
+              echo "OK    ${imagen} publica ${PLATAFORMA}"
+            else
+              echo "::error::${imagen} no existe para ${PLATAFORMA}. El despliegue en OCI fallaria."
+              faltantes=$((faltantes + 1))
+            fi
+          done
+
+          exit $faltantes
+
       # cache-from/to type=gha reutiliza las capas entre corridas. En la practica
       # es la diferencia entre reinstalar scikit-learn en cada push o no hacerlo.
       - name: Construir la imagen del backend
@@ -161,10 +192,47 @@ jobs:
       # Validar la sintaxis del compose aqui evita el escenario clasico: las dos
       # imagenes construyen bien, el despliegue arranca, y falla por una comilla
       # mal puesta en el YAML.
+      #
+      # Se valida TAMBIEN el archivo de produccion, y fusionado con el base, que
+      # es la unica forma en que se usa de verdad. Sin este paso, un error en
+      # docker-compose.prod.yml (una etiqueta !reset mal puesta, una clave que no
+      # fusiona como se esperaba, un puerto duplicado) solo se descubriria en la
+      # VM, a mitad de un despliegue a produccion.
+      #
+      # Los valores de entorno son ficticios: aqui interesa que el YAML resuelva,
+      # no desplegar nada. Las variables declaradas con ${VAR:?...} son
+      # obligatorias y sin ellas `config` falla.
       - name: Validar los archivos de compose
+        env:
+          OCIR_REGISTRY: ejemplo.ocir.io
+          OCI_NAMESPACE: ejemplo
+          OCI_REGION: sa-saopaulo-1
+          IMAGE_TAG: ci
+          DB_USERNAME: ci
+          DB_PASSWORD: ci
+          TECHMIND_API_KEY: ci
+          CORS_ALLOWED_ORIGINS: http://localhost:3000
         run: |
           docker compose -f docker-compose.yml config --quiet
           echo "docker-compose.yml valido"
+
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+          echo "docker-compose.prod.yml valido (fusionado con el base)"
+
+          # El ml-service NO debe publicar puertos en produccion. Es una
+          # propiedad de seguridad, no un detalle de formato: si alguien quita el
+          # `ports: !reset null`, el modelo queda expuesto a Internet sin nada
+          # delante. Se comprueba sobre la configuracion ya fusionada, que es la
+          # unica que refleja lo que se despliega de verdad.
+          publicados=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+            config --format json | jq '.services["ml-service"].ports | length')
+
+          if [ "$publicados" -eq 0 ]; then
+            echo "ml-service no publica puertos en produccion"
+          else
+            echo "::error::docker-compose.prod.yml publica ${publicados} puerto(s) del ml-service. Debe quedar interno."
+            exit 1
+          fi
 
   # =========================================================================
   # Prueba de humo - levanta el sistema completo y lo interroga
@@ -214,7 +282,17 @@ jobs:
             -d '{"titulo":"Analisis exploratorio con Pandas","texto":"Carga, limpieza y exploracion de conjuntos de datos tabulares usando Pandas, tratamiento de valores nulos y calculo de estadisticas descriptivas."}' \
             | tee /dev/stderr | grep -q '"probabilidad"'
 
-      - name: Verificar que el backend responde
+      # Dos comprobaciones distintas a proposito: /actuator/health es lo que
+      # decide si el contenedor esta sano (y por tanto si un despliegue se da
+      # por bueno), y /v3/api-docs confirma que springdoc sigue publicando el
+      # contrato que consume Swagger UI.
+      - name: Verificar la salud del backend
+        run: |
+          respuesta=$(curl --silent --fail http://localhost:8080/actuator/health)
+          echo "$respuesta"
+          echo "$respuesta" | grep -q '"status":"UP"'
+
+      - name: Verificar que springdoc publica el contrato
         run: curl --silent --fail http://localhost:8080/v3/api-docs > /dev/null
 
       # Comprueba el camino completo: cliente -> backend -> ml-service.

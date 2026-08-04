@@ -37,9 +37,26 @@ RUN mv target/*.jar /build/app.jar
 # ---------------------------------------------------------------------------
 # Etapa 2: imagen final
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre-alpine AS runtime
+# NO USAR LA VARIANTE `-alpine` DE ESTA IMAGEN.
+#
+# Eclipse Temurin publica sus imagenes Alpine (musl) SOLO para linux/amd64. En
+# arm64 no existen, y el build falla con:
+#
+#     no match for platform in manifest: not found
+#
+# Eso rompe dos cosas a la vez: la compilacion en cualquier Mac con Apple
+# Silicon, y —lo importante— el job de CD, que construye para linux/arm64
+# porque la VM Always Free de OCI es Ampere A1. Comprobado con
+# `docker manifest inspect`: la variante `-jammy` si publica amd64, arm64, arm,
+# ppc64le y s390x.
+#
+# Cuesta unos 100 MB mas que Alpine. Es el precio de que la imagen exista para
+# la arquitectura a la que se despliega.
+FROM eclipse-temurin:17-jre-jammy AS runtime
 
 # Usuario sin privilegios (mismo criterio que en el ml-service).
+# Estas son las opciones largas de `adduser` de Debian, que es lo que trae esta
+# imagen (Ubuntu 22.04).
 RUN addgroup --system --gid 1000 techmind \
     && adduser --system --uid 1000 --ingroup techmind --no-create-home techmind
 
@@ -68,15 +85,21 @@ ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC"
 # UseSerialGC: en una instancia de 1 vCPU el recolector paralelo genera mas
 # contencion que beneficio. Conviene revisarlo si se escala la VM.
 
-# Healthcheck contra /v3/api-docs, que springdoc ya expone (esta en el pom del
-# equipo). Se eligio ese endpoint para NO tener que agregar spring-boot-actuator
-# al pom, ya que el codigo del backend no es alcance de DevOps.
+# Healthcheck contra /actuator/health, el endpoint dedicado a esto que expone
+# spring-boot-starter-actuator (agregado al pom por DevOps, ver el comentario
+# alli). Antes se apuntaba a /v3/api-docs para no tocar el pom, pero esa es una
+# ruta funcional: en cuanto SecurityConfig la protegiera, el contenedor quedaria
+# unhealthy pese a funcionar y el CD revertiria cada despliegue.
 #
-# SI EL EQUIPO PROTEGE ESA RUTA en SecurityConfig, hay que actualizar este
-# healthcheck o dejar /v3/api-docs publico, o el contenedor quedara marcado como
-# unhealthy pese a estar funcionando.
+# CONDICION QUE DEBE MANTENERSE: /actuator/health tiene que seguir siendo
+# publico. Esta anotado tambien en application.properties, que es donde lo va a
+# leer quien implemente la seguridad.
+#
+# La imagen base (Ubuntu 22.04) trae curl, asi que no hay que instalar nada.
+# `--fail` es lo que hace util al chequeo: sin el, curl devuelve 0 aunque el
+# servidor conteste 401 o 503, y el contenedor se declararia sano estando roto.
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
-    CMD wget --quiet --tries=1 --spider http://localhost:8080/v3/api-docs || exit 1
+    CMD curl --fail --silent --max-time 4 -o /dev/null http://localhost:8080/actuator/health || exit 1
 
 # `sh -c` es necesario para que $JAVA_OPTS se expanda; en forma exec no lo haria.
 # `exec` hace que la JVM sea el PID 1, de modo que reciba directamente el SIGTERM

@@ -348,8 +348,13 @@ jobs:
           # Esta comprobacion se hace desde el runner y no por SSH a proposito:
           # confirma que el servicio es accesible a traves de la Security List y
           # del firewall, no solo desde dentro de la propia maquina.
+          #
+          # Se consulta /actuator/health y no una ruta funcional: cuando el
+          # equipo implemente la autenticacion por API key, una ruta de negocio
+          # devolveria 401 desde el runner y este paso fallaria un despliegue
+          # que en realidad fue correcto.
           for intento in 1 2 3 4 5; do
-            if curl --silent --fail --max-time 10 "http://${HOST}:8080/v3/api-docs" > /dev/null; then
+            if curl --silent --fail --max-time 10 "http://${HOST}:8080/actuator/health" > /dev/null; then
               echo "La API responde publicamente."
               exit 0
             fi

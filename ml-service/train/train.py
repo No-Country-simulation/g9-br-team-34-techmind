@@ -21,7 +21,7 @@ sabe leer.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import joblib
@@ -189,7 +189,7 @@ def main() -> None:
         {
             "pipeline": modelo_final,
             "categorias": sorted(y.unique().tolist()),
-            "entrenado_en": datetime.now(timezone.utc).isoformat(),
+            "entrenado_en": datetime.now(UTC).isoformat(),
             "n_documentos": len(df),
             "exactitud_prueba": exactitud,
         },
@@ -205,7 +205,7 @@ def main() -> None:
                 "f1_macro_cv_std": round(f1_std, 4) if f1_std is not None else None,
                 "n_documentos": len(df),
                 "categorias": sorted(y.unique().tolist()),
-                "entrenado_en": datetime.now(timezone.utc).isoformat(),
+                "entrenado_en": datetime.now(UTC).isoformat(),
                 "reporte_por_clase": reporte,
             },
             indent=2,

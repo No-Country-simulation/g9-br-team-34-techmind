@@ -34,6 +34,24 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!--
+            Agregado por DevOps. Da el endpoint /actuator/health, que es lo que
+            consulta el HEALTHCHECK de la imagen y, a traves de el, la condicion
+            `service_healthy` del compose y la espera del despliegue.
+
+            Antes se usaba /v3/api-docs para no tocar el pom, pero esa es una
+            ruta funcional: el dia que SecurityConfig la proteja, el contenedor
+            quedaria unhealthy pese a funcionar y el CD revertiria cada
+            despliegue. Un endpoint de salud dedicado no tiene ese acoplamiento.
+
+            Solo se expone `health`; el resto de endpoints de actuator quedan
+            apagados (ver application.properties).
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

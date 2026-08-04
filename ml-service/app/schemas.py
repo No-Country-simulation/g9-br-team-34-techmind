@@ -10,8 +10,6 @@ mapea `informacion_adicional` explicitamente, asi que no hay friccion.
 
 from __future__ import annotations
 
-from typing import List
-
 from pydantic import BaseModel, Field
 
 
@@ -47,7 +45,7 @@ class PredictResponse(BaseModel):
 
     categoria: str
     probabilidad: float = Field(ge=0.0, le=1.0)
-    informacion_adicional: List[str] = Field(default_factory=list)
+    informacion_adicional: list[str] = Field(default_factory=list)
 
 
 class HealthResponse(BaseModel):
@@ -61,5 +59,5 @@ class HealthResponse(BaseModel):
 
     status: str
     modelo_cargado: bool
-    categorias: List[str] = Field(default_factory=list)
+    categorias: list[str] = Field(default_factory=list)
     origen_modelo: str

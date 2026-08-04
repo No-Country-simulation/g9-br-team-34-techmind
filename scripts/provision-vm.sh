@@ -71,9 +71,16 @@ menor=$(echo "$version_compose" | cut -d. -f2)
 if [ "$mayor" -gt 2 ] || { [ "$mayor" -eq 2 ] && [ "$menor" -ge 24 ]; }; then
   ok "Compose soporta las etiquetas !reset que usa docker-compose.prod.yml"
 else
-  aviso "Compose ${version_compose} es anterior a la 2.24."
+  # Esto ABORTA en vez de avisar. Con una version anterior, `!reset` es un tag
+  # YAML desconocido: el archivo ni siquiera parsea, asi que el despliegue no
+  # falla "a medias", falla entero. Es mejor detenerse aca, con el motivo a la
+  # vista, que dejar la maquina aparentemente lista y descubrirlo cuando el
+  # workflow de CD ya esta corriendo contra produccion.
+  printf "\n${AMARILLO}    Compose %s es anterior a la 2.24.${FIN}\n" "$version_compose"
   aviso "Las etiquetas !reset de docker-compose.prod.yml NO funcionaran."
-  aviso "Actualizar con: sudo dnf update docker-compose-plugin"
+  aviso "Actualizar y volver a ejecutar este script:"
+  aviso "    sudo dnf update -y docker-compose-plugin"
+  exit 1
 fi
 
 # --------------------------------------------------------------------------

@@ -63,14 +63,18 @@ Todos los resultados son entregados mediante una API REST utilizando formato JSO
 
 ### Infraestructura
 
+- Docker y Docker Compose
+- GitHub Actions (CI/CD)
 - Oracle Cloud Infrastructure (OCI)
 
-Servicios OCI sugeridos:
+Servicios de OCI en uso:
 
-- Object Storage
-- Compute
-- Functions
-- Base de datos (opcional)
+| Servicio | Para que |
+|---|---|
+| **Compute** (VM.Standard.A1.Flex, Always Free) | ejecuta los contenedores |
+| **Object Storage** | almacena el modelo entrenado y sus metricas |
+| **Container Registry (OCIR)** | almacena las imagenes publicadas por CI |
+| **IAM** (Dynamic Group + Policy) | permite a la VM leer el modelo sin secretos en disco |
 
 ---
 
@@ -78,14 +82,91 @@ Servicios OCI sugeridos:
 
 ```
 .
-├── data/
-├── model/
-├── notebooks/
-├── api/
-├── docs/
-├── README.md
-└── requirements.txt
+├── backend/                    API REST en Spring Boot (Java 17)
+│   ├── src/
+│   ├── pom.xml
+│   └── Dockerfile              build multi-etapa: maven -> jre-alpine
+│
+├── ml-service/                 Servicio de inferencia en FastAPI (Python 3.11)
+│   ├── app/                    API HTTP que sirve el modelo
+│   ├── train/                  entrenamiento y dataset
+│   ├── tests/
+│   └── Dockerfile              build multi-etapa: entrena y empaqueta
+│
+├── scripts/
+│   ├── provision-vm.sh         deja lista la VM de OCI (se ejecuta una vez)
+│   └── smoke-test.sh           verifica un sistema levantado
+│
+├── docs/devops/
+│   └── despliegue-oci.md       guia completa de despliegue y runbook
+│
+├── .github/workflows/
+│   ├── ci.yml                  pruebas, imagenes y prueba de humo
+│   └── cd.yml                  despliegue automatico en OCI
+│
+├── docker-compose.yml          orquestacion para desarrollo local
+├── docker-compose.prod.yml     sobrescritura para produccion en OCI
+├── Makefile                    atajos de desarrollo y operacion
+└── .env.example                plantilla de variables de entorno
 ```
+
+---
+
+## Puesta en marcha (local)
+
+Requisitos: **Docker** con Compose v2.24 o superior. Nada mas: ni Java, ni
+Python, ni Maven instalados en la maquina.
+
+```bash
+make env      # crea el .env a partir de .env.example
+make up       # construye y levanta backend + ml-service
+```
+
+Al terminar quedan disponibles:
+
+| Servicio | URL |
+|---|---|
+| API REST | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| Salud de la API | http://localhost:8080/actuator/health |
+| Documentacion del modelo | http://localhost:8000/docs |
+| Salud del modelo | http://localhost:8000/health |
+
+Para comprobar que todo funciona de punta a punta:
+
+```bash
+make smoke
+```
+
+### Comandos frecuentes
+
+`make` sin argumentos lista todos. Los mas usados:
+
+| Comando | Que hace |
+|---|---|
+| `make up` / `make down` | levanta / detiene el sistema |
+| `make logs` | sigue los logs de ambos servicios |
+| `make ps` | estado de los contenedores |
+| `make test` | pruebas de backend y ml-service |
+| `make train` | reentrena el modelo en local |
+| `make rebuild` | reconstruye ignorando la cache de Docker |
+| `make clean-all` | borra tambien los volumenes (se pierde la base) |
+
+El puerto 8000 se publica **solo en desarrollo**, para poder interrogar el modelo
+directamente con `curl`. En produccion el ml-service es interno: solo lo alcanza
+el backend por la red privada del compose.
+
+---
+
+## Despliegue
+
+El despliegue en Oracle Cloud Infrastructure es automatico: cada merge a `main`
+dispara el workflow de CD, que entrena y publica el modelo en Object Storage,
+construye y sube las imagenes a OCIR, y actualiza los contenedores en la VM por
+SSH. Si los healthchecks no pasan, **revierte solo** a la version anterior.
+
+La guia completa —recursos de OCI, permisos, secrets, primer despliegue y
+runbook de operacion— esta en **[docs/devops/despliegue-oci.md](docs/devops/despliegue-oci.md)**.
 
 ---
 
@@ -134,17 +215,13 @@ La estructura de la respuesta puede variar según el enfoque implementado por el
 
 ## Instalación
 
-Clonar el repositorio.
-
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/No-Country-simulation/g9-br-team-34-techmind.git
+cd g9-br-team-34-techmind
+make env && make up
 ```
 
-Ingresar al proyecto.
-
-```bash
-cd proyecto
-```
+Ver [Puesta en marcha (local)](#puesta-en-marcha-local) para el detalle.
 
 ---
 

@@ -92,11 +92,14 @@ services:
       TECHMIND_API_KEY: ${TECHMIND_API_KEY:?falta TECHMIND_API_KEY en el .env de la VM}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
 
-    ports:
-      # Se enlaza a todas las interfaces porque este es el unico servicio que
-      # debe ser publico. Quien controla el acceso real es la Security List de
-      # la VCN mas el firewall de la instancia (ver el runbook).
-      - "${BACKEND_PORT:-8080}:8080"
+    # `ports` NO se redeclara aca. El archivo base ya publica
+    # "${BACKEND_PORT:-8080}:8080" y las secuencias de compose se FUSIONAN
+    # concatenando: repetir la misma entrada no aporta nada y, segun la version
+    # de compose, puede terminar en "port is already allocated".
+    #
+    # El backend es el unico servicio publico. Quien controla el acceso real es
+    # la Security List de la VCN mas el firewall de la instancia; ver
+    # docs/devops/despliegue-oci.md.
 
     deploy:
       resources:

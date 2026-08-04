@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from typing import Optional
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -30,8 +29,8 @@ logger = logging.getLogger("techmind.ml")
 
 # Estado del proceso. Queda en `None` si el modelo no pudo cargarse; el resto
 # del archivo trata ese caso explicitamente en vez de asumir que existe.
-_modelo: Optional[ClassifierModel] = None
-_error_carga: Optional[str] = None
+_modelo: ClassifierModel | None = None
+_error_carga: str | None = None
 
 
 @asynccontextmanager
