@@ -166,10 +166,44 @@ class ContenidoControllerTest {
                 .andExpect(jsonPath("$.totalElements").value(0));
     }
 
+    @Test
+    void deberiaBuscarPorKeywordInsensibleAMayusculas() throws Exception {
+        contenido("Introducción a Spring", "Backend", 0.9);
+        contenido("Docker en producción", "DevOps", 0.8,
+                "Guía rápida sobre contenedores con spring y docker compose.");
+        contenido("Bases de datos relacionales", "Backend", 0.7);
+
+        mockMvc.perform(get("/api/v1/contenidos").param("keyword", "spring"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void deberiaCombinarCategoriaYKeywordConAnd() throws Exception {
+        contenido("Introducción a Spring", "Backend", 0.9);
+        contenido("Integración continua", "Backend", 0.85,
+                "Pipeline con despliegue automatizado a un entorno de pruebas.");
+        contenido("Docker en producción", "DevOps", 0.8);
+
+        mockMvc.perform(get("/api/v1/contenidos")
+                        .param("categoria", "Backend")
+                        .param("keyword", "spring"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].titulo").value("Introducción a Spring"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
     private ContenidoAnalizado contenido(String titulo, String categoria, double probabilidad) {
+        return contenido(titulo, categoria, probabilidad,
+                "Texto de prueba con más de veinte caracteres válidos.");
+    }
+
+    private ContenidoAnalizado contenido(String titulo, String categoria, double probabilidad, String texto) {
         return repository.save(ContenidoAnalizado.builder()
                 .titulo(titulo)
-                .texto("Texto de prueba con más de veinte caracteres válidos.")
+                .texto(texto)
                 .categoria(categoria)
                 .probabilidad(probabilidad)
                 .palabrasClave(List.of("Java"))

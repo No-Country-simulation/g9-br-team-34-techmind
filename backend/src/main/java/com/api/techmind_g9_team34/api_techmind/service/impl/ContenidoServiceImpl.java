@@ -68,7 +68,8 @@ public class ContenidoServiceImpl implements ContenidoService {
     public PaginaDTO<ContenidoResumenDTO> listarContenidos(
             String categoria, String palabraClave, Pageable pageable) {
 
-        Specification<ContenidoAnalizado> spec = porCategoria(categoria);
+        Specification<ContenidoAnalizado> spec =
+                combinar(porCategoria(categoria), porPalabraClave(palabraClave));
 
         // TM-037: la paginación real llega en TM-062; mientras tanto se trae
         // todo en una sola página para no acotar resultados por defecto.
@@ -76,6 +77,25 @@ public class ContenidoServiceImpl implements ContenidoService {
 
         Page<ContenidoAnalizado> page = contenidoRepository.findAll(spec, efectivo);
         return PaginaDTO.de(page.map(mapper::toResumenDTO));
+    }
+
+    /**
+     * Combina Specifications con AND lógico, tolerando {@code null}.
+     *
+     * <p>Spring Data {@code Specification.and()} no acepta {@code this == null},
+     * así que se combina de forma defensiva: si una de las dos es {@code null},
+     * se devuelve la otra; si ambas lo son, se devuelve {@code null} (sin
+     * filtro).
+     */
+    private Specification<ContenidoAnalizado> combinar(
+            Specification<ContenidoAnalizado> a, Specification<ContenidoAnalizado> b) {
+        if (a == null) {
+            return b;
+        }
+        if (b == null) {
+            return a;
+        }
+        return a.and(b);
     }
 
     /**
@@ -94,5 +114,28 @@ public class ContenidoServiceImpl implements ContenidoService {
             return null;
         }
         return (root, query, cb) -> cb.equal(root.get("categoria"), categoria);
+    }
+
+    /**
+     * Specification de búsqueda por palabra clave sobre {@code titulo} y
+     * {@code texto}, insensible a mayúsculas (TM-050).
+     *
+     * <p>Usa {@code lower()} en ambos lados de un {@code LIKE} para que el
+     * matcheo no dependa del casing, y hace OR entre los dos campos: el
+     * contenido coincide si la palabra aparece en cualquiera de ellos. Si el
+     * parámetro es nulo o blank, devuelve {@code null} (sin filtro).
+     *
+     * @param palabraClave término a buscar (opcional)
+     * @return Specification o {@code null} si no hay filtro
+     */
+    private Specification<ContenidoAnalizado> porPalabraClave(String palabraClave) {
+        if (palabraClave == null || palabraClave.isBlank()) {
+            return null;
+        }
+        String patron = "%" + palabraClave.toLowerCase() + "%";
+        return (root, query, cb) -> cb.or(
+                cb.like(cb.lower(root.get("titulo")), patron),
+                cb.like(cb.lower(root.get("texto")), patron)
+        );
     }
 }
