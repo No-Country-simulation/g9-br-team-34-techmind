@@ -2,6 +2,8 @@ package com.api.techmind_g9_team34.api_techmind.exception;
 
 import com.api.techmind_g9_team34.api_techmind.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,6 +22,9 @@ import java.util.List;
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidation(
@@ -95,6 +100,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneral(
             Exception ex, HttpServletRequest request) {
+
+        logger.error(
+                "Excepción no controlada al procesar la solicitud [{}]",
+                request.getRequestURI(),
+                ex);
+
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponseDTO.of(
