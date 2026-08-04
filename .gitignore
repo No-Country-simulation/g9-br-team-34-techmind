@@ -12,3 +12,4 @@
 *.key
 /data/
 /backend/data/
+__pycache__/
