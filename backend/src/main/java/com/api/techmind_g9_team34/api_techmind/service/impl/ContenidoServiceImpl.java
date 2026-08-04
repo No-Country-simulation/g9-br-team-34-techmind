@@ -7,21 +7,30 @@ import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.exception.ModeloServiceException;
 import com.api.techmind_g9_team34.api_techmind.mapper.ContenidoMapper;
+import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
+import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ContenidoServiceImpl implements ContenidoService {
 
     private final ModeloInferenciaClient modeloClient;
     private final ContenidoMapper mapper;
+    private final ContenidoAnalizadoRepository contenidoRepository;
 
-    public ContenidoServiceImpl(ModeloInferenciaClient modeloClient, ContenidoMapper mapper) {
+    public ContenidoServiceImpl(
+            ModeloInferenciaClient modeloClient,
+            ContenidoMapper mapper,
+            ContenidoAnalizadoRepository contenidoRepository) {
         this.modeloClient = modeloClient;
         this.mapper = mapper;
+        this.contenidoRepository = contenidoRepository;
     }
 
     @Override
+    @Transactional
     public ContenidoResponseDTO procesarContenido(ContenidoRequestDTO request) {
         ModelPredictClientRequestDto clientRequest = mapper.toClientRequest(request);
         ModelPredictClientResponseDto clientResponse;
@@ -31,6 +40,8 @@ public class ContenidoServiceImpl implements ContenidoService {
             throw new ModeloServiceException(
                     "El servicio de análisis no está disponible en este momento.", e);
         }
-        return mapper.toResponse(request, clientResponse);
+        ContenidoAnalizado entity = mapper.toEntity(request, clientResponse);
+        ContenidoAnalizado persistido = contenidoRepository.save(entity);
+        return mapper.toResponseDTO(persistido);
     }
 }
