@@ -1,8 +1,10 @@
 package com.api.techmind_g9_team34.api_techmind.repository;
 
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -34,7 +36,9 @@ import java.util.UUID;
  * quede documentada y visible.
  */
 @Repository
-public interface ContenidoAnalizadoRepository extends JpaRepository<ContenidoAnalizado, UUID> {
+public interface ContenidoAnalizadoRepository extends
+        JpaRepository<ContenidoAnalizado, UUID>,
+        JpaSpecificationExecutor<ContenidoAnalizado> {
 
     /**
      * Busca un contenido por id, trayendo sus palabras clave en la misma consulta.

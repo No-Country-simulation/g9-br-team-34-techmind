@@ -122,4 +122,57 @@ class ContenidoControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").isNotEmpty());
     }
+
+    @Test
+    void deberiaListarContenidosSinFiltroConResumenDTO() throws Exception {
+        contenido("Introducción a Spring", "Backend", 0.9);
+        contenido("Docker en producción", "DevOps", 0.8);
+        contenido("Bases de datos relacionales", "Backend", 0.7);
+
+        mockMvc.perform(get("/api/v1/contenidos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.content[*].id").isNotEmpty())
+                .andExpect(jsonPath("$.content[*].categoria").value(
+                        org.hamcrest.Matchers.hasItems("Backend", "DevOps")))
+                .andExpect(jsonPath("$.content[0].fechaProcesamiento").isNotEmpty())
+                .andExpect(jsonPath("$.page").value(0));
+    }
+
+    @Test
+    void deberiaFiltrarPorCategoria() throws Exception {
+        contenido("Introducción a Spring", "Backend", 0.9);
+        contenido("Docker en producción", "DevOps", 0.8);
+        contenido("Bases de datos relacionales", "Backend", 0.7);
+
+        mockMvc.perform(get("/api/v1/contenidos").param("categoria", "Backend"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[*].categoria").value(
+                        org.hamcrest.Matchers.everyItem(
+                                org.hamcrest.Matchers.is("Backend"))))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void deberiaDevolverListaVaciaParaCategoriaInexistente() throws Exception {
+        contenido("Introducción a Spring", "Backend", 0.9);
+
+        mockMvc.perform(get("/api/v1/contenidos").param("categoria", "Inexistente"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    private ContenidoAnalizado contenido(String titulo, String categoria, double probabilidad) {
+        return repository.save(ContenidoAnalizado.builder()
+                .titulo(titulo)
+                .texto("Texto de prueba con más de veinte caracteres válidos.")
+                .categoria(categoria)
+                .probabilidad(probabilidad)
+                .palabrasClave(List.of("Java"))
+                .build());
+    }
 }

@@ -5,12 +5,18 @@ import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientRequ
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import com.api.techmind_g9_team34.api_techmind.exception.ContenidoNoEncontradoException;
 import com.api.techmind_g9_team34.api_techmind.exception.ModeloServiceException;
 import com.api.techmind_g9_team34.api_techmind.mapper.ContenidoMapper;
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
 import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,5 +61,38 @@ public class ContenidoServiceImpl implements ContenidoService {
                 .orElseThrow(() -> new ContenidoNoEncontradoException(
                         "No existe un contenido procesado con el id indicado."));
         return mapper.toResponseDTO(entity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginaDTO<ContenidoResumenDTO> listarContenidos(
+            String categoria, String palabraClave, Pageable pageable) {
+
+        Specification<ContenidoAnalizado> spec = porCategoria(categoria);
+
+        // TM-037: la paginación real llega en TM-062; mientras tanto se trae
+        // todo en una sola página para no acotar resultados por defecto.
+        Pageable efectivo = PageRequest.of(0, Integer.MAX_VALUE);
+
+        Page<ContenidoAnalizado> page = contenidoRepository.findAll(spec, efectivo);
+        return PaginaDTO.de(page.map(mapper::toResumenDTO));
+    }
+
+    /**
+     * Specification de filtro exacto por categoría.
+     *
+     * <p>Si el parámetro es nulo o blank, devuelve {@code null} (sin filtro) para
+     * que {@code findAll(null, pageable)} no aplique restricción. Las categorías
+     * las produce el modelo y se asumen canónicas, por eso la comparación no es
+     * insensible a mayúsculas (FR-016).
+     *
+     * @param categoria categoría a filtrar (opcional)
+     * @return Specification o {@code null} si no hay filtro
+     */
+    private Specification<ContenidoAnalizado> porCategoria(String categoria) {
+        if (categoria == null || categoria.isBlank()) {
+            return null;
+        }
+        return (root, query, cb) -> cb.equal(root.get("categoria"), categoria);
     }
 }

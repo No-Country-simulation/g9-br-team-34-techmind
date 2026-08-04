@@ -4,6 +4,7 @@ import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientRequ
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
 import org.springframework.stereotype.Component;
 
@@ -62,6 +63,26 @@ public class ContenidoMapper {
                 clientResponse.probabilidad(),
                 clientResponse.informacionAdicional(),
                 null
+        );
+    }
+
+    /**
+     * Convierte una entidad en su visión ligera para listados (TM-037).
+     *
+     * <p>Omite {@code probabilidad} e {@code informacionAdicional} a propósito:
+     * el listado no necesita esos campos y así se evita cargar la colección
+     * perezosa {@code palabrasClave} (que dispararía LazyInitializationException
+     * fuera de transacción).
+     *
+     * @param entity entidad persistida
+     * @return resumen del contenido
+     */
+    public ContenidoResumenDTO toResumenDTO(ContenidoAnalizado entity) {
+        return new ContenidoResumenDTO(
+                entity.getId(),
+                entity.getTitulo(),
+                entity.getCategoria(),
+                entity.getFechaProcesamiento()
         );
     }
 }
