@@ -61,8 +61,7 @@ class CategoriaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[?(@.categoria=='Backend')]").exists())
-                .andExpect(jsonPath("$[?(@.categoria=='DevOps')]").exists())
-                .andExpect(jsonPath("$[0].cantidadProcesados").doesNotExist());
+                .andExpect(jsonPath("$[?(@.categoria=='DevOps')]").exists());
     }
 
     @Test
@@ -70,5 +69,22 @@ class CategoriaControllerTest {
         mockMvc.perform(get("/api/v1/categorias"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void deberiaListarCategoriasConCantidadProcesados() throws Exception {
+        contenido("A", "Backend");
+        contenido("B", "Backend");
+        contenido("C", "Backend");
+        contenido("D", "DevOps");
+        contenido("E", "DevOps");
+
+        mockMvc.perform(get("/api/v1/categorias"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].categoria").value("Backend"))
+                .andExpect(jsonPath("$[0].cantidadProcesados").value(3))
+                .andExpect(jsonPath("$[1].categoria").value("DevOps"))
+                .andExpect(jsonPath("$[1].cantidadProcesados").value(2));
     }
 }

@@ -1,6 +1,7 @@
 package com.api.techmind_g9_team34.api_techmind.repository;
 
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
+import com.api.techmind_g9_team34.api_techmind.repository.projection.ConteoCategoria;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -81,5 +82,20 @@ class ContenidoAnalizadoRepositoryTest {
         List<String> categorias = repository.findCategoriasDistintas();
 
         assertThat(categorias).isEmpty();
+    }
+
+    @Test
+    void deberiaContarContenidosPorCategoria() {
+        repository.save(contenido("A", "Backend"));
+        repository.save(contenido("B", "Backend"));
+        repository.save(contenido("C", "Backend"));
+        repository.save(contenido("D", "DevOps"));
+        repository.save(contenido("E", "DevOps"));
+
+        List<ConteoCategoria> conteos = repository.contarPorCategoria();
+
+        assertThat(conteos)
+                .anyMatch(c -> c.getCategoria().equals("Backend") && c.getCantidadProcesados() == 3)
+                .anyMatch(c -> c.getCategoria().equals("DevOps") && c.getCantidadProcesados() == 2);
     }
 }

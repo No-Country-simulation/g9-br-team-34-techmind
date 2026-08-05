@@ -1,6 +1,7 @@
 package com.api.techmind_g9_team34.api_techmind.repository;
 
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
+import com.api.techmind_g9_team34.api_techmind.repository.projection.ConteoCategoria;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -101,4 +102,18 @@ public interface ContenidoAnalizadoRepository extends
      */
     @Query("select distinct c.categoria from ContenidoAnalizado c")
     List<String> findCategoriasDistintas();
+
+    /**
+     * Cuenta los contenidos agrupados por categoría.
+     *
+     * <p>Consumidor previsto: TM-067 ({@code GET /api/v1/categorias}). Los
+     * alias del {@code select} ({@code categoria}, {@code cantidadProcesados})
+     * deben coincidir con los getters de {@link ConteoCategoria}. Se ordena por
+     * categoría para un resultado determinístico.
+     *
+     * @return conteo por categoría ordenado alfabéticamente
+     */
+    @Query("select c.categoria as categoria, count(c) as cantidadProcesados " +
+            "from ContenidoAnalizado c group by c.categoria order by c.categoria")
+    List<ConteoCategoria> contarPorCategoria();
 }
