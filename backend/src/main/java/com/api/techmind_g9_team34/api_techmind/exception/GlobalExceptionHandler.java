@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 
@@ -50,6 +51,21 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.BAD_REQUEST,
                         ex.getMessage(),
+                        request.getRequestURI()));
+    }
+
+    /**
+     * Argumento de ruta o query con un tipo que no se puede convertir, p. ej. un
+     * {@code id} que no es un UUID válido (TM-036).
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDTO> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        return ResponseEntity
+                .badRequest()
+                .body(ErrorResponseDTO.of(
+                        HttpStatus.BAD_REQUEST,
+                        "El valor proporcionado no tiene el formato esperado.",
                         request.getRequestURI()));
     }
 
