@@ -10,8 +10,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -86,5 +92,30 @@ class CategoriaControllerTest {
                 .andExpect(jsonPath("$[0].cantidadProcesados").value(3))
                 .andExpect(jsonPath("$[1].categoria").value("DevOps"))
                 .andExpect(jsonPath("$[1].cantidadProcesados").value(2));
+    }
+
+    @Test
+    void deberiaMantenerAisladoElEndpointDeCategorias() throws Exception {
+        String baseContenidos = RequestMapping.class
+                .cast(ContenidoController.class.getAnnotation(RequestMapping.class)).value()[0];
+
+        assertThat(baseContenidos).isEqualTo("/api/v1/contenidos");
+        for (Method metodo : ContenidoController.class.getDeclaredMethods()) {
+            if (metodo.isAnnotationPresent(GetMapping.class)) {
+                String ruta = GetMapping.class.cast(metodo.getAnnotation(GetMapping.class)).value().length > 0
+                        ? GetMapping.class.cast(metodo.getAnnotation(GetMapping.class)).value()[0]
+                        : "";
+                assertThat(baseContenidos + ruta).isNotEqualTo("/api/v1/categorias");
+            }
+        }
+
+        String baseCategorias = RequestMapping.class
+                .cast(CategoriaController.class.getAnnotation(RequestMapping.class)).value()[0];
+        assertThat(baseCategorias).isEqualTo("/api/v1/categorias");
+
+        long gettersDeCategorias = Arrays.stream(CategoriaController.class.getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(GetMapping.class))
+                .count();
+        assertThat(gettersDeCategorias).isEqualTo(1);
     }
 }
