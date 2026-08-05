@@ -64,4 +64,22 @@ class ContenidoAnalizadoRepositoryTest {
 
         assertThat(resultado).isEmpty();
     }
+
+    @Test
+    void deberiaDevolverCategoriasDistintas() {
+        repository.save(contenido("A", "Backend"));
+        repository.save(contenido("B", "Backend"));
+        repository.save(contenido("C", "DevOps"));
+
+        List<String> categorias = repository.findCategoriasDistintas();
+
+        assertThat(categorias).containsExactlyInAnyOrder("Backend", "DevOps");
+    }
+
+    @Test
+    void deberiaDevolverListaVaciaDeCategoriasCuandoLaBaseEstaVacia() {
+        List<String> categorias = repository.findCategoriasDistintas();
+
+        assertThat(categorias).isEmpty();
+    }
 }

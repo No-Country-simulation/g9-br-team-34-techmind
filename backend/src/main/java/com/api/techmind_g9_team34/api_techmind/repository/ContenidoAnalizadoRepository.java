@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -88,4 +89,16 @@ public interface ContenidoAnalizadoRepository extends
      */
     @EntityGraph(attributePaths = "palabrasClave")
     List<ContenidoAnalizado> findByCategoria(String categoria);
+
+    /**
+     * Devuelve las categorías distintas presentes en la base de datos.
+     *
+     * <p>Consumidor previsto: TM-038 ({@code GET /api/v1/categorias}). Sin
+     * orden definido en esta versión (TM-038); el conteo agrupado lo agrega
+     * TM-067.
+     *
+     * @return lista de categorías distintas; vacía si no hay contenidos
+     */
+    @Query("select distinct c.categoria from ContenidoAnalizado c")
+    List<String> findCategoriasDistintas();
 }
