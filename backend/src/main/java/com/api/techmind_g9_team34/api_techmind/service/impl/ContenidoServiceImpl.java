@@ -9,11 +9,13 @@ import com.api.techmind_g9_team34.api_techmind.dto.response.LoteContenidoRespons
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import com.api.techmind_g9_team34.api_techmind.exception.ContenidoNoEncontradoException;
+import com.api.techmind_g9_team34.api_techmind.exception.ValidacionException;
 import com.api.techmind_g9_team34.api_techmind.exception.ModeloServiceException;
 import com.api.techmind_g9_team34.api_techmind.mapper.ContenidoMapper;
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
 import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -31,6 +33,9 @@ import java.util.List;
 
 @Service
 public class ContenidoServiceImpl implements ContenidoService {
+
+    @Value("${techmind.csv.max-rows:100}")
+    private int maxRows;
 
     private final ModeloInferenciaClient modeloClient;
     private final ContenidoMapper mapper;
@@ -152,12 +157,38 @@ public class ContenidoServiceImpl implements ContenidoService {
                         archivo.getInputStream(),
                         StandardCharsets.UTF_8))) {
 
+            String encabezado = reader.readLine();
+            
+            if (encabezado == null) {
+                throw new ValidacionException(
+                        "El archivo CSV está vacío.");
+            }
+
+            String[] columnasEncabezado = encabezado.split(",", -1);
+
+            if (columnasEncabezado.length != 2
+                    || !columnasEncabezado[0].trim().equalsIgnoreCase("titulo")
+                    || !columnasEncabezado[1].trim().equalsIgnoreCase("texto")) {
+
+                throw new ValidacionException(
+                        "El archivo CSV debe contener el encabezado: titulo,texto.");
+            }
+
             String linea;
 
-            // Saltar encabezado
-            reader.readLine();
+            int filas = 0;
 
             while ((linea = reader.readLine()) != null) {
+
+                filas++;
+
+                if (filas > maxRows) {
+                    throw new ValidacionException(
+                            "El archivo supera el máximo permitido de "
+                                    + maxRows
+                                    + " filas.");
+                }
+
                 String[] columnas = linea.split(",", 2);
 
                 if (columnas.length < 2) {
@@ -179,9 +210,8 @@ public class ContenidoServiceImpl implements ContenidoService {
             }
 
         } catch (IOException e) {
-            throw new RuntimeException(
-                    "Error al leer el archivo CSV.",
-                    e);
+            throw new ValidacionException(
+                    "No fue posible leer el archivo CSV.");
         }
 
         return new LoteContenidoResponseDTO(
