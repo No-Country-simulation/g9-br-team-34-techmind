@@ -3,13 +3,18 @@ package com.api.techmind_g9_team34.api_techmind.service;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.LoteContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
 public interface ContenidoService {
+
     ContenidoResponseDTO procesarContenido(ContenidoRequestDTO request);
+
+    LoteContenidoResponseDTO procesarLote(MultipartFile archivo);
 
     /**
      * Obtiene un contenido previamente procesado por su id.
@@ -33,5 +38,8 @@ public interface ContenidoService {
      * @return página de resúmenes de contenidos
      */
     PaginaDTO<ContenidoResumenDTO> listarContenidos(
-            String categoria, String palabraClave, Pageable pageable);
+            String categoria,
+            String palabraClave,
+            Pageable pageable);
+
 }

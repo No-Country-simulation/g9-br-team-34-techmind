@@ -5,6 +5,7 @@ import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientRequ
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.LoteContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import com.api.techmind_g9_team34.api_techmind.exception.ContenidoNoEncontradoException;
@@ -18,8 +19,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ContenidoServiceImpl implements ContenidoService {
@@ -132,5 +140,52 @@ public class ContenidoServiceImpl implements ContenidoService {
                 cb.like(cb.lower(root.get("titulo")), patron),
                 cb.like(cb.lower(root.get("texto")), patron)
         );
+    }
+
+    @Override
+    public LoteContenidoResponseDTO procesarLote(MultipartFile archivo) {
+        List<ContenidoResponseDTO> exitos = new ArrayList<>();
+        List<String> rechazados = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        archivo.getInputStream(),
+                        StandardCharsets.UTF_8))) {
+
+            String linea;
+
+            // Saltar encabezado
+            reader.readLine();
+
+            while ((linea = reader.readLine()) != null) {
+                String[] columnas = linea.split(",", 2);
+
+                if (columnas.length < 2) {
+                    rechazados.add(linea);
+                    continue;
+                }
+
+                try {
+                    ContenidoRequestDTO request =
+                            new ContenidoRequestDTO(
+                                    columnas[0].trim(),
+                                    columnas[1].trim());
+
+                    exitos.add(procesarContenido(request));
+
+                } catch (Exception e) {
+                    rechazados.add(linea);
+                }
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    "Error al leer el archivo CSV.",
+                    e);
+        }
+
+        return new LoteContenidoResponseDTO(
+                exitos,
+                rechazados);
     }
 }
