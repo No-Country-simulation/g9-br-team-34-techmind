@@ -23,6 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+
 import java.util.UUID;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,6 +33,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ContenidoServiceImpl implements ContenidoService {
@@ -40,14 +44,18 @@ public class ContenidoServiceImpl implements ContenidoService {
     private final ModeloInferenciaClient modeloClient;
     private final ContenidoMapper mapper;
     private final ContenidoAnalizadoRepository contenidoRepository;
+    private final Validator validator;
 
     public ContenidoServiceImpl(
             ModeloInferenciaClient modeloClient,
             ContenidoMapper mapper,
-            ContenidoAnalizadoRepository contenidoRepository) {
+            ContenidoAnalizadoRepository contenidoRepository,
+            Validator validator) {
+
         this.modeloClient = modeloClient;
         this.mapper = mapper;
         this.contenidoRepository = contenidoRepository;
+        this.validator = validator;
     }
 
     @Override
@@ -201,6 +209,14 @@ public class ContenidoServiceImpl implements ContenidoService {
                             new ContenidoRequestDTO(
                                     columnas[0].trim(),
                                     columnas[1].trim());
+
+                    Set<ConstraintViolation<ContenidoRequestDTO>> errores =
+                            validator.validate(request);
+
+                    if (!errores.isEmpty()) {
+                        rechazados.add(linea);
+                        continue;
+                    } 
 
                     exitos.add(procesarContenido(request));
 
