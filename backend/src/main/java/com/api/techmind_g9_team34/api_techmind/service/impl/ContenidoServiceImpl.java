@@ -4,9 +4,10 @@ import com.api.techmind_g9_team34.api_techmind.client.ModeloInferenciaClient;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientRequestDto;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLoteResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
-import com.api.techmind_g9_team34.api_techmind.dto.response.LoteContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.FilaResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import com.api.techmind_g9_team34.api_techmind.exception.ContenidoNoEncontradoException;
 import com.api.techmind_g9_team34.api_techmind.exception.ValidacionException;
@@ -156,9 +157,13 @@ public class ContenidoServiceImpl implements ContenidoService {
     }
 
     @Override
-    public LoteContenidoResponseDTO procesarLote(MultipartFile archivo) {
-        List<ContenidoResponseDTO> exitos = new ArrayList<>();
-        List<String> rechazados = new ArrayList<>();
+    public ContenidoLoteResultadoDTO procesarLote(MultipartFile archivo) {
+
+        List<FilaResultadoDTO> resultados = new ArrayList<>();
+
+        int totalFilas = 0;
+        int procesadosExitosos = 0;
+        int procesadosConError = 0;
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(
@@ -166,7 +171,7 @@ public class ContenidoServiceImpl implements ContenidoService {
                         StandardCharsets.UTF_8))) {
 
             String encabezado = reader.readLine();
-            
+
             if (encabezado == null) {
                 throw new ValidacionException(
                         "El archivo CSV está vacío.");
@@ -182,25 +187,36 @@ public class ContenidoServiceImpl implements ContenidoService {
                         "El archivo CSV debe contener el encabezado: titulo,texto.");
             }
 
+            List<String> lineas = new ArrayList<>();
             String linea;
+            while ((linea = reader.readLine()) != null) {
+                lineas.add(linea);
+            }
 
+            if (lineas.size() > maxRows) {
+                throw new ValidacionException(
+                        "El archivo supera el máximo permitido de "
+                                + maxRows
+                                + " filas.");
+            }
+
+            totalFilas = lineas.size();
             int filas = 0;
 
-            while ((linea = reader.readLine()) != null) {
+            for (String filaLinea : lineas) {
 
                 filas++;
 
-                if (filas > maxRows) {
-                    throw new ValidacionException(
-                            "El archivo supera el máximo permitido de "
-                                    + maxRows
-                                    + " filas.");
-                }
-
-                String[] columnas = linea.split(",", 2);
+                String[] columnas = filaLinea.split(",", 2);
 
                 if (columnas.length < 2) {
-                    rechazados.add(linea);
+                    resultados.add(new FilaResultadoDTO(
+                            filas,
+                            "ERROR",
+                            null,
+                            "Fila CSV inválida"
+                    ));
+                    procesadosConError++;
                     continue;
                 }
 
@@ -214,14 +230,34 @@ public class ContenidoServiceImpl implements ContenidoService {
                             validator.validate(request);
 
                     if (!errores.isEmpty()) {
-                        rechazados.add(linea);
+                        resultados.add(new FilaResultadoDTO(
+                                filas,
+                                "ERROR",
+                                null,
+                                "No fue posible procesar la fila"
+                        ));
+                        procesadosConError++;
                         continue;
-                    } 
+                    }
 
-                    exitos.add(procesarContenido(request));
+                    ContenidoResponseDTO resultado = procesarContenido(request);
+
+                    resultados.add(new FilaResultadoDTO(
+                            filas,
+                            "PROCESADO",
+                            resultado,
+                            null
+                    ));
+                    procesadosExitosos++;
 
                 } catch (Exception e) {
-                    rechazados.add(linea);
+                    resultados.add(new FilaResultadoDTO(
+                            filas,
+                            "ERROR",
+                            null,
+                            "No fue posible procesar la fila"
+                    ));
+                    procesadosConError++;
                 }
             }
 
@@ -230,8 +266,11 @@ public class ContenidoServiceImpl implements ContenidoService {
                     "No fue posible leer el archivo CSV.");
         }
 
-        return new LoteContenidoResponseDTO(
-                exitos,
-                rechazados);
+        return new ContenidoLoteResultadoDTO(
+                totalFilas,
+                procesadosExitosos,
+                procesadosConError,
+                resultados
+        );
     }
 }

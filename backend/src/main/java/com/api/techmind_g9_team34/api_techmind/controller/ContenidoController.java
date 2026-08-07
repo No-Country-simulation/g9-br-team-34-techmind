@@ -3,8 +3,8 @@ package com.api.techmind_g9_team34.api_techmind.controller;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
-import com.api.techmind_g9_team34.api_techmind.dto.response.LoteContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLoteResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -58,10 +58,10 @@ public class ContenidoController {
     }
 
     @PostMapping("/lote")
-    public ResponseEntity<LoteContenidoResponseDTO> procesarLote(
+    public ResponseEntity<ContenidoLoteResultadoDTO> procesarLote(
             @RequestParam("archivo") MultipartFile archivo) {
 
-        LoteContenidoResponseDTO response =
+        ContenidoLoteResultadoDTO response =
                 contenidoService.procesarLote(archivo);
 
         return ResponseEntity.ok(response);
