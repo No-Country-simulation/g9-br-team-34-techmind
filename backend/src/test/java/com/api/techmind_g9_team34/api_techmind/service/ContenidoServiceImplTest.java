@@ -10,6 +10,7 @@ import com.api.techmind_g9_team34.api_techmind.mapper.ContenidoMapper;
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
 import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
 import com.api.techmind_g9_team34.api_techmind.service.impl.ContenidoServiceImpl;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,13 +36,16 @@ class ContenidoServiceImplTest {
     @Mock
     private ContenidoAnalizadoRepository repository;
 
+    @Mock
+    private Validator validator;
+
     private ContenidoMapper mapper;
     private ContenidoService service;
 
     @BeforeEach
     void setUp() {
         mapper = new ContenidoMapper();
-        service = new ContenidoServiceImpl(client, mapper, repository);
+        service = new ContenidoServiceImpl(client, mapper, repository, validator);
     }
 
     @Test
