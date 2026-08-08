@@ -42,4 +42,22 @@ public interface ContenidoService {
             String palabraClave,
             Pageable pageable);
 
+    /**
+     * Elimina un contenido previamente procesado.
+     *
+     * <p>TM-051. La operación no es idempotente por decisión de contrato: un id
+     * inexistente produce 404 y no 204. Se elige informar al cliente que el
+     * recurso no existía, en lugar de dejarlo creyendo que borró algo.
+     *
+     * <p>Al borrar la fila, Hibernate elimina también sus palabras clave en
+     * {@code contenido_palabras_clave}: es una {@code @ElementCollection}, cuyo
+     * ciclo de vida depende por completo de la entidad dueña. No hace falta
+     * borrarlas a mano.
+     *
+     * @param id identificador del contenido a eliminar
+     * @throws com.api.techmind_g9_team34.api_techmind.exception.ContenidoNoEncontradoException
+     *         si no existe un contenido con ese id
+     */
+    void eliminarContenido(UUID id);
+
 }
