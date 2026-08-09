@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -93,5 +94,25 @@ public class ContenidoController {
                 contenidoService.listarContenidos(categoria, palabraClave, pageable);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * TM-051 — Elimina un contenido procesado.
+     *
+     * <p>Devuelve 204 sin cuerpo al borrar, 404 si el id no existe y 400 si el
+     * path variable no tiene formato UUID (esto último lo resuelve
+     * {@code GlobalExceptionHandler} vía {@code MethodArgumentTypeMismatchException},
+     * TM-064).
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarContenido(
+            @PathVariable UUID id,
+            HttpServletRequest httpRequest) {
+
+        logger.info("Solicitud recibida para {}", httpRequest.getRequestURI());
+
+        contenidoService.eliminarContenido(id);
+
+        return ResponseEntity.noContent().build();
     }
 }

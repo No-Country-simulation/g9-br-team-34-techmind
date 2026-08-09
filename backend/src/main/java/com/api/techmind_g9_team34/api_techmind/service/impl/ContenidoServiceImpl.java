@@ -273,4 +273,27 @@ public class ContenidoServiceImpl implements ContenidoService {
                 resultados
         );
     }
+
+    /**
+     * TM-051 — Elimina un contenido procesado.
+     *
+     * <p>Se comprueba la existencia con {@code existsById} antes de borrar, en
+     * lugar de llamar a {@code deleteById} directamente: ese método no falla si
+     * el id no existe, de modo que sin la comprobación previa la API devolvería
+     * 204 tanto al borrar algo real como al pedir el borrado de un id
+     * inventado, y el cliente no podría distinguir un caso del otro.
+     *
+     * <p>Se usa {@code existsById} y no {@code findById} porque no hace falta
+     * traer la entidad ni sus palabras clave para decidir: alcanza con un
+     * {@code count} en base.
+     */
+    @Override
+    @Transactional
+    public void eliminarContenido(UUID id) {
+        if (!contenidoRepository.existsById(id)) {
+            throw new ContenidoNoEncontradoException(
+                    "No existe un contenido procesado con el id indicado.");
+        }
+        contenidoRepository.deleteById(id);
+    }
 }
