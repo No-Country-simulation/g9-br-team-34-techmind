@@ -1,0 +1,88 @@
+# Actualizacion automatica de dependencias.
+#
+# Dependabot abre un PR cuando sale una version nueva. Como cada PR dispara CI
+# entero —pruebas, construccion de imagenes y prueba de humo extremo a extremo—
+# la actualizacion llega ya verificada: si algo se rompe, el PR queda en rojo y
+# no se mergea.
+#
+# Todo va agrupado y semanal a proposito. Sin agrupar, un lunes cualquiera
+# aparecen quince PR sueltos, nadie los revisa, y en dos semanas el ruido hace
+# que el equipo desactive Dependabot. Un PR por ecosistema es revisable.
+
+version: 2
+
+updates:
+
+  # -------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      acciones:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+    labels: ["dependencias", "ci"]
+
+  # -------------------------------------------------------------------------
+  - package-ecosystem: maven
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      spring:
+        patterns: ["org.springframework*"]
+      resto:
+        patterns: ["*"]
+        exclude-patterns: ["org.springframework*"]
+    ignore:
+      # Spring Boot 4 exige Java 17+ y trae cambios que rompen. Actualizar de
+      # version mayor es una decision del equipo de backend, no algo que deba
+      # aparecer solo en un PR automatico.
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "backend"
+    labels: ["dependencias", "backend"]
+
+  # -------------------------------------------------------------------------
+  - package-ecosystem: pip
+    directory: /ml-service
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      ciencia-de-datos:
+        patterns: ["scikit-learn", "pandas", "numpy", "joblib"]
+      api:
+        patterns: ["fastapi", "uvicorn*", "pydantic*"]
+      resto:
+        patterns: ["*"]
+        exclude-patterns:
+          ["scikit-learn", "pandas", "numpy", "joblib", "fastapi", "uvicorn*", "pydantic*"]
+    commit-message:
+      prefix: "ml"
+    labels: ["dependencias", "ml-service"]
+
+  # -------------------------------------------------------------------------
+  # Imagenes base de los Dockerfile.
+  #
+  # OJO al revisar estos PR: la imagen propuesta TIENE que existir para
+  # linux/arm64, o el despliegue en la VM Ampere falla. El job `docker` de CI ya
+  # lo comprueba automaticamente en cada PR, asi que basta con no mergear en
+  # rojo. Fue exactamente el problema que tuvimos con eclipse-temurin:*-alpine.
+  - package-ecosystem: docker
+    directories:
+      - /backend
+      - /ml-service
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "docker"
+    labels: ["dependencias", "docker"]

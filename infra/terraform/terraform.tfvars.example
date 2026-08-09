@@ -1,0 +1,75 @@
+# Copiar a terraform.tfvars y completar.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# terraform.tfvars NO se versiona: esta en .gitignore junto con el estado.
+# No contiene claves privadas —solo la RUTA a una— pero si identificadores de
+# tu cuenta que no tienen por que estar en un repositorio publico.
+
+# ---------------------------------------------------------------------------
+# Credenciales
+# ---------------------------------------------------------------------------
+# Salen de: Consola > perfil > Tenancy, y de la pantalla que muestra OCI al
+# generar la API key (Users > tu usuario > API Keys > Add API Key).
+# Son las mismas cuatro que despues van a los secrets de GitHub.
+
+tenancy_ocid   = "ocid1.tenancy.oc1..aaaaaaaa"
+user_ocid      = "ocid1.user.oc1..aaaaaaaa"
+fingerprint    = "a1:b2:c3:d4:e5:f6:07:08:09:10:11:12:13:14:15:16"
+ruta_clave_api = "~/.oci/techmind_api_key.pem"
+region         = "sa-saopaulo-1"
+
+# Vacio = usar el compartment raiz del tenancy.
+compartment_ocid = ""
+
+# ---------------------------------------------------------------------------
+# Acceso
+# ---------------------------------------------------------------------------
+# Generar antes con:
+#   ssh-keygen -t ed25519 -C "techmind-deploy" -f ~/.ssh/techmind_deploy -N ""
+# Aca va la PUBLICA (.pub). La privada va al secret OCI_SSH_PRIVATE_KEY.
+
+ruta_clave_publica_ssh = "~/.ssh/techmind_deploy.pub"
+
+# ---------------------------------------------------------------------------
+# Instancia
+# ---------------------------------------------------------------------------
+# Los valores por defecto ya son los correctos para la capa Always Free de
+# Ampere. Solo hace falta tocarlos si Oracle rechaza la creacion.
+
+# shape      = "VM.Standard.A1.Flex"
+# ocpus      = 2
+# memoria_gb = 12
+
+# Ante "Out of host capacity": esta es la primera perilla. Proba 1, despues 2.
+# La capacidad de Ampere varia entre dominios de la misma region.
+# indice_dominio_disponibilidad = 0
+
+# PLAN B, si Ampere no da capacidad en ningun dominio. Ojo: exige tambien
+# cambiar TARGET_PLATFORM a linux/amd64 y bajar los limites de memoria del
+# compose de produccion. Ver el apendice del runbook.
+# shape      = "VM.Standard.E2.1.Micro"
+# ocpus      = 1
+# memoria_gb = 1
+
+# ---------------------------------------------------------------------------
+# Identidad
+# ---------------------------------------------------------------------------
+# Si tu tenancy usa identity domains (los creados desde 2023), poner el nombre
+# del dominio, normalmente "Default". Si no, dejar vacio.
+#
+# Como saberlo: Identity & Security > Domains. Si esa pantalla existe y lista
+# al menos un dominio, tu tenancy los usa.
+#
+# Importante: equivocarse aca NO da error al aplicar. La policy se crea igual
+# pero no aplica a nadie, y el sintoma aparece mucho despues, como un
+# NotAuthenticated del ml-service al intentar bajar el modelo.
+
+dominio_identidad = ""
+
+# ---------------------------------------------------------------------------
+# Opcional
+# ---------------------------------------------------------------------------
+# Abrir 80 y 443 para un proxy inverso con certificado (Caddy).
+
+# habilitar_https = true

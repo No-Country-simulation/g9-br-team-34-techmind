@@ -112,6 +112,82 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # -------------------------------------------------------------------------
+  # Proxy inverso con HTTPS  (OPCIONAL)
+  # -------------------------------------------------------------------------
+  #
+  # Este servicio esta detras de un `profile`, asi que POR DEFECTO NO ARRANCA.
+  # Sin el, todo sigue funcionando exactamente igual por http://IP:8080.
+  #
+  # Para encenderlo, dos lineas en el .env de la VM:
+  #
+  #   COMPOSE_PROFILES=https
+  #   TECHMIND_DOMINIO=techmind.140-238-1-2.sslip.io
+  #
+  # Compose lee COMPOSE_PROFILES del propio .env, de modo que activar HTTPS no
+  # requiere tocar ni el workflow de despliegue ni ningun comando. Es una linea
+  # en un archivo, y se apaga borrandola.
+  #
+  # ANTES de encenderlo hay que abrir 80 y 443 en la Security List de la VCN:
+  #   terraform apply -var 'habilitar_https=true'
+  # El 80 no es opcional: Let's Encrypt lo necesita para validar el dominio.
+  caddy:
+    image: caddy:2-alpine
+    container_name: techmind-caddy
+    profiles: ["https"]
+
+    environment:
+      # Valor por defecto, y NO la sintaxis `${VAR:?mensaje}` que se usa en el
+      # resto del archivo.
+      #
+      # Compose interpola el archivo COMPLETO antes de filtrar por perfil, de
+      # modo que un `:?` aca hace fallar `config` y `up` aunque el perfil https
+      # este apagado. Es decir: rompería el despliegue normal y el paso de
+      # validacion de CI, por una variable que en ese caso no se usa.
+      #
+      # Con `localhost` como respaldo, activar el perfil sin definir el dominio
+      # levanta Caddy con un certificado interno en vez de pedirle uno a Let's
+      # Encrypt para un nombre vacio. El error se ve en los logs de Caddy y no
+      # consume ninguno de los cinco intentos semanales por dominio.
+      TECHMIND_DOMINIO: ${TECHMIND_DOMINIO:-localhost}
+      TECHMIND_EMAIL_TLS: ${TECHMIND_EMAIL_TLS:-}
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Los certificados persisten entre reinicios. Sin esto, cada redespliegue
+      # volveria a pedirlos, y Let's Encrypt limita a cinco por dominio por
+      # semana: al sexto intento el sitio se queda sin certificado durante dias.
+      - caddy-data:/data
+      - caddy-config:/config
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    networks:
+      - techmind-net
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   ml-models:
+    driver: local
+  caddy-data:
+    driver: local
+  caddy-config:
     driver: local

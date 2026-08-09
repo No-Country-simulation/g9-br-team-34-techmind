@@ -550,19 +550,66 @@ Las métricas del modelo de cada versión quedan en `modelos/metrics-<sha>.json`
 
 ### Backup de la base de datos
 
-La base H2 vive en el volumen `techmind_backend-data`. No hay backup automático;
-si el proyecto pasa de hackathon a algo real, esto es lo primero que hay que
-agregar. Copia manual:
+**Está automatizado.** `provision-vm.sh` programa
+[`backup-datos.sh`](../../scripts/backup-datos.sh) en un cron diario a las 04:00
+UTC. El script pausa el backend menos de un segundo —para que la copia de H2 sea
+consistente—, comprime el volumen y lo sube al bucket `techmind-backups`.
+
+Ese bucket es **distinto** del de modelos, y no por orden: la VM necesita
+escribir en él, pero debe seguir sin poder escribir en el de modelos. Si alguien
+compromete el contenedor, no debe poder envenenar el artefacto que sirve el
+sistema.
+
+Ejecutarlo a mano, por ejemplo antes de un cambio riesgoso:
 
 ```bash
-docker run --rm \
-  -v techmind_backend-data:/data:ro \
-  -v /tmp:/backup \
-  alpine tar czf /backup/techmind-$(date +%F).tar.gz -C /data .
-
-# y bajarlo a tu máquina
-scp -i ~/.ssh/techmind_deploy opc@<IP>:/tmp/techmind-*.tar.gz .
+ssh -i ~/.ssh/techmind_deploy opc@<IP>
+bash /opt/techmind/backup-datos.sh
 ```
+
+Ver el historial y los respaldos disponibles:
+
+```bash
+tail -50 /var/log/techmind-respaldo.log
+oci os object list --bucket-name techmind-backups --prefix datos/ --auth instance_principal
+```
+
+Los respaldos se borran solos a los 14 días, por una regla de retención del
+bucket definida en Terraform. Sin eso, un respaldo diario llena los 20 GB de la
+capa gratuita.
+
+**Restaurar:**
+
+```bash
+# 1. Bajar el respaldo elegido
+oci os object get --bucket-name techmind-backups \
+  --name datos/techmind-datos-20260804T040000Z.tar.gz \
+  --file /tmp/restaurar.tar.gz --auth instance_principal
+
+# 2. Detener el backend (aquí sí hay que detenerlo, no pausarlo)
+cd /opt/techmind
+docker compose -f docker-compose.yml -f docker-compose.prod.yml stop backend
+
+# 3. Reemplazar el contenido del volumen
+docker run --rm -v techmind_backend-data:/datos -v /tmp:/respaldo alpine:3 \
+  sh -c "rm -rf /datos/* && tar xzf /respaldo/restaurar.tar.gz -C /datos"
+
+# 4. Levantar
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait
+```
+
+### Monitoreo
+
+[`monitoreo.yml`](../../.github/workflows/monitoreo.yml) consulta
+`/actuator/health` cada quince minutos. Si falla **dos veces seguidas** abre un
+issue con la etiqueta `incidente-produccion`, y lo cierra solo cuando el servicio
+vuelve. Exige dos fallos a propósito: un solo timeout puede ser un corte de red
+del runner, y avisar por eso convierte la alerta en ruido que la gente aprende a
+ignorar.
+
+Dos límites que conviene tener presentes: GitHub no garantiza la puntualidad del
+cron, y **los workflows programados se desactivan solos tras 60 días sin
+actividad** en el repositorio.
 
 ### Espacio en disco
 

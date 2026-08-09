@@ -20,6 +20,32 @@
 
     <properties>
         <java.version>17</java.version>
+
+        <!--
+            Parche de seguridad del Tomcat embebido, agregado por DevOps.
+
+            Spring Boot 3.3.0 trae Tomcat 10.1.24, que arrastra cuatro
+            vulnerabilidades CRITICAS con parche publicado:
+
+              CVE-2025-24813  ejecucion remota de codigo por subida de archivos
+              CVE-2026-41293  cabeceras HTTP/2 sin validar
+              CVE-2026-43512  omision de autenticacion digest
+              CVE-2026-43515  autorizacion incorrecta
+
+            Actualizar Spring Boot NO las resuelve: hasta la 3.5.3 siguen
+            fijando Tomcat 10.1.42. Se comprobo consultando el BOM de cada
+            version.
+
+            Sobrescribir esta unica propiedad es lo mas acotado que se puede
+            hacer: mantiene la version de Spring Boot que eligio el equipo y
+            solo mueve Tomcat dentro de su misma linea 10.1.x, que es
+            compatible a nivel de API.
+
+            Cuando el equipo suba a un Spring Boot que ya traiga 10.1.55 o
+            superior, esta linea se puede borrar. El escaneo de Trivy en CI
+            avisa si se queda corta.
+        -->
+        <tomcat.version>10.1.55</tomcat.version>
     </properties>
 
     <dependencies>

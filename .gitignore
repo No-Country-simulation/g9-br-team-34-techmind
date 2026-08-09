@@ -36,3 +36,27 @@ venv/
 # de arriba no las cubre.
 .env.*
 !.env.example
+
+### Terraform ###
+
+# El estado es lo mas sensible de todo el repositorio: guarda en claro los OCID
+# de la cuenta y los valores de cualquier recurso creado. Nunca se versiona.
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Proveedores descargados: cientos de MB, y se recuperan con `terraform init`.
+.terraform/
+crash.log
+crash.*.log
+
+# Valores concretos de la cuenta. Solo se versiona el .example.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Planes guardados: pueden contener valores sensibles resueltos.
+*.tfplan
+
+# .terraform.lock.hcl SI se versiona a proposito: fija las versiones exactas de
+# los proveedores para que dos personas no apliquen con proveedores distintos.

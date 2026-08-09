@@ -148,16 +148,42 @@ OCI_REGION=
 OCI_BUCKET_NAME=techmind-models
 OCI_MODEL_OBJECT=model.joblib
 
+# Bucket de respaldos. Es distinto del de modelos a proposito: la VM puede
+# escribir aqui, pero sobre el de modelos es de solo lectura.
+OCI_BUCKET_RESPALDOS=techmind-backups
+
 # --- Version desplegada (la actualiza el workflow de CD) ---
 IMAGE_TAG=latest
 
 # --- Backend ---
 BACKEND_PORT=8080
 DB_USERNAME=techmind
+
+# ATENCION: DB_PASSWORD se elige UNA sola vez.
+# H2 crea la base con esta contrasena en el primer arranque. Cambiarla despues
+# hace que el backend falle con "Wrong user name or password" y el unico arreglo
+# es borrar el volumen, perdiendo todos los datos.
+# Generar con: openssl rand -base64 24
 DB_PASSWORD=
+
+# Generar con: openssl rand -hex 32
 TECHMIND_API_KEY=
+
 CORS_ALLOWED_ORIGINS=
 INFERENCE_SERVICE_TIMEOUT_MS=8000
+
+# --- HTTPS (opcional) ---
+#
+# Descomentar las dos lineas para levantar el proxy inverso con certificado
+# automatico de Let's Encrypt. El dominio de sslip.io se arma con la IP publica
+# de esta maquina y los puntos cambiados por guiones.
+#
+# ANTES hay que abrir 80 y 443 en la Security List:
+#   terraform apply -var 'habilitar_https=true'
+#
+# COMPOSE_PROFILES=https
+# TECHMIND_DOMINIO=techmind.140-238-1-2.sslip.io
+# TECHMIND_EMAIL_TLS=tu-correo@ejemplo.com
 PLANTILLA
   chmod 600 "${DIRECTORIO_APP}/.env"
   ok "Plantilla de .env creada en ${DIRECTORIO_APP}/.env (permisos 600)"
@@ -189,6 +215,48 @@ JSON
 else
   ok "/etc/docker/daemon.json ya existia, no se toca"
 fi
+
+# --------------------------------------------------------------------------
+paso "Programando el respaldo diario de la base de datos"
+
+# El respaldo corre a las 04:00 UTC: la franja de menos trafico, y ademas la
+# unica en la que la pausa de un segundo del backend no le molesta a nadie.
+#
+# Se instala en /etc/cron.d y no en el crontab del usuario porque asi queda
+# versionable, visible para cualquiera que entre a la maquina, y sobrevive si el
+# usuario cambia.
+if [ -f "${DIRECTORIO_APP}/backup-datos.sh" ]; then
+  sudo tee /etc/cron.d/techmind-respaldo > /dev/null <<CRON
+# Respaldo diario de la base de TechMind hacia Object Storage.
+# Lo instala scripts/provision-vm.sh. La salida queda en /var/log/techmind-respaldo.log
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+0 4 * * * ${USUARIO} /bin/bash ${DIRECTORIO_APP}/backup-datos.sh >> /var/log/techmind-respaldo.log 2>&1
+CRON
+  sudo chmod 0644 /etc/cron.d/techmind-respaldo
+  sudo touch /var/log/techmind-respaldo.log
+  sudo chown "${USUARIO}:${USUARIO}" /var/log/techmind-respaldo.log
+  ok "Respaldo diario programado a las 04:00 UTC"
+  aviso "Requiere el bucket de respaldos y su policy: ver infra/terraform/"
+else
+  aviso "No se encontro ${DIRECTORIO_APP}/backup-datos.sh"
+  aviso "El respaldo se programara en el proximo despliegue, que copia el script."
+fi
+
+# La rotacion del log del respaldo: sin esto crece indefinidamente, que es
+# justo el problema que este script intenta evitar en el resto de la maquina.
+sudo tee /etc/logrotate.d/techmind-respaldo > /dev/null <<'ROTACION'
+/var/log/techmind-respaldo.log {
+    weekly
+    rotate 4
+    compress
+    missingok
+    notifempty
+    copytruncate
+}
+ROTACION
+ok "Rotacion del log de respaldos configurada"
 
 # --------------------------------------------------------------------------
 paso "Verificacion final"

@@ -273,11 +273,16 @@ jobs:
           HOST: ${{ vars.OCI_HOST }}
           USUARIO: ${{ vars.OCI_SSH_USER }}
         run: |
-          # Solo viajan los dos archivos de orquestacion. El codigo fuente NO se
+          # Solo viajan los archivos de orquestacion. El codigo fuente NO se
           # copia: lo que se despliega son las imagenes ya construidas y probadas
           # en CI, no una compilacion hecha en el servidor.
+          #
+          # El Caddyfile viaja siempre, aunque el perfil `https` este apagado:
+          # cuesta 2 KB y evita el escenario de activar HTTPS en el .env y que el
+          # despliegue falle porque el archivo de configuracion no esta.
           scp -i ~/.ssh/id_deploy \
             docker-compose.yml docker-compose.prod.yml \
+            caddy/Caddyfile scripts/backup-datos.sh \
             "${USUARIO}@${HOST}:/opt/techmind/"
 
       - name: Desplegar

@@ -189,6 +189,64 @@ jobs:
           cache-from: type=gha,scope=ml-service
           cache-to: type=gha,mode=max,scope=ml-service
 
+      # =====================================================================
+      # Vulnerabilidades conocidas en las imagenes
+      # =====================================================================
+      #
+      # El umbral esta puesto donde es accionable: CRITICAS y QUE TENGAN
+      # ARREGLO DISPONIBLE.
+      #
+      # `ignore-unfixed: true` es la clave. Las imagenes base arrastran siempre
+      # unas cuantas vulnerabilidades sin parche publicado; hacer fallar el
+      # build por algo que nadie puede arreglar convierte el escaneo en un
+      # obstaculo que el equipo termina desactivando. Con este filtro, un fallo
+      # significa "hay una actualizacion que deberias aplicar", que si merece
+      # detener el pipeline.
+      - name: Escanear la imagen del backend
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: techmind/backend:ci
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          vuln-type: os,library
+
+      - name: Escanear la imagen del ml-service
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: techmind/ml-service:ci
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          vuln-type: os,library
+
+      # Informe completo (todas las severidades) para cuando alguien quiera
+      # mirar el detalle. `if: always()` porque interesa sobre todo cuando el
+      # paso anterior fallo.
+      - name: Informe detallado de vulnerabilidades
+        if: always()
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: techmind/backend:ci
+          format: table
+          severity: CRITICAL,HIGH,MEDIUM
+          ignore-unfixed: false
+          exit-code: '0'
+          output: trivy-backend.txt
+
+      - name: Publicar el informe en el resumen
+        if: always()
+        run: |
+          {
+            echo "### Vulnerabilidades de la imagen del backend"
+            echo ""
+            echo '```'
+            head -60 trivy-backend.txt 2>/dev/null || echo "(sin informe)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # Validar la sintaxis del compose aqui evita el escenario clasico: las dos
       # imagenes construyen bien, el despliegue arranca, y falla por una comilla
       # mal puesta en el YAML.
