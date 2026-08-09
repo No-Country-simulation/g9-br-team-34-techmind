@@ -2,6 +2,7 @@ package com.api.techmind_g9_team34.api_techmind.controller;
 
 import com.api.techmind_g9_team34.api_techmind.client.ModeloInferenciaClient;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
+import com.api.techmind_g9_team34.api_techmind.exception.ModeloServiceException;
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
 import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,6 +22,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -254,6 +256,137 @@ class ContenidoControllerTest {
 
         mockMvc.perform(get("/api/v1/contenidos").param("size", "-5"))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ---------- TM-049 / TM-068: GET /{id}/relacionados ----------
+
+    @Test
+    void deberiaDevolverRelacionadosDeLaMismaCategoriaOrdenadosPorCoincidencias() throws Exception {
+        ContenidoAnalizado base = conPalabras("Base", "Backend", List.of("java", "spring", "jpa"));
+        ContenidoAnalizado tresCoincidencias =
+                conPalabras("Tres", "Backend", List.of("java", "spring", "jpa"));
+        ContenidoAnalizado unaCoincidencia =
+                conPalabras("Una", "Backend", List.of("java", "kotlin"));
+
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", base.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                // El de más palabras en común va primero.
+                .andExpect(jsonPath("$[0].id").value(tresCoincidencias.getId().toString()))
+                .andExpect(jsonPath("$[1].id").value(unaCoincidencia.getId().toString()));
+    }
+
+    @Test
+    void noDeberiaIncluirElContenidoBaseEntreSusRelacionados() throws Exception {
+        ContenidoAnalizado base = conPalabras("Base", "Backend", List.of("java", "spring"));
+        conPalabras("Otro", "Backend", List.of("java"));
+
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", base.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == '" + base.getId() + "')]", hasSize(0)));
+    }
+
+    @Test
+    void noDeberiaDevolverContenidosDeOtraCategoria() throws Exception {
+        ContenidoAnalizado base = conPalabras("Base", "Backend", List.of("java", "spring"));
+        conPalabras("Otra categoría", "Frontend", List.of("java", "spring"));
+
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", base.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void deberiaDevolverListaVaciaSiNoHaySimilares() throws Exception {
+        ContenidoAnalizado base = conPalabras("Base", "Backend", List.of("java"));
+        conPalabras("Sin nada en común", "Backend", List.of("python", "django"));
+
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", base.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void deberiaDevolver404SiElContenidoBaseNoExiste() throws Exception {
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void deberiaDevolver400EnRelacionadosSiElIdNoEsUuid() throws Exception {
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", "no-es-un-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    void deberiaDevolverComoMaximo5RelacionadosSinParametroLimite() throws Exception {
+        ContenidoAnalizado base = conPalabras("Base", "Backend", List.of("java"));
+        for (int i = 0; i < 8; i++) {
+            conPalabras("Relacionado " + i, "Backend", List.of("java"));
+        }
+
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", base.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(5)));
+    }
+
+    @Test
+    void deberiaRespetarElParametroLimiteCuandoEsMenorAlMaximo() throws Exception {
+        ContenidoAnalizado base = conPalabras("Base", "Backend", List.of("java"));
+        for (int i = 0; i < 8; i++) {
+            conPalabras("Relacionado " + i, "Backend", List.of("java"));
+        }
+
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", base.getId())
+                        .param("limite", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)));
+    }
+
+    @Test
+    void deberiaAcotarA20UnLimiteMayorAlMaximo() throws Exception {
+        ContenidoAnalizado base = conPalabras("Base", "Backend", List.of("java"));
+        for (int i = 0; i < 25; i++) {
+            conPalabras("Relacionado " + i, "Backend", List.of("java"));
+        }
+
+        // Decisión de TM-068: se acota a 20 en lugar de rechazar con 400.
+        mockMvc.perform(get("/api/v1/contenidos/{id}/relacionados", base.getId())
+                        .param("limite", "50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(20)));
+    }
+
+    // ---------- TM-044: servicio de inferencia caído ----------
+
+    @Test
+    void deberiaDevolver503CuandoElServicioDeInferenciaFalla() throws Exception {
+        when(modeloInferenciaClient.predecir(any()))
+                .thenThrow(new ModeloServiceException(
+                        "El servicio de inferencia no está disponible."));
+
+        String body = """
+                {"titulo":"Introducción a Spring Boot",
+                 "texto":"Contenido técnico con más de veinte caracteres para pasar la validación."}
+                """;
+
+        mockMvc.perform(post("/api/v1/contenidos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value(503));
+    }
+
+    private ContenidoAnalizado conPalabras(String titulo, String categoria, List<String> palabras) {
+        return repository.save(ContenidoAnalizado.builder()
+                .titulo(titulo)
+                .texto("Texto de prueba con más de veinte caracteres válidos.")
+                .categoria(categoria)
+                .probabilidad(0.9)
+                .palabrasClave(palabras)
+                .build());
     }
 
     private ContenidoAnalizado contenido(String titulo, String categoria, double probabilidad) {
