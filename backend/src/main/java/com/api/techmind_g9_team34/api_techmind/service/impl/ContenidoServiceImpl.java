@@ -175,6 +175,14 @@ public class ContenidoServiceImpl implements ContenidoService {
                         archivo.getInputStream(),
                         StandardCharsets.UTF_8))) {
 
+            String nombreArchivo = archivo.getOriginalFilename();
+
+            if (nombreArchivo == null
+                    || !nombreArchivo.toLowerCase().endsWith(".csv")) {
+                throw new ValidacionException(
+                        "El archivo debe ser un CSV (extensión .csv).");
+            }
+
             String encabezado = reader.readLine();
 
             if (encabezado == null) {
@@ -182,7 +190,7 @@ public class ContenidoServiceImpl implements ContenidoService {
                         "El archivo CSV está vacío.");
             }
 
-            String[] columnasEncabezado = encabezado.split(",", -1);
+            String[] columnasEncabezado = parsearLineaCsv(encabezado);
 
             if (columnasEncabezado.length != 2
                     || !columnasEncabezado[0].trim().equalsIgnoreCase("titulo")
@@ -212,7 +220,7 @@ public class ContenidoServiceImpl implements ContenidoService {
 
                 filas++;
 
-                String[] columnas = filaLinea.split(",", 2);
+                String[] columnas = parsearLineaCsv(filaLinea);
 
                 if (columnas.length < 2) {
                     resultados.add(new FilaResultadoDTO(
@@ -277,6 +285,37 @@ public class ContenidoServiceImpl implements ContenidoService {
                 procesadosConError,
                 resultados
         );
+    }
+
+    private String[] parsearLineaCsv(String linea) {
+        List<String> campos = new ArrayList<>();
+        StringBuilder actual = new StringBuilder();
+        boolean dentroDeComillas = false;
+
+        for (int i = 0; i < linea.length(); i++) {
+            char c = linea.charAt(i);
+            if (dentroDeComillas) {
+                if (c == '"') {
+                    if (i + 1 < linea.length() && linea.charAt(i + 1) == '"') {
+                        actual.append('"');
+                        i++;
+                    } else {
+                        dentroDeComillas = false;
+                    }
+                } else {
+                    actual.append(c);
+                }
+            } else if (c == '"') {
+                dentroDeComillas = true;
+            } else if (c == ',') {
+                campos.add(actual.toString());
+                actual.setLength(0);
+            } else {
+                actual.append(c);
+            }
+        }
+        campos.add(actual.toString());
+        return campos.toArray(new String[0]);
     }
 
     /**

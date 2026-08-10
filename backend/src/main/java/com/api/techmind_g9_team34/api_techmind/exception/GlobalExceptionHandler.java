@@ -6,11 +6,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
@@ -123,6 +127,39 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.PAYLOAD_TOO_LARGE,
                         "El archivo supera el tamaño máximo permitido.",
+                        request.getRequestURI()));
+    }
+
+    /**
+     * Solicitud no multipart o sin el campo {@code archivo} en el lote
+     * ({@code POST /contenidos/lote}). Sin esto respondía 500 en lugar de 400
+     * (detectado en pruebas de aceptación de TM-052).
+     */
+    @ExceptionHandler({MultipartException.class, MissingServletRequestPartException.class,
+            MissingServletRequestParameterException.class})
+    public ResponseEntity<ErrorResponseDTO> handleMultipartAusente(
+            Exception ex, HttpServletRequest request) {
+        return ResponseEntity
+                .badRequest()
+                .body(ErrorResponseDTO.of(
+                        HttpStatus.BAD_REQUEST,
+                        "La solicitud debe incluir el campo 'archivo' en formato multipart/form-data.",
+                        request.getRequestURI()));
+    }
+
+    /**
+     * {@code Content-Type} que el endpoint no soporta, p. ej. un POST JSON
+     * enviado como {@code text/plain}. La especificación (Sección 4.1) exige
+     * 400 y no 415 para este caso; sin este handler respondía 500.
+     */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        return ResponseEntity
+                .badRequest()
+                .body(ErrorResponseDTO.of(
+                        HttpStatus.BAD_REQUEST,
+                        "El Content-Type de la solicitud debe ser application/json.",
                         request.getRequestURI()));
     }
 
