@@ -94,6 +94,20 @@ class ContenidoControllerTest {
     }
 
     @Test
+    void deberiaDevolver400CuandoElBodyNoCumpleLasValidaciones() throws Exception {
+        mockMvc.perform(post("/api/v1/contenidos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"titulo": "",
+                                 "texto": "corto"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").isNotEmpty())
+                .andExpect(jsonPath("$.errores[0].campo").exists())
+                .andExpect(jsonPath("$.errores[0].mensaje").isNotEmpty());
+    }
+
+    @Test
     void deberiaDevolver200ConContenidoCompletoPorId() throws Exception {
         ContenidoAnalizado entity = repository.save(ContenidoAnalizado.builder()
                 .titulo("Título")
