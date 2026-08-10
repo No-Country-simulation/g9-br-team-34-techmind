@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
@@ -122,6 +123,24 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.PAYLOAD_TOO_LARGE,
                         "El archivo supera el tamaño máximo permitido.",
+                        request.getRequestURI()));
+    }
+
+    /**
+     * Recurso estático o ruta sin controlador, p. ej. el {@code favicon.ico}
+     * que los navegadores piden solos o una URL inexistente.
+     *
+     * <p>Sin este handler, la excepción cae en el catch-all
+     * ({@link #handleGeneral}) y la API responde 500 con stack trace en el log.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleNoResource(
+            NoResourceFoundException ex, HttpServletRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponseDTO.of(
+                        HttpStatus.NOT_FOUND,
+                        "El recurso solicitado no existe.",
                         request.getRequestURI()));
     }
 
