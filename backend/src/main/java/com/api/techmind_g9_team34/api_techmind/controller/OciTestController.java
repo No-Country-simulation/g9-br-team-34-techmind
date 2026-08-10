@@ -1,20 +1,20 @@
 package com.api.techmind_g9_team34.api_techmind.controller;
 
+import com.api.techmind_g9_team34.api_techmind.dto.response.OciPruebaResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.service.OciBucketService;
-import com.oracle.bmc.model.BmcException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 /**
  * Endpoint temporal de prueba de integración con OCI Object Storage (TM-014).
- * Sube y descarga un archivo de prueba para validar credenciales y permisos
- * antes de que otros componentes dependan de esta integración.
+ *
+ * <p>Delega toda la lógica (subir, descargar y comparar) en
+ * {@link OciBucketService}; el controlador solo decide el código HTTP según el
+ * resultado de la prueba (TM-057: usar exclusivamente DTOs y no contener lógica
+ * de negocio).
  */
 @RestController
 @ConditionalOnProperty(name = "techmind.oci.enabled", matchIfMissing = true)
@@ -27,33 +27,11 @@ public class OciTestController {
     }
 
     @PostMapping("/api/test/oci")
-    public ResponseEntity<Map<String, Object>> probarIntegracionOci() {
-        String objectName = "prueba-integracion.txt";
-        String contenidoOriginal = "Archivo de prueba - " + System.currentTimeMillis();
-
-        Map<String, Object> resultado = new LinkedHashMap<>();
-
-        try {
-            ociBucketService.subirArchivoDePrueba(objectName, contenidoOriginal);
-            resultado.put("subida", "OK");
-
-            String contenidoDescargado = ociBucketService.descargarArchivoDePrueba(objectName);
-            resultado.put("descarga", "OK");
-
-            boolean coincide = contenidoOriginal.equals(contenidoDescargado);
-            resultado.put("contenidoCoincide", coincide);
-            resultado.put("objectName", objectName);
-
-            return ResponseEntity.ok(resultado);
-
-        } catch (BmcException e) {
-            // Documentación de errores de credenciales/permisos
-            resultado.put("error", true);
-            resultado.put("codigoHttp", e.getStatusCode());
-            resultado.put("mensaje", e.getMessage());
-            resultado.put("opcRequestId", e.getOpcRequestId());
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resultado);
-        }
+    public ResponseEntity<OciPruebaResultadoDTO> probarIntegracionOci() {
+        OciPruebaResultadoDTO resultado = ociBucketService.probarIntegracion();
+        HttpStatus status = resultado.error()
+                ? HttpStatus.INTERNAL_SERVER_ERROR
+                : HttpStatus.OK;
+        return ResponseEntity.status(status).body(resultado);
     }
 }
