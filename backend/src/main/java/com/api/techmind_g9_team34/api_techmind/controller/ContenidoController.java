@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -104,6 +105,33 @@ public class ContenidoController {
      * {@code GlobalExceptionHandler} vía {@code MethodArgumentTypeMismatchException},
      * TM-064).
      */
+    /**
+     * TM-049 y TM-068 — Contenidos relacionados a uno dado.
+     *
+     * <p>Devuelve 200 con la lista (posiblemente vacía si no hay similares),
+     * 404 si el contenido base no existe y 400 si el path variable no tiene
+     * formato UUID — este último lo resuelve {@code GlobalExceptionHandler} vía
+     * {@code MethodArgumentTypeMismatchException} (TM-064), sin llegar al
+     * repositorio.
+     *
+     * <p>{@code limite} es opcional: ausente equivale a 5 y los valores mayores
+     * a 20 se acotan a 20 en lugar de rechazarse (decisión de TM-068,
+     * documentada en {@code ContenidoService}).
+     */
+    @GetMapping("/{id}/relacionados")
+    public ResponseEntity<List<ContenidoResumenDTO>> obtenerRelacionados(
+            @PathVariable UUID id,
+            @RequestParam(name = "limite", required = false) Integer limite,
+            HttpServletRequest httpRequest) {
+
+        logger.info("Solicitud recibida para {}", httpRequest.getRequestURI());
+
+        List<ContenidoResumenDTO> response =
+                contenidoService.obtenerRelacionados(id, limite);
+
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarContenido(
             @PathVariable UUID id,

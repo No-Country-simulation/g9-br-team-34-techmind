@@ -18,6 +18,7 @@ import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepo
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ContenidoServiceImpl implements ContenidoService {
@@ -295,5 +300,81 @@ public class ContenidoServiceImpl implements ContenidoService {
                     "No existe un contenido procesado con el id indicado.");
         }
         contenidoRepository.deleteById(id);
+    }
+
+    /** TM-068 — Cantidad de relacionados devuelta si el cliente no pide otra. */
+    private static final int LIMITE_RELACIONADOS_POR_DEFECTO = 5;
+
+    /** TM-068 — Tope duro de relacionados; los valores mayores se acotan a este. */
+    private static final int LIMITE_RELACIONADOS_MAXIMO = 20;
+
+    /**
+     * TM-049 y TM-068 — Contenidos relacionados a uno dado.
+     *
+     * <p>Se resuelve en tres pasos: cargar el contenido base (que además valida
+     * su existencia para el 404), pedir al repositorio los ids relacionados ya
+     * ordenados por similitud, y rehidratar esos ids conservando el orden.
+     *
+     * <p>La rehidratación necesita el reordenamiento manual porque
+     * {@code findAllById} no garantiza devolver las entidades en el orden en que
+     * se pidieron: perdería el ranking por cantidad de coincidencias, que es
+     * justamente el resultado del cálculo.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContenidoResumenDTO> obtenerRelacionados(UUID id, Integer limite) {
+        ContenidoAnalizado base = contenidoRepository.findById(id)
+                .orElseThrow(() -> new ContenidoNoEncontradoException(
+                        "No existe un contenido procesado con el id indicado."));
+
+        // Sin palabras clave no hay nada que comparar: se corta antes de ir a
+        // base, porque la consulta con una colección vacía daría error en el IN.
+        if (base.getPalabrasClave() == null || base.getPalabrasClave().isEmpty()) {
+            return List.of();
+        }
+
+        List<String> palabrasNormalizadas = base.getPalabrasClave().stream()
+                .filter(Objects::nonNull)
+                .map(p -> p.toLowerCase(Locale.ROOT))
+                .distinct()
+                .toList();
+
+        if (palabrasNormalizadas.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> idsOrdenados = contenidoRepository.findIdsRelacionados(
+                id,
+                base.getCategoria(),
+                palabrasNormalizadas,
+                PageRequest.of(0, normalizarLimite(limite)));
+
+        if (idsOrdenados.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, ContenidoAnalizado> porId = contenidoRepository.findAllById(idsOrdenados)
+                .stream()
+                .collect(Collectors.toMap(ContenidoAnalizado::getId, c -> c));
+
+        return idsOrdenados.stream()
+                .map(porId::get)
+                .filter(Objects::nonNull)
+                .map(mapper::toResumenDTO)
+                .toList();
+    }
+
+    /**
+     * TM-068 — Traduce el parámetro {@code limite} recibido a un valor usable.
+     *
+     * <p>Nulo o menor a uno cae al valor por defecto; por encima del máximo se
+     * acota en lugar de rechazarse. La decisión de acotar y no devolver 400 está
+     * documentada en {@link ContenidoService#obtenerRelacionados}.
+     */
+    private int normalizarLimite(Integer limite) {
+        if (limite == null || limite < 1) {
+            return LIMITE_RELACIONADOS_POR_DEFECTO;
+        }
+        return Math.min(limite, LIMITE_RELACIONADOS_MAXIMO);
     }
 }

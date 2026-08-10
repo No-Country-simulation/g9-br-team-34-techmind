@@ -8,6 +8,7 @@ import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ContenidoService {
@@ -59,5 +60,31 @@ public interface ContenidoService {
      *         si no existe un contenido con ese id
      */
     void eliminarContenido(UUID id);
+
+    /**
+     * Devuelve contenidos relacionados a uno dado.
+     *
+     * <p>TM-049 y TM-068. El criterio de relación es <b>misma categoría y al
+     * menos una palabra clave compartida</b>, ordenado por cantidad de palabras
+     * en común de mayor a menor. Es determinístico y no consulta al servicio de
+     * inferencia: la especificación de la API deja el algoritmo a criterio del
+     * equipo, y resolverlo en base evita depender de un endpoint de similitud
+     * que Ciencia de Datos no expone.
+     *
+     * <p>El contenido base nunca aparece entre sus propios relacionados.
+     *
+     * <p>Sobre {@code limite} (TM-068): {@code null} equivale al valor por
+     * defecto (5) y cualquier valor mayor al máximo se acota a 20 en lugar de
+     * rechazarse con 400. Se elige acotar porque pedir "los 50 más parecidos"
+     * es una intención razonable del cliente y no un error de uso; devolver los
+     * 20 mejores lo satisface mejor que un error.
+     *
+     * @param id      contenido base
+     * @param limite  cantidad máxima de resultados; nulo usa 5, mayor a 20 se acota a 20
+     * @return relacionados del más al menos similar; lista vacía si no hay ninguno
+     * @throws com.api.techmind_g9_team34.api_techmind.exception.ContenidoNoEncontradoException
+     *         si no existe un contenido con ese id
+     */
+    List<ContenidoResumenDTO> obtenerRelacionados(UUID id, Integer limite);
 
 }
