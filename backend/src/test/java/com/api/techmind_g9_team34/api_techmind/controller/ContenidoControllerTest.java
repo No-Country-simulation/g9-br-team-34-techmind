@@ -25,6 +25,8 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -387,6 +389,50 @@ class ContenidoControllerTest {
                 .probabilidad(0.9)
                 .palabrasClave(palabras)
                 .build());
+    }
+
+    // ---------- TM-051: DELETE /api/v1/contenidos/{id} ----------
+
+    @Test
+    void deberiaDevolver204YEliminarElContenidoExistente() throws Exception {
+        ContenidoAnalizado entity = contenido("Guía de Spring Data JPA", "Backend", 0.91);
+        UUID id = entity.getId();
+
+        mockMvc.perform(delete("/api/v1/contenidos/{id}", id))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        // El 204 por sí solo no prueba que la fila se haya borrado: se verifica
+        // contra el repositorio, que es la única fuente de verdad.
+        assertThat(repository.findById(id)).isEmpty();
+    }
+
+    @Test
+    void deberiaDevolver404AlEliminarUnIdInexistente() throws Exception {
+        UUID idInexistente = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/contenidos/{id}", idInexistente))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void deberiaDevolver400AlEliminarConUnIdQueNoEsUuid() throws Exception {
+        mockMvc.perform(delete("/api/v1/contenidos/{id}", "no-es-un-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    void noDeberiaEliminarOtrosContenidosAlBorrarUno() throws Exception {
+        ContenidoAnalizado aBorrar = contenido("Contenido a borrar", "Backend", 0.90);
+        ContenidoAnalizado aConservar = contenido("Contenido a conservar", "Frontend", 0.80);
+
+        mockMvc.perform(delete("/api/v1/contenidos/{id}", aBorrar.getId()))
+                .andExpect(status().isNoContent());
+
+        // Protege contra un deleteAll accidental o un borrado por criterio erróneo.
+        assertThat(repository.findById(aConservar.getId())).isPresent();
     }
 
     private ContenidoAnalizado contenido(String titulo, String categoria, double probabilidad) {
