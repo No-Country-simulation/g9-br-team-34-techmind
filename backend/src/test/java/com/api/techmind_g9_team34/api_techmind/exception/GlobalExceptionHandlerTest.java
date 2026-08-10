@@ -3,8 +3,10 @@ package com.api.techmind_g9_team34.api_techmind.exception;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -155,6 +157,37 @@ class GlobalExceptionHandlerTest {
                 "/api/v1/contenidos",
                 body.path()
         );
+        assertNotNull(body.timestamp());
+        assertNull(body.errores());
+    }
+
+    @Test
+    void debeTraducirNoResourceFoundA404YNoCaerEnElCatchAll() {
+        when(request.getRequestURI())
+                .thenReturn("/favicon.ico");
+
+        NoResourceFoundException exception =
+                new NoResourceFoundException(HttpMethod.GET, "favicon.ico");
+
+        ResponseEntity<ErrorResponseDTO> response =
+                handler.handleNoResource(exception, request);
+
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                response.getStatusCode()
+        );
+
+        assertNotNull(response.getBody());
+
+        ErrorResponseDTO body = response.getBody();
+
+        assertEquals(404, body.status());
+        assertEquals("Not Found", body.error());
+        assertEquals(
+                "El recurso solicitado no existe.",
+                body.message()
+        );
+        assertEquals("/favicon.ico", body.path());
         assertNotNull(body.timestamp());
         assertNull(body.errores());
     }
