@@ -52,7 +52,7 @@ RUN mv target/*.jar /build/app.jar
 #
 # Cuesta unos 100 MB mas que Alpine. Es el precio de que la imagen exista para
 # la arquitectura a la que se despliega.
-FROM eclipse-temurin:17-jre-jammy AS runtime
+FROM eclipse-temurin:25-jre-jammy AS runtime
 
 # Usuario sin privilegios (mismo criterio que en el ml-service).
 # Estas son las opciones largas de `adduser` de Debian, que es lo que trae esta
