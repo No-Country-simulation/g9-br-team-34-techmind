@@ -1,0 +1,65 @@
+# Proxy inverso con HTTPS automatico.
+#
+# Caddy resuelve solo lo que con nginx serian tres piezas separadas: obtener el
+# certificado de Let's Encrypt, renovarlo antes de que venza, y redirigir HTTP a
+# HTTPS. No hay certbot, ni cron de renovacion, ni nada que se venza en 90 dias
+# y tire el sitio un domingo.
+#
+# El dominio entra por variable de entorno para que este archivo no tenga que
+# cambiar cuando cambia la IP de la VM. Se define en /opt/techmind/.env:
+#
+#   TECHMIND_DOMINIO=techmind.140-238-1-2.sslip.io
+#
+# sslip.io es un servicio publico que resuelve cualquier IP codificada en el
+# nombre. No hay que registrar ni pagar nada, y a Let's Encrypt le sirve igual
+# que un dominio propio.
+{
+	# Email para los avisos de vencimiento de Let's Encrypt. Si queda vacio,
+	# Caddy pide el certificado igual, pero nadie se entera si algo falla.
+	email {$TECHMIND_EMAIL_TLS:admin@example.com}
+
+	# Sin esta linea Caddy publica su propia API de administracion en el 2019.
+	# No la usamos y no tiene por que estar escuchando.
+	admin off
+}
+
+{$TECHMIND_DOMINIO} {
+	# El backend se alcanza por el nombre del servicio en la red interna del
+	# compose. Nunca por IP ni por localhost: dentro de un contenedor, localhost
+	# es ese mismo contenedor.
+	reverse_proxy backend:8080 {
+		# Sin estas cabeceras, Spring cree que toda peticion llega por HTTP
+		# plano, y cualquier URL que construya (redirecciones, enlaces de
+		# Swagger) saldria con http:// y el navegador la bloquearia por
+		# contenido mixto.
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+		header_up X-Real-IP {remote_host}
+	}
+
+	encode gzip
+
+	header {
+		# HSTS: el navegador recuerda que este dominio es solo HTTPS y no vuelve
+		# a intentar por HTTP, ni siquiera la primera redireccion.
+		Strict-Transport-Security "max-age=31536000"
+
+		# Evita que un navegador adivine el tipo de contenido y termine
+		# ejecutando como script algo que la API devolvio como texto.
+		X-Content-Type-Options "nosniff"
+
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+
+		# No hace falta anunciar el servidor.
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+		# Los healthchecks del propio contenedor generarian una linea de log
+		# cada quince segundos y ahogarian todo lo demas.
+		level WARN
+	}
+}

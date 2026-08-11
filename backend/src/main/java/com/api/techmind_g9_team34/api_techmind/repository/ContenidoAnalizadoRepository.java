@@ -1,10 +1,17 @@
 package com.api.techmind_g9_team34.api_techmind.repository;
 
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
+import com.api.techmind_g9_team34.api_techmind.repository.projection.ConteoCategoria;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,7 +41,9 @@ import java.util.UUID;
  * quede documentada y visible.
  */
 @Repository
-public interface ContenidoAnalizadoRepository extends JpaRepository<ContenidoAnalizado, UUID> {
+public interface ContenidoAnalizadoRepository extends
+        JpaRepository<ContenidoAnalizado, UUID>,
+        JpaSpecificationExecutor<ContenidoAnalizado> {
 
     /**
      * Busca un contenido por id, trayendo sus palabras clave en la misma consulta.
@@ -84,4 +93,80 @@ public interface ContenidoAnalizadoRepository extends JpaRepository<ContenidoAna
      */
     @EntityGraph(attributePaths = "palabrasClave")
     List<ContenidoAnalizado> findByCategoria(String categoria);
+
+    /**
+     * Devuelve las categorías distintas presentes en la base de datos.
+     *
+     * <p>Consumidor previsto: TM-038 ({@code GET /api/v1/categorias}). Sin
+     * orden definido en esta versión (TM-038); el conteo agrupado lo agrega
+     * TM-067.
+     *
+     * @return lista de categorías distintas; vacía si no hay contenidos
+     */
+    @Query("select distinct c.categoria from ContenidoAnalizado c")
+    List<String> findCategoriasDistintas();
+
+    /**
+     * TM-049 — Busca contenidos relacionados a uno dado.
+     *
+     * <p>Criterio de relación: <b>misma categoría y al menos una palabra clave
+     * compartida</b>, ordenando de mayor a menor cantidad de palabras clave en
+     * común. Es determinístico y no depende del servicio de inferencia; la
+     * especificación de la API deja el algoritmo a criterio del equipo.
+     *
+     * <p>Detalles de la consulta que conviene tener presentes:
+     *
+     * <ul>
+     *   <li><b>Se excluye el propio contenido base</b> ({@code c.id <> :id}).
+     *       Sin eso siempre saldría primero, porque comparte todas sus palabras
+     *       clave consigo mismo.</li>
+     *   <li>El {@code join} sobre {@code palabrasClave} recorre la tabla
+     *       {@code contenido_palabras_clave}; cada coincidencia produce una fila,
+     *       y el {@code group by} las colapsa en un contenido por grupo.</li>
+     *   <li>El desempate por {@code fechaProcesamiento} descendente evita que
+     *       dos contenidos con la misma cantidad de coincidencias salgan en
+     *       orden aleatorio entre ejecuciones, lo que haría los tests
+     *       intermitentes.</li>
+     *   <li>Las palabras clave se comparan en minúsculas: el modelo puede
+     *       devolver "Java" y "java" como formas distintas de lo mismo.</li>
+     * </ul>
+     *
+     * <p>Devuelve identificadores y no entidades porque el orden lo impone el
+     * {@code group by}, y volver a traer las entidades con {@code findAllById}
+     * lo perdería. El servicio reordena según esta lista.
+     *
+     * @param id         contenido base
+     * @param categoria  categoría del contenido base
+     * @param pageable   límite de resultados (TM-068)
+     * @return ids de los contenidos relacionados, del más al menos similar
+     */
+    @Query("""
+            select c.id
+            from ContenidoAnalizado c
+            join c.palabrasClave p
+            where c.id <> :id
+              and c.categoria = :categoria
+              and lower(p) in :palabrasClave
+            group by c.id, c.fechaProcesamiento
+            order by count(p) desc, c.fechaProcesamiento desc
+            """)
+    List<UUID> findIdsRelacionados(
+            @Param("id") UUID id,
+            @Param("categoria") String categoria,
+            @Param("palabrasClave") Collection<String> palabrasClave,
+            Pageable pageable);
+
+    /**
+     * Cuenta los contenidos agrupados por categoría.
+     *
+     * <p>Consumidor previsto: TM-067 ({@code GET /api/v1/categorias}). Los
+     * alias del {@code select} ({@code categoria}, {@code cantidadProcesados})
+     * deben coincidir con los getters de {@link ConteoCategoria}. Se ordena por
+     * categoría para un resultado determinístico.
+     *
+     * @return conteo por categoría ordenado alfabéticamente
+     */
+    @Query("select c.categoria as categoria, count(c) as cantidadProcesados " +
+            "from ContenidoAnalizado c group by c.categoria order by c.categoria")
+    List<ConteoCategoria> contarPorCategoria();
 }

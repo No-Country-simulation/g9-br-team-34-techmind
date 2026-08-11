@@ -1,0 +1,4 @@
+titulo,texto
+"Introduccion a Docker","Docker permite empaquetar aplicaciones en contenedores portables con volumenes y redes para simplificar el despliegue de software."
+"Fundamentos de SQL","El lenguaje SQL permite consultar y manipular bases de datos relacionales de forma declarativa y eficiente."
+"Conceptos de Git","Git es un sistema de control de versiones distribuido que permite rastrear cambios en el codigo fuente de un proyecto."

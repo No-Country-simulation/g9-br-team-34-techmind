@@ -1,0 +1,21 @@
+# Servicio de inferencia TechMind - dependencias fijadas por version exacta.
+#
+# Las versiones estan pinneadas (== y no >=) a proposito: una imagen Docker que
+# resuelve versiones distintas en cada build no es reproducible, y un fallo en
+# produccion que no se reproduce en local es tiempo perdido que en un hackathon
+# no hay.
+
+# --- API ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# --- Ciencia de Datos ---
+scikit-learn==1.6.0
+pandas==2.2.3
+numpy==2.2.1
+joblib==1.4.2
+
+# --- Integracion OCI (descarga del modelo desde Object Storage) ---
+oci==2.142.0

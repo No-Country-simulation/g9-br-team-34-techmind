@@ -1,6 +1,7 @@
 package com.api.techmind_g9_team34.api_techmind.service;
 
 import com.api.techmind_g9_team34.api_techmind.config.OciStorageConfig;
+import com.api.techmind_g9_team34.api_techmind.dto.response.OciPruebaResultadoDTO;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.objectstorage.ObjectStorageClient;
 import com.oracle.bmc.objectstorage.requests.GetObjectRequest;
@@ -33,6 +34,38 @@ public class OciBucketService {
     public OciBucketService(ObjectStorageClient client, OciStorageConfig config) {
         this.client = client;
         this.config = config;
+    }
+
+    /**
+     * Ejecuta la prueba completa de integración con OCI Object Storage: sube un
+     * archivo de prueba, lo descarga y compara el contenido.
+     *
+     * <p>Devuelve el resultado en un {@link OciPruebaResultadoDTO} en lugar de
+     * propagar la excepción, para que el controlador no tenga que interpretar
+     * errores de credenciales o permisos (TM-057).
+     */
+    public OciPruebaResultadoDTO probarIntegracion() {
+        String objectName = "prueba-integracion.txt";
+        String contenidoOriginal = "Archivo de prueba - " + System.currentTimeMillis();
+
+        try {
+            subirArchivoDePrueba(objectName, contenidoOriginal);
+
+            String contenidoDescargado = descargarArchivoDePrueba(objectName);
+            boolean coincide = contenidoOriginal.equals(contenidoDescargado);
+
+            log.info("Prueba de integración OCI completada: contenidoCoincide={}", coincide);
+            return new OciPruebaResultadoDTO(
+                    objectName, true, true, coincide, false, null, null, null);
+
+        } catch (BmcException e) {
+            // Documentación de errores de credenciales/permisos (TM-014)
+            log.error("Prueba de integración OCI falló. Codigo HTTP: {}, Mensaje: {}, OpcRequestId: {}",
+                    e.getStatusCode(), e.getMessage(), e.getOpcRequestId());
+            return new OciPruebaResultadoDTO(
+                    objectName, false, false, false, true,
+                    e.getStatusCode(), e.getMessage(), e.getOpcRequestId());
+        }
     }
 
     /**

@@ -1,0 +1,2 @@
+titulo,texto
+"Incorrecto","Este archivo no tiene las columnas esperadas y deberia ser rechazado por extension."
