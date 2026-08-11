@@ -12,7 +12,7 @@
 # ---------------------------------------------------------------------------
 # Etapa 1: dependencias + entrenamiento
 # ---------------------------------------------------------------------------
-FROM python:3.11-slim AS builder
+FROM python:3.14-slim AS builder
 
 # PYTHONDONTWRITEBYTECODE: los .pyc no aportan nada en una imagen inmutable.
 # PIP_NO_CACHE_DIR: la cache de pip solo agrega peso a la capa.
@@ -43,7 +43,7 @@ RUN python -m train.train
 # ---------------------------------------------------------------------------
 # Etapa 2: imagen final
 # ---------------------------------------------------------------------------
-FROM python:3.11-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
