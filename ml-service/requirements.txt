@@ -12,10 +12,10 @@ pydantic==2.10.4
 pydantic-settings==2.7.1
 
 # --- Ciencia de Datos ---
-scikit-learn==1.6.0
-pandas==2.2.3
-numpy==2.2.1
-joblib==1.4.2
+scikit-learn==1.9.0
+pandas==3.0.5
+numpy==2.5.1
+joblib==1.5.3
 
 # --- Integracion OCI (descarga del modelo desde Object Storage) ---
 oci==2.142.0
