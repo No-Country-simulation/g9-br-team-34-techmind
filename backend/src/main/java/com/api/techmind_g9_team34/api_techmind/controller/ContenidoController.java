@@ -1,11 +1,14 @@
 package com.api.techmind_g9_team34.api_techmind.controller;
 
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoUrlRequestDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLoteResultadoDTO;
+import com.api.techmind_g9_team34.api_techmind.exception.ExtraccionException;
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
+import com.api.techmind_g9_team34.api_techmind.service.ExtraccionArchivoService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -35,9 +39,13 @@ public class ContenidoController {
             LoggerFactory.getLogger(ContenidoController.class);
 
     private final ContenidoService contenidoService;
+    private final ExtraccionArchivoService extraccionArchivoService;
 
-    public ContenidoController(ContenidoService contenidoService) {
+    public ContenidoController(
+            ContenidoService contenidoService,
+            ExtraccionArchivoService extraccionArchivoService) {
         this.contenidoService = contenidoService;
+        this.extraccionArchivoService = extraccionArchivoService;
     }
 
     @PostMapping
@@ -67,6 +75,68 @@ public class ContenidoController {
                 contenidoService.procesarLote(archivo);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Procesa un archivo técnico (PDF o DOCX): extrae título/texto y lo
+     * limpia vía Gemini (ver ExtraccionArchivoService), luego sigue el
+     * mismo flujo que POST /api/v1/contenidos.
+     */
+    @PostMapping(value = "/archivo")
+    public ResponseEntity<ContenidoResponseDTO> procesarDesdeArchivo(
+            @RequestParam("archivo") MultipartFile archivo,
+            HttpServletRequest httpRequest) {
+
+        logger.info("Solicitud recibida para {}", httpRequest.getRequestURI());
+
+        ContenidoRequestDTO datosExtraidos = leerYExtraer(archivo);
+
+        ContenidoResponseDTO response =
+                contenidoService.procesarContenido(datosExtraidos);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .replacePath("/api/v1/contenidos/{id}")
+                .buildAndExpand(response.id())
+                .toUri();
+
+        return ResponseEntity.created(location).body(response);
+    }
+
+    /**
+     * Procesa contenido accesible por URL (ej. una consulta de foro):
+     * extrae título/texto y lo limpia vía Gemini, luego sigue el mismo
+     * flujo que POST /api/v1/contenidos.
+     */
+    @PostMapping("/url")
+    public ResponseEntity<ContenidoResponseDTO> procesarDesdeUrl(
+            @Valid @RequestBody ContenidoUrlRequestDTO request,
+            HttpServletRequest httpRequest) {
+
+        logger.info("Solicitud recibida para {}", httpRequest.getRequestURI());
+
+        ContenidoRequestDTO datosExtraidos =
+                extraccionArchivoService.extraerDesdeUrl(request.url());
+
+        ContenidoResponseDTO response =
+                contenidoService.procesarContenido(datosExtraidos);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .replacePath("/api/v1/contenidos/{id}")
+                .buildAndExpand(response.id())
+                .toUri();
+
+        return ResponseEntity.created(location).body(response);
+    }
+
+    private ContenidoRequestDTO leerYExtraer(MultipartFile archivo) {
+        try {
+            return extraccionArchivoService.extraerDesdeArchivo(
+                    archivo.getBytes(), archivo.getOriginalFilename());
+        } catch (IOException e) {
+            throw new ExtraccionException("No se pudo leer el archivo subido.", e);
+        }
     }
 
     @GetMapping("/{id}")
