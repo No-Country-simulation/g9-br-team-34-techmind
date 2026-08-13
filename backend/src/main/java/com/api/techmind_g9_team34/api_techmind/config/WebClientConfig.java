@@ -19,10 +19,10 @@ public class WebClientConfig {
                 .requestFactory(factory)
                 .build();
     }
-    
+
     @Bean
     public RestClient geminiRestClient(
-            @Value("${techmind.gemini.timeout-ms}") int timeoutMs) {
+            @Value("${techmind.gemini.timeout-ms:60000}") int timeoutMs) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeoutMs);
         factory.setReadTimeout(timeoutMs);
