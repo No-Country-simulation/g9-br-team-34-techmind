@@ -296,28 +296,28 @@
   <p class="hint" id="hint"></p>
 
   <div id="seek">
-    <input id="seekIn" type="search" placeholder="Buscar por palabra clave…" autocomplete="off">
+    <input id="seekIn" type="search" placeholder="Buscar por palabra clave…" autocomplete="off" title="Busca entre las palabras clave que extrajo el modelo">
     <div id="seekOut"></div>
   </div>
 
   <header class="topbar" id="topbar">
-    <button class="mark" id="home">
+    <button class="mark" id="home" title="Volver a la copa del árbol">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
         <path d="M12 21V11"/><path d="M12 11 6.5 6"/><path d="M12 11l5.5-5"/><path d="M12 15l-4-3.5"/>
         <circle cx="6" cy="5.5" r="1.7"/><circle cx="18" cy="5.5" r="1.7"/><circle cx="7.5" cy="11" r="1.5"/>
       </svg>Logi<em>Tree</em>
     </button>
-    <button class="pill hide" id="back">← Volver</button>
+    <button class="pill hide" id="back" title="Volver a la vista anterior">← Volver</button>
     <div class="spacer"></div>
-    <button class="pill solid" id="sowBtn">+ Analizar contenido</button>
-    <div class="chip" id="chip"></div>
+    <button class="pill solid" id="sowBtn" title="Analizar un texto o un PDF y sumarlo a tu árbol">+ Analizar contenido</button>
+    <div class="chip" id="chip" title="Resumen de lo que hay en tu árbol"></div>
   </header>
 
   <div id="sow">
     <div class="sow-box">
       <h2 class="sow-title">Analizar contenido</h2>
       <p class="sow-sub">Pegá un texto técnico o soltá un PDF. El modelo lo clasifica y extrae sus palabras clave.</p>
-      <div class="drop" id="drop">
+      <div class="drop" id="drop" title="Se lee el texto del PDF en tu navegador; el archivo no se sube a ningún lado">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
           <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/>
         </svg>
@@ -326,11 +326,11 @@
         <input type="file" id="file" accept="application/pdf" hidden>
       </div>
       <div class="field">
-        <label for="tit">Título</label>
+        <label for="tit" title="Cómo vas a reconocer este contenido después. Máximo 200 caracteres.">Título</label>
         <input id="tit" maxlength="200" placeholder="Introducción a Spring Boot">
       </div>
       <div class="field">
-        <label for="txt">Texto</label>
+        <label for="txt" title="El contenido técnico que el modelo va a clasificar. Entre 20 y 10.000 caracteres.">Texto</label>
         <textarea id="txt" maxlength="10000" placeholder="Pegá acá el contenido técnico…"></textarea>
         <div class="meter" id="meter"><span>Mínimo 20 caracteres</span><span id="count">0 / 10000</span></div>
       </div>
@@ -356,6 +356,30 @@ const API_KEY  = '';   // TM-039: cuando el filtro X-API-Key esté activo, poner
 
 /** Tope de tamaño de página que impone el backend (TM-062). */
 const MAX_SIZE = 50;
+
+/**
+ * Clave de agrupación de una categoría.
+ *
+ * <p>El modelo devuelve la misma categoría con distinta caja ("Backend" y
+ * "backend"), y sin esto cada variante genera su propio nodo en el mapa.
+ * Se agrupa por minúsculas sin acentos, y para mostrar se conserva la forma
+ * más frecuente. Es un paliativo: en la base siguen conviviendo las dos
+ * escrituras, así que filtrar por una no trae los de la otra.
+ */
+const claveCat = s => String(s??'').trim().toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+/** Devuelve la forma de la categoría que más veces apareció. */
+function formaCanonica(clave){
+  const cuenta = {};
+  S.contenidos.forEach(c=>{
+    if(claveCat(c.categoria)!==clave) return;
+    const v=String(c.categoria).trim();
+    cuenta[v]=(cuenta[v]||0)+1;
+  });
+  const orden=Object.entries(cuenta).sort((a,b)=>b[1]-a[1]);
+  return orden.length ? orden[0][0] : clave;
+}
 
 const PALETA = ['#14b8a6','#38bdf8','#fb923c','#a78bfa','#f472b6','#60a5fa','#fb7185'];
 const colorDe = n => PALETA[[...n].reduce((s,c)=>s+c.charCodeAt(0),0) % PALETA.length];
@@ -412,7 +436,7 @@ async function listarTodo(){
 
 /* ---------- estado ---------- */
 const S = {
-  ramas: [],            // [{nombre, cantidad, color, x, y, abierto}]
+  ramas: [],            // [{clave, nombre, cantidad, color, x, y, abierto}]
   contenidos: [],       // ContenidoResumenDTO[]
   aristas: [],          // {a, b} por id, desde /relacionados
   cargadas: new Set(),  // ramas cuyas relaciones ya se pidieron
@@ -420,8 +444,8 @@ const S = {
   rama: null,
   sel: null
 };
-const porRama = n => S.contenidos.filter(c => c.categoria === n);
-const ramaDe  = n => S.ramas.find(r => r.nombre === n);
+const porRama = clave => S.contenidos.filter(c => claveCat(c.categoria) === clave);
+const ramaDe  = cat   => S.ramas.find(r => r.clave === claveCat(cat));
 
 /* ---------- semilla ---------- */
 const sapling = document.getElementById('sapling');
@@ -456,16 +480,23 @@ async function germinar(){
     S.contenidos = await listarTodo();
 
     avance(72,'Clasificando por rama');
-    S.ramas = (cats||[]).map(c => ({
-      nombre: c.categoria,
-      cantidad: c.cantidadProcesados ?? porRama(c.categoria).length,
-      color: colorDe(c.categoria), abierto:0, x:0, y:0
-    }));
-    // Si /categorias viniera vacío, se derivan de lo que ya llegó.
-    if (!S.ramas.length){
-      [...new Set(S.contenidos.map(c=>c.categoria))].forEach(n=>
-        S.ramas.push({nombre:n, cantidad:porRama(n).length, color:colorDe(n), abierto:0, x:0, y:0}));
-    }
+    // Se agrupa por clave normalizada: /categorias puede devolver "Backend" y
+    // "backend" como entradas separadas, y ambas son la misma rama.
+    const acum = new Map();
+    (cats||[]).forEach(c=>{
+      const k=claveCat(c.categoria);
+      if(!k) return;
+      acum.set(k,(acum.get(k)||0)+(c.cantidadProcesados||0));
+    });
+    S.contenidos.forEach(c=>{
+      const k=claveCat(c.categoria);
+      if(k && !acum.has(k)) acum.set(k,0);
+    });
+    S.ramas = [...acum].map(([clave,cant])=>{
+      const nombre=formaCanonica(clave);
+      return { clave, nombre, cantidad: cant || porRama(clave).length,
+               color: colorDe(clave), abierto:0, x:0, y:0 };
+    });
     ubicar();
 
     // El contador sube hasta lo que realmente hay en la base.
@@ -504,7 +535,7 @@ function ubicar(){
     const a=(i/n)*Math.PI*2-Math.PI/2, j=[1,.84,1.1,.9,1.05,.87,1.02][i%7];
     r.x=Math.cos(a)*ANILLO*j; r.y=Math.sin(a)*ANILLO*j*.78;
     nodos.push({tipo:'rama',rama:r,r:13,x:r.x,y:r.y});
-    porRama(r.nombre).forEach((c,k,arr)=>{
+    porRama(r.clave).forEach((c,k,arr)=>{
       c._ang=(k+.5)/arr.length*Math.PI*2+i*1.7;
       const nd={tipo:'hoja',cont:c,rama:r,r:5.5,x:r.x,y:r.y};
       nodos.push(nd); porId[c.id]=nd;});});
@@ -575,7 +606,7 @@ function frame(){
       cx.fillText(nd.rama.nombre,px,py-rr-15);
       cx.fillStyle='#7d9490';
       cx.font=`500 ${Math.max(9,10.5*cam.z)}px 'JetBrains Mono',monospace`;
-      cx.fillText(porRama(nd.rama.nombre).length+' contenidos',px,py+rr+22);
+      cx.fillText(porRama(nd.rama.clave).length+' contenidos',px,py+rr+22);
     }else{
       const dim=S.modo==='rama'&&S.rama!==nd.rama;
       cx.globalAlpha=dim?.06:(.42+.58*nd.rama.abierto);
@@ -608,7 +639,13 @@ function nodoEn(mx,my){
 cv.addEventListener('mousemove',e=>{
   const b=cv.getBoundingClientRect();
   hover=nodoEn(e.clientX-b.left,e.clientY-b.top);
-  cv.style.cursor=hover?'pointer':(S.modo==='rama'?'zoom-out':'default');});
+  cv.style.cursor=hover?'pointer':(S.modo==='rama'?'zoom-out':'default');
+  // El canvas no admite title nativo: el texto se pone en el propio elemento.
+  cv.title = hover
+    ? (hover.tipo==='rama'
+        ? `${hover.rama.nombre} — ${porRama(hover.rama.clave).length} contenidos. Clic para abrir la rama.`
+        : `${hover.cont.titulo} — clic para ver el detalle`)
+    : (S.modo==='rama' ? 'Clic en el vacío para volver a la copa' : 'Elegí una rama para abrirla');});
 cv.addEventListener('click',e=>{
   const b=cv.getBoundingClientRect();
   const nd=nodoEn(e.clientX-b.left,e.clientY-b.top);
@@ -645,9 +682,9 @@ async function irARama(r){
 
 /* Las conexiones las decide el backend, no el navegador. */
 async function cargarAristas(r){
-  if(S.cargadas.has(r.nombre)) return;
-  S.cargadas.add(r.nombre);
-  const items=porRama(r.nombre);
+  if(S.cargadas.has(r.clave)) return;
+  S.cargadas.add(r.clave);
+  const items=porRama(r.clave);
   const vistos=new Set(S.aristas.map(e=>e.a+'|'+e.b));
   for(const c of items){
     try{
@@ -680,21 +717,21 @@ function pintarChip(){
     elHint.textContent = S.contenidos.length ? 'Elegí una rama para abrirla'
                                              : 'Tu árbol está vacío — analizá el primer contenido';
   }else{
-    elChip.innerHTML=`<b>${porRama(S.rama.nombre).length}</b> contenidos en ${S.rama.nombre}`;
+    elChip.innerHTML=`<b>${porRama(S.rama.clave).length}</b> contenidos en ${esc(S.rama.nombre)}`;
     elHint.textContent='Clic en el vacío para volver a la copa';}
   elHint.classList.remove('gone');}
 
 function pintarHearth(){
   const recientes=[...S.contenidos]
     .sort((a,b)=>new Date(b.fechaProcesamiento)-new Date(a.fechaProcesamiento)).slice(0,3);
-  const mayor=[...S.ramas].sort((a,b)=>porRama(b.nombre).length-porRama(a.nombre).length)[0];
+  const mayor=[...S.ramas].sort((a,b)=>porRama(b.clave).length-porRama(a.clave).length)[0];
   elHearth.innerHTML=`
     <div class="box">
       <p class="eyebrow">Tu árbol</p>
       <div class="h-big"><span class="n">${S.contenidos.length}</span><span class="u">contenidos</span></div>
       <div class="h-row">
         <div><div class="n">${S.ramas.length}</div><div class="l">ramas</div></div>
-        <div><div class="n">${mayor?porRama(mayor.nombre).length:0}</div><div class="l">mayor rama</div></div>
+        <div><div class="n">${mayor?porRama(mayor.clave).length:0}</div><div class="l">mayor rama</div></div>
         <div><div class="n">${S.aristas.length}</div><div class="l">conexiones</div></div>
       </div>
       <p class="h-label">Últimos analizados</p>
@@ -708,7 +745,7 @@ function pintarHearth(){
     b.addEventListener('click',()=>abrirDetalle(b.dataset.id)));}
 
 function pintarShelf(r){
-  const items=porRama(r.nombre);
+  const items=porRama(r.clave);
   elShelf.innerHTML=`
     <div class="shelf-head">
       <div class="shelf-name" style="color:${r.color}">${esc(r.nombre)}</div>
@@ -743,20 +780,20 @@ async function abrirDetalle(id){
         <span class="tag" style="color:${r.color}"><i></i>${esc(c.categoria)}</span>
         <h1 class="d-title">${esc(c.titulo)}</h1>
         ${c.probabilidad!=null?`<div class="conf">
-          <div class="fact"><div class="l">Confianza del modelo</div></div>
+          <div class="fact"><div class="l" title="Qué tan seguro está el modelo de haber elegido bien la categoría">Confianza del modelo</div></div>
           <div class="bar"><i style="width:${(c.probabilidad*100).toFixed(0)}%;background:${r.color}"></i></div>
           <div class="meter"><span>${(c.probabilidad*100).toFixed(1)}%</span><span>${fecha(c.fechaProcesamiento)}</span></div>
         </div>`:''}
         <div class="d-facts">
-          <div class="fact"><div class="n">${claves.length}</div><div class="l">palabras clave</div></div>
-          <div class="fact"><div class="n">${rel.length}</div><div class="l">relacionados</div></div>
+          <div class="fact" title="Términos más representativos que el modelo extrajo del texto"><div class="n">${claves.length}</div><div class="l">palabras clave</div></div>
+          <div class="fact" title="Contenidos de la misma categoría que comparten palabras clave con este"><div class="n">${rel.length}</div><div class="l">relacionados</div></div>
         </div>
-        <button class="danger" id="del">Eliminar contenido</button>
+        <button class="danger" id="del" title="Borra este contenido de la base. No se puede deshacer.">Eliminar contenido</button>
       </section>
       <div>
-        <p class="sec-label">Palabras clave extraídas</p>
+        <p class="sec-label" title="Clic en cualquiera para buscar otros contenidos que la compartan">Palabras clave extraídas</p>
         <div class="chips">${claves.length?claves.map(k=>
-          `<button class="kw" data-k="${esc(k)}">${esc(k)}</button>`).join('')
+          `<button class="kw" data-k="${esc(k)}" title="Buscar contenidos con “${esc(k)}”">${esc(k)}</button>`).join('')
           :'<p class="empty">El modelo no devolvió palabras clave para este contenido.</p>'}</div>
       </div>
       <aside>
@@ -770,8 +807,15 @@ async function abrirDetalle(id){
     elDWrap.querySelectorAll('.rel button').forEach(b=>
       b.addEventListener('click',()=>abrirDetalle(b.dataset.id)));
     elDWrap.querySelectorAll('.kw').forEach(b=>
-      b.addEventListener('click',()=>{ cerrarDetalle(); irACopa();
-        document.getElementById('seekIn').value=b.dataset.k; buscar(b.dataset.k); }));
+      b.addEventListener('click',()=>{
+        // Se vuelve a la copa porque el buscador vive ahí, y se deja el
+        // término cargado y desplegado: el clic es la búsqueda, no un atajo
+        // que además obliga a escribir.
+        cerrarDetalle(); irACopa();
+        elSeekIn.value=b.dataset.k;
+        buscar(b.dataset.k);
+        elSeekIn.focus();
+      }));
     document.getElementById('del').addEventListener('click',async()=>{
       if(!confirm('¿Eliminar este contenido? No se puede deshacer.')) return;
       await api.borrar(id);
@@ -876,15 +920,18 @@ elGo.addEventListener('click',async()=>{
     const c=await api.crear({ titulo:elTit.value.trim(), texto:elTxt.value.trim() });
     S.contenidos.push({ id:c.id, titulo:c.titulo, categoria:c.categoria,
                         fechaProcesamiento:c.fechaProcesamiento });
-    if(!ramaDe(c.categoria))
-      S.ramas.push({nombre:c.categoria,cantidad:1,color:colorDe(c.categoria),abierto:0,x:0,y:0});
+    if(!ramaDe(c.categoria)){
+      const k=claveCat(c.categoria);
+      S.ramas.push({clave:k,nombre:String(c.categoria).trim(),cantidad:1,
+                    color:colorDe(k),abierto:0,x:0,y:0});
+    }
     ubicar();
 
     // Las líneas tienen que aparecer con el contenido, no al reentrar a la rama.
     await aristasDe(c.id);
 
     pintarChip(); pintarHearth();
-    if(S.modo==='rama' && S.rama && S.rama.nombre===c.categoria) pintarShelf(S.rama);
+    if(S.modo==='rama' && S.rama && S.rama.clave===claveCat(c.categoria)) pintarShelf(S.rama);
     cerrarSow(); elTit.value=''; elTxt.value=''; medirTexto();
     elDropHint.textContent='o hacé clic para elegirlo · se leen las primeras páginas';
     abrirDetalle(c.id);
