@@ -203,7 +203,7 @@ jobs:
       # significa "hay una actualizacion que deberias aplicar", que si merece
       # detener el pipeline.
       - name: Escanear la imagen del backend
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: techmind/backend:ci
           format: table
@@ -213,7 +213,7 @@ jobs:
           vuln-type: os,library
 
       - name: Escanear la imagen del ml-service
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: techmind/ml-service:ci
           format: table
@@ -227,7 +227,7 @@ jobs:
       # paso anterior fallo.
       - name: Informe detallado de vulnerabilidades
         if: always()
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: techmind/backend:ci
           format: table

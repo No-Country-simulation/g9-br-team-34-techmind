@@ -119,6 +119,17 @@ public class GlobalExceptionHandler {
                         request.getRequestURI()));
     }
 
+    @ExceptionHandler(ExtraccionException.class)
+    public ResponseEntity<ErrorResponseDTO> handleExtraccion(
+            ExtraccionException ex, HttpServletRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ErrorResponseDTO.of(
+                        HttpStatus.UNPROCESSABLE_ENTITY,
+                        ex.getMessage(),
+                        request.getRequestURI()));
+    }
+
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponseDTO> handleMaxUploadSizeExceeded(
             MaxUploadSizeExceededException ex, HttpServletRequest request) {
