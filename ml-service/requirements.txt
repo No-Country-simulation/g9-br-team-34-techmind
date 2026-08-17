@@ -18,4 +18,4 @@ numpy==2.2.1
 joblib==1.4.2
 
 # --- Integracion OCI (descarga del modelo desde Object Storage) ---
-oci==2.142.0
+oci==2.184.1
