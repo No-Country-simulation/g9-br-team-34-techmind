@@ -16,7 +16,7 @@ pydantic-settings==2.7.1
 # data-science/API/ se serializaron con scikit-learn 1.8.0 y numpy 2.x; cargarlos
 # con una version anterior rompe (o degrada silenciosamente) la deserializacion.
 scikit-learn==1.8.0
-scipy==1.15.2
+scipy==1.18.0
 pandas==2.2.3
 numpy==2.2.1
 joblib==1.4.2
@@ -30,4 +30,4 @@ spacy==3.8.15
 es_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.8.0/es_core_news_sm-3.8.0-py3-none-any.whl
 
 # --- Integracion OCI (descarga del modelo desde Object Storage) ---
-oci==2.142.0
+oci==2.184.1
