@@ -1,8 +1,9 @@
 """Carga del modelo serializado y ejecucion de la inferencia.
 
 Responsabilidad de este modulo: tomar el artefacto `.joblib` que produce
-`train/train.py` (o el que entregue el equipo de Ciencia de Datos) y exponerlo
-como un objeto con un metodo `predict`. No entrena, no conoce el dataset.
+`train/train.py` (reempaquetado de los archivos que entrega Ciencia de Datos en
+`data-science/API/`) y exponerlo como un objeto con un metodo `predict`. No
+entrena, no conoce el dataset.
 
 Esa separacion es deliberada: el contenedor de produccion nunca debe entrenar.
 Entrenar en el arranque haria que el tiempo de despliegue dependiera del tamano
@@ -19,19 +20,20 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+from scipy.sparse import hstack
 
+from .preprocess import limpiar_texto
 from .settings import settings
 
 logger = logging.getLogger(__name__)
 
-# Claves del diccionario que `train.py` serializa. Se nombran una sola vez aca
-# para que el contrato del artefacto no quede repetido en dos archivos.
-KEY_PIPELINE = "pipeline"
+# Claves del diccionario que `train/train.py` serializa. Se nombran una sola vez
+# aca para que el contrato del artefacto no quede repetido en dos archivos.
+KEY_MODELO = "modelo"
+KEY_VECT_TITULO = "vect_titulo"
+KEY_VECT_TEXTO = "vect_texto"
+KEY_PESO_TITULO = "peso_titulo"
 KEY_CATEGORIAS = "categorias"
-
-# Nombres de los pasos dentro del Pipeline de scikit-learn.
-STEP_TFIDF = "tfidf"
-STEP_CLF = "clf"
 
 
 @dataclass
@@ -42,15 +44,26 @@ class InferenceResult:
 
 
 class ClassifierModel:
-    """Envuelve el pipeline entrenado y le da una interfaz estable.
+    """Envuelve los artefactos de Ciencia de Datos y les da una interfaz estable.
 
     El resto del servicio habla con esta clase y no con scikit-learn. Si manana
     Ciencia de Datos cambia TF-IDF + Regresion Logistica por embeddings, el
     cambio queda contenido aca dentro.
     """
 
-    def __init__(self, pipeline, categorias: list[str], origen: str) -> None:
-        self._pipeline = pipeline
+    def __init__(
+        self,
+        modelo,
+        vect_titulo,
+        vect_texto,
+        peso_titulo: float,
+        categorias: list[str],
+        origen: str,
+    ) -> None:
+        self._modelo = modelo
+        self._vect_titulo = vect_titulo
+        self._vect_texto = vect_texto
+        self._peso_titulo = peso_titulo
         self._categorias = categorias
         self._origen = origen
 
@@ -65,14 +78,25 @@ class ClassifierModel:
     def predict(self, titulo: str, texto: str) -> InferenceResult:
         """Clasifica un contenido y extrae sus palabras clave.
 
-        El titulo se concatena al texto en lugar de ignorarse porque suele ser
-        la senal mas densa del documento: "Tutorial de Docker" aporta mas por
-        palabra que cualquier parrafo del cuerpo.
+        El titulo y el texto se limpian por separado (misma limpieza que en el
+        entrenamiento) y se vectorizan con sus propios TF-IDF, ponderando el del
+        titulo por `peso_titulo` y apilando ambos. Ese orden es el que vio el
+        clasificador al entrenarse; cambiarlo cambiaria el significado de cada
+        columna de la matriz y degradaria las predicciones.
         """
-        documento = f"{titulo}. {texto}"
+        vector_titulo = self._vect_titulo.transform([limpiar_texto(titulo)]) * self._peso_titulo
+        vector_texto = self._vect_texto.transform([limpiar_texto(texto)])
+        vector = hstack([vector_titulo, vector_texto])
 
-        categoria, probabilidad = self._clasificar(documento)
-        palabras_clave = self._extraer_palabras_clave(documento)
+        probabilidades = self._modelo.predict_proba(vector)[0]
+        indice = int(np.argmax(probabilidades))
+
+        # `classes_` viene del clasificador y no de `self._categorias`: es el
+        # orden real de las columnas de `predict_proba`. Usar la otra lista
+        # asumiria que ambos ordenes coinciden, y un dia no coincidirian.
+        categoria = str(self._modelo.classes_[indice])
+        probabilidad = round(float(probabilidades[indice]), 4)
+        palabras_clave = self._extraer_palabras_clave(vector)
 
         return InferenceResult(
             categoria=categoria,
@@ -80,42 +104,22 @@ class ClassifierModel:
             palabras_clave=palabras_clave,
         )
 
-    def _clasificar(self, documento: str) -> tuple[str, float]:
-        probabilidades = self._pipeline.predict_proba([documento])[0]
-        indice = int(np.argmax(probabilidades))
-
-        # `classes_` viene del clasificador y no de `self._categorias`: es el
-        # orden real de las columnas de `predict_proba`. Usar la otra lista
-        # asumiria que ambos ordenes coinciden, y un dia no coincidirian.
-        categoria = str(self._pipeline.named_steps[STEP_CLF].classes_[indice])
-        probabilidad = round(float(probabilidades[indice]), 4)
-
-        return categoria, probabilidad
-
-    def _extraer_palabras_clave(self, documento: str) -> list[str]:
+    def _extraer_palabras_clave(self, vector) -> list[str]:
         """Devuelve los terminos con mayor peso TF-IDF dentro del documento.
 
-        Se reutiliza el vectorizador ya entrenado en vez de contar frecuencias:
-        TF-IDF ya descarta lo que aparece en todos los documentos del corpus, de
-        modo que "utilizando" o "contenido" no compiten con "spring boot".
+        Replica `predecir_json_separado` del notebook: los nombres de las
+        features son la concatenacion del vocabulario del titulo y del texto (en
+        ese orden, el mismo con el que se armo la matriz apilada), se ordenan
+        por peso y se toman los `settings.max_keywords` con peso positivo.
         """
-        vectorizador = self._pipeline.named_steps[STEP_TFIDF]
-        vector = vectorizador.transform([documento])
-
-        # La matriz es dispersa: solo iteramos sobre los terminos presentes en
-        # este documento, no sobre todo el vocabulario.
-        fila = vector.tocoo()
-        if fila.nnz == 0:
-            return []
-
-        nombres = vectorizador.get_feature_names_out()
-        pares = sorted(
-            zip(fila.col, fila.data, strict=False),
-            key=lambda par: par[1],
-            reverse=True,
+        nombres = list(self._vect_titulo.get_feature_names_out()) + list(
+            self._vect_texto.get_feature_names_out()
         )
 
-        return [str(nombres[indice]) for indice, _ in pares[: settings.max_keywords]]
+        vector_denso = vector.toarray()[0]
+        indices_top = vector_denso.argsort()[::-1][: settings.max_keywords]
+
+        return [str(nombres[i]) for i in indices_top if vector_denso[i] > 0]
 
 
 def _descargar_desde_oci(destino: Path) -> None:
@@ -219,9 +223,21 @@ def cargar_modelo() -> ClassifierModel:
 
     artefacto = joblib.load(destino)
 
-    pipeline = artefacto[KEY_PIPELINE]
-    categorias = list(artefacto[KEY_CATEGORIAS])
+    modelo = artefacto[KEY_MODELO]
+    vect_titulo = artefacto[KEY_VECT_TITULO]
+    vect_texto = artefacto[KEY_VECT_TEXTO]
+    peso_titulo = float(artefacto.get(KEY_PESO_TITULO, 0.5))
+    categorias = list(artefacto.get(KEY_CATEGORIAS) or modelo.classes_)
 
-    logger.info("Modelo cargado desde %s con %d categorias", origen, len(categorias))
+    logger.info(
+        "Modelo cargado desde %s con %d categorias", origen, len(categorias)
+    )
 
-    return ClassifierModel(pipeline=pipeline, categorias=categorias, origen=origen)
+    return ClassifierModel(
+        modelo=modelo,
+        vect_titulo=vect_titulo,
+        vect_texto=vect_texto,
+        peso_titulo=peso_titulo,
+        categorias=categorias,
+        origen=origen,
+    )
