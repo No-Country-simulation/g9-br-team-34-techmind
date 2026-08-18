@@ -1,0 +1,259 @@
+====================
+CASO 1 — POST /contenidos exito (Spring Boot)
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"id":"7ae6b70b-c35f-4a96-b378-0d0eacadffe5","titulo":"Introduccion a Spring Boot","categoria":"Backend","probabilidad":0.2738,"informacion_adicional":["boot","spring boot","spring","basicos creacion","boot contenido"]}
+----HTTP:201----
+
+====================
+CASO 2 — POST /contenidos exito (DevOps/Docker)
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"id":"7d22152f-710c-4f09-8ff4-9295fa6f65c6","titulo":"Tutorial de Docker","categoria":"DevOps","probabilidad":0.2171,"informacion_adicional":["docker","tutorial","aplicaciones docker","compose","dockerfile"]}
+----HTTP:201----
+
+====================
+CASO 3 — POST /contenidos exito (Ciencia de Datos)
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"id":"7384a9e7-867b-45f1-9d64-c099714c8e6c","titulo":"Analisis exploratorio de datos con Pandas","categoria":"Ciencia de Datos","probabilidad":0.2644,"informacion_adicional":["pandas","analisis exploratorio","carga limpieza","conjuntos","conjuntos datos"]}
+----HTTP:201----
+
+====================
+CASO 4 — POST /contenidos titulo vacio -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"timestamp":"2026-08-10T02:47:51.285594886Z","status":400,"error":"Bad Request","message":"Error de validación en los campos de la solicitud.","path":"/api/v1/contenidos","errores":[{"campo":"titulo","mensaje":"El campo 'titulo' es obligatorio y no puede estar vacío."}]}
+----HTTP:400----
+
+====================
+CASO 5 — POST /contenidos titulo >200 chars -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"timestamp":"2026-08-10T02:47:51.375008342Z","status":400,"error":"Bad Request","message":"Error de validación en los campos de la solicitud.","path":"/api/v1/contenidos","errores":[{"campo":"titulo","mensaje":"El campo 'titulo' no puede superar los 200 caracteres."}]}
+----HTTP:400----
+
+====================
+CASO 6 — POST /contenidos texto <20 chars -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"timestamp":"2026-08-10T02:47:51.404745340Z","status":400,"error":"Bad Request","message":"Error de validación en los campos de la solicitud.","path":"/api/v1/contenidos","errores":[{"campo":"texto","mensaje":"El campo 'texto' debe tener entre 20 y 10000 caracteres."}]}
+----HTTP:400----
+
+====================
+CASO 7 — POST /contenidos texto >10000 chars -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"timestamp":"2026-08-10T02:47:51.472279668Z","status":400,"error":"Bad Request","message":"Error de validación en los campos de la solicitud.","path":"/api/v1/contenidos","errores":[{"campo":"texto","mensaje":"El campo 'texto' debe tener entre 20 y 10000 caracteres."}]}
+----HTTP:400----
+
+====================
+CASO 8 — POST /contenidos content-type incorrecto -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"timestamp":"2026-08-10T02:47:51.529660329Z","status":400,"error":"Bad Request","message":"El Content-Type de la solicitud debe ser application/json.","path":"/api/v1/contenidos"}
+----HTTP:400----
+
+====================
+CASO 9 — GET /contenidos listado
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos
+RES:
+{"content":[{"id":"7ae6b70b-c35f-4a96-b378-0d0eacadffe5","titulo":"Introduccion a Spring Boot","categoria":"Backend","fechaProcesamiento":"2026-08-10T02:47:50.941934Z"},{"id":"7d22152f-710c-4f09-8ff4-9295fa6f65c6","titulo":"Tutorial de Docker","categoria":"DevOps","fechaProcesamiento":"2026-08-10T02:47:51.152026Z"},{"id":"7384a9e7-867b-45f1-9d64-c099714c8e6c","titulo":"Analisis exploratorio de datos con Pandas","categoria":"Ciencia de Datos","fechaProcesamiento":"2026-08-10T02:47:51.218323Z"}],"page":0,"size":20,"totalElements":3,"totalPages":1}
+----HTTP:200----
+
+====================
+CASO 10 — GET /contenidos paginado page=0&size=2
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?page=0&size=2
+RES:
+{"content":[{"id":"7ae6b70b-c35f-4a96-b378-0d0eacadffe5","titulo":"Introduccion a Spring Boot","categoria":"Backend","fechaProcesamiento":"2026-08-10T02:47:50.941934Z"},{"id":"7d22152f-710c-4f09-8ff4-9295fa6f65c6","titulo":"Tutorial de Docker","categoria":"DevOps","fechaProcesamiento":"2026-08-10T02:47:51.152026Z"}],"page":0,"size":2,"totalElements":3,"totalPages":2}
+----HTTP:200----
+
+====================
+CASO 11 — GET /contenidos size>50 -> 400
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?size=51
+RES:
+{"timestamp":"2026-08-10T02:47:51.940513939Z","status":400,"error":"Bad Request","message":"El parámetro 'size' no puede exceder 50.","path":"/api/v1/contenidos"}
+----HTTP:400----
+
+====================
+CASO 12 — GET /contenidos size no numerico -> 400
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?size=abc
+RES:
+{"timestamp":"2026-08-10T02:47:51.973442991Z","status":400,"error":"Bad Request","message":"El parámetro 'size' debe ser un número entero.","path":"/api/v1/contenidos"}
+----HTTP:400----
+
+====================
+CASO 13 — GET /contenidos page negativo -> 400
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?page=-1
+RES:
+{"timestamp":"2026-08-10T02:47:52.006147396Z","status":400,"error":"Bad Request","message":"El parámetro 'page' debe ser mayor o igual a 0.","path":"/api/v1/contenidos"}
+----HTTP:400----
+
+====================
+CASO 14 — GET /contenidos filtro categoria=Backend
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?categoria=Backend
+RES:
+{"content":[{"id":"7ae6b70b-c35f-4a96-b378-0d0eacadffe5","titulo":"Introduccion a Spring Boot","categoria":"Backend","fechaProcesamiento":"2026-08-10T02:47:50.941934Z"}],"page":0,"size":20,"totalElements":1,"totalPages":1}
+----HTTP:200----
+
+====================
+CASO 15 — GET /contenidos busqueda palabraClave=spring
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?palabraClave=spring
+RES:
+{"content":[{"id":"7ae6b70b-c35f-4a96-b378-0d0eacadffe5","titulo":"Introduccion a Spring Boot","categoria":"Backend","fechaProcesamiento":"2026-08-10T02:47:50.941934Z"}],"page":0,"size":20,"totalElements":1,"totalPages":1}
+----HTTP:200----
+
+====================
+CASO 16 — GET /contenidos combinado categoria+palabraClave+paginacion+sort
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?categoria=Backend&palabraClave=spring&page=0&size=20&sort=titulo,asc
+RES:
+{"content":[{"id":"7ae6b70b-c35f-4a96-b378-0d0eacadffe5","titulo":"Introduccion a Spring Boot","categoria":"Backend","fechaProcesamiento":"2026-08-10T02:47:50.941934Z"}],"page":0,"size":20,"totalElements":1,"totalPages":1}
+----HTTP:200----
+
+====================
+CASO 17 — GET /contenidos sort no permitido -> 400
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?sort=probabilidad,desc
+RES:
+{"timestamp":"2026-08-10T02:47:52.265277415Z","status":400,"error":"Bad Request","message":"El parámetro 'sort' solo permite las propiedades: fechaProcesamiento, titulo, categoria.","path":"/api/v1/contenidos"}
+----HTTP:400----
+
+====================
+CASO 18 — GET /contenidos sort direccion invalida -> 400
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos?sort=titulo,pepe
+RES:
+{"timestamp":"2026-08-10T02:47:52.289226493Z","status":400,"error":"Bad Request","message":"El parámetro 'sort' solo admite dirección 'asc' o 'desc'.","path":"/api/v1/contenidos"}
+----HTTP:400----
+
+====================
+CASO 19 — GET /contenidos/{id} exito
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos/2cc9f449-7668-42a0-b0ab-ff113251e323
+RES:
+{"id":"2cc9f449-7668-42a0-b0ab-ff113251e323","titulo":"Contenido para consulta","categoria":"Seguridad","probabilidad":0.1638,"fechaProcesamiento":"2026-08-10T02:47:52.375660Z","informacion_adicional":["consulta","contenido","endpoint","recuperacion"]}
+----HTTP:200----
+
+====================
+CASO 20 — GET /contenidos/{id} inexistente -> 404
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos/00000000-0000-0000-0000-000000000000
+RES:
+{"timestamp":"2026-08-10T02:47:52.533002294Z","status":404,"error":"Not Found","message":"No existe un contenido procesado con el id indicado.","path":"/api/v1/contenidos/00000000-0000-0000-0000-000000000000"}
+----HTTP:404----
+
+====================
+CASO 21 — GET /contenidos/{id} id invalido -> 400
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos/no-es-uuid
+RES:
+{"timestamp":"2026-08-10T02:47:52.555700163Z","status":400,"error":"Bad Request","message":"El valor proporcionado no tiene el formato esperado.","path":"/api/v1/contenidos/no-es-uuid"}
+----HTTP:400----
+
+====================
+CASO 22 — GET /contenidos/{id}/relacionados
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos/2cc9f449-7668-42a0-b0ab-ff113251e323/relacionados
+RES:
+[]
+----HTTP:200----
+
+====================
+CASO 23 — GET /contenidos/{id}/relacionados limite=3
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos/2cc9f449-7668-42a0-b0ab-ff113251e323/relacionados?limite=3
+RES:
+[]
+----HTTP:200----
+
+====================
+CASO 24 — GET /relacionados base inexistente -> 404
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos/00000000-0000-0000-0000-000000000000/relacionados
+RES:
+{"timestamp":"2026-08-10T02:47:52.732208823Z","status":404,"error":"Not Found","message":"No existe un contenido procesado con el id indicado.","path":"/api/v1/contenidos/00000000-0000-0000-0000-000000000000/relacionados"}
+----HTTP:404----
+
+====================
+CASO 25 — GET /relacionados id invalido -> 400
+REQ: GET http://127.0.0.1:8080/api/v1/contenidos/no-es-uuid/relacionados
+RES:
+{"timestamp":"2026-08-10T02:47:52.759494680Z","status":400,"error":"Bad Request","message":"El valor proporcionado no tiene el formato esperado.","path":"/api/v1/contenidos/no-es-uuid/relacionados"}
+----HTTP:400----
+
+====================
+CASO 26 — GET /categorias exito
+REQ: GET http://127.0.0.1:8080/api/v1/categorias
+RES:
+[{"categoria":"Backend","cantidadProcesados":1},{"categoria":"Ciencia de Datos","cantidadProcesados":1},{"categoria":"DevOps","cantidadProcesados":1},{"categoria":"Seguridad","cantidadProcesados":1}]
+----HTTP:200----
+
+====================
+CASO 27 — POST /lote CSV valido
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos/lote
+RES:
+{"totalFilas":3,"procesadosExitosos":3,"procesadosConError":0,"resultados":[{"fila":1,"estado":"PROCESADO","resultado":{"id":"2edb9d88-8735-4cd1-be7c-2857a8419fe2","titulo":"Introduccion a Docker","categoria":"DevOps","probabilidad":0.2105,"fechaProcesamiento":"2026-08-10T02:47:52.892067Z","informacion_adicional":["docker","redes","software","volumenes","volumenes redes"]},"mensajeError":null},{"fila":2,"estado":"PROCESADO","resultado":{"id":"5301d03b-f080-45e8-961a-8a062ce331de","titulo":"Fundamentos de SQL","categoria":"Bases de Datos","probabilidad":0.1964,"fechaProcesamiento":"2026-08-10T02:47:52.913377Z","informacion_adicional":["sql","datos relacionales","declarativa","forma","fundamentos sql"]},"mensajeError":null},{"fila":3,"estado":"PROCESADO","resultado":{"id":"abe2672c-6aec-4152-8dc9-c83569e69cde","titulo":"Conceptos de Git","categoria":"DevOps","probabilidad":0.1566,"fechaProcesamiento":"2026-08-10T02:47:52.935940Z","informacion_adicional":["proyecto","cambios","control","versiones","conceptos"]},"mensajeError":null}]}
+----HTTP:200----
+
+====================
+CASO 28 — POST /lote CSV con fila invalida (error por fila)
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos/lote
+RES:
+{"totalFilas":2,"procesadosExitosos":1,"procesadosConError":1,"resultados":[{"fila":1,"estado":"PROCESADO","resultado":{"id":"9a3c3239-0dca-420e-83d6-29fcca8e4ec7","titulo":"Solicitud correcta","categoria":"Ciencia de Datos","probabilidad":0.159,"fechaProcesamiento":"2026-08-10T02:47:52.992400Z","informacion_adicional":["clasificacion","contenido","sistema"]},"mensajeError":null},{"fila":2,"estado":"ERROR","resultado":null,"mensajeError":"No fue posible procesar la fila"}]}
+----HTTP:200----
+
+====================
+CASO 29 — POST /lote sin archivo -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos/lote
+RES:
+{"timestamp":"2026-08-10T02:47:53.022677625Z","status":400,"error":"Bad Request","message":"La solicitud debe incluir el campo 'archivo' en formato multipart/form-data.","path":"/api/v1/contenidos/lote"}
+----HTTP:400----
+
+====================
+CASO 30 — POST /lote archivo no .csv -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos/lote
+RES:
+{"timestamp":"2026-08-10T02:47:53.052121847Z","status":400,"error":"Bad Request","message":"El archivo debe ser un CSV (extensión .csv).","path":"/api/v1/contenidos/lote"}
+----HTTP:400----
+
+====================
+CASO 31 — POST /lote CSV header invalido -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos/lote
+RES:
+{"timestamp":"2026-08-10T02:47:53.080014478Z","status":400,"error":"Bad Request","message":"El archivo CSV debe contener el encabezado: titulo,texto.","path":"/api/v1/contenidos/lote"}
+----HTTP:400----
+
+====================
+CASO 32 — POST /lote CSV mas de 100 filas -> 400
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos/lote
+RES:
+{"timestamp":"2026-08-10T02:47:53.105697701Z","status":400,"error":"Bad Request","message":"El archivo supera el máximo permitido de 100 filas.","path":"/api/v1/contenidos/lote"}
+----HTTP:400----
+
+====================
+CASO 33 — POST /lote archivo >5MB -> 413
+REQ: POST http://127.0.0.1:8080/api/v1/contenidos/lote
+RES:
+{"timestamp":"2026-08-10T02:47:53.141294409Z","status":413,"error":"Payload Too Large","message":"El archivo supera el tamaño máximo permitido.","path":"/api/v1/contenidos/lote"}
+----HTTP:413----
+
+====================
+CASO 34 — DELETE /contenidos/{id} exito -> 204
+REQ: DELETE http://127.0.0.1:8080/api/v1/contenidos/2d6131a9-40ee-4b7f-b6f1-155ec393e7d2
+RES:
+
+----HTTP:204----
+
+====================
+CASO 35 — DELETE /contenidos/{id} ya borrado -> 404
+REQ: DELETE http://127.0.0.1:8080/api/v1/contenidos/2d6131a9-40ee-4b7f-b6f1-155ec393e7d2
+RES:
+{"timestamp":"2026-08-10T02:47:53.355936437Z","status":404,"error":"Not Found","message":"No existe un contenido procesado con el id indicado.","path":"/api/v1/contenidos/2d6131a9-40ee-4b7f-b6f1-155ec393e7d2"}
+----HTTP:404----
+
+====================
+CASO 36 — DELETE /contenidos/{id} id invalido -> 400
+REQ: DELETE http://127.0.0.1:8080/api/v1/contenidos/no-es-uuid
+RES:
+{"timestamp":"2026-08-10T02:47:53.403827054Z","status":400,"error":"Bad Request","message":"El valor proporcionado no tiene el formato esperado.","path":"/api/v1/contenidos/no-es-uuid"}
+----HTTP:400----
+
+====================
+CASO 37 — GET /actuator/health -> 200 UP
+REQ: GET http://127.0.0.1:8080/actuator/health
+RES:
+{"status":"UP"}
+----HTTP:200----
+

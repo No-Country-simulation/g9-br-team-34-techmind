@@ -1,0 +1,378 @@
+# Integracion continua de TechMind.
+#
+# Se ejecuta en cada push y en cada pull request contra main. Su objetivo es que
+# nadie tenga que preguntar "¿compila?" ni "¿pasan las pruebas?": si el check
+# esta en verde, la respuesta ya esta dada.
+#
+# Los tres primeros jobs corren EN PARALELO porque son independientes entre si.
+# El job de imagenes espera a los otros: construir un contenedor con codigo que
+# ni siquiera compila es tiempo de runner desperdiciado.
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  # Permite lanzarlo a mano desde la pestana Actions, util para depurar la
+  # propia canalizacion sin ensuciar el historial con commits vacios.
+  workflow_dispatch:
+
+# Si se empuja dos veces seguidas a la misma rama, cancela la corrida anterior:
+# los minutos de runner son limitados y el resultado viejo ya no le importa a
+# nadie. En main no se cancela, porque ahi cada corrida es la que habilita el
+# despliegue.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+
+  # =========================================================================
+  # Backend Java - compilacion y pruebas
+  # =========================================================================
+  backend:
+    name: Backend (Java 17 / Maven)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          # Cachea ~/.m2 entre corridas. Sin esto, cada build vuelve a descargar
+          # Spring Boot entero y el job tarda varios minutos de mas.
+          cache: 'maven'
+
+      # Se usa el wrapper del repositorio y no el Maven del runner, para que CI
+      # compile con exactamente la misma version de Maven (3.9.16) que usa el
+      # equipo en local. Un "en mi maquina funciona" menos.
+      - name: Dar permiso de ejecucion al wrapper
+        working-directory: backend
+        run: chmod +x mvnw
+
+      - name: Compilar y ejecutar pruebas
+        working-directory: backend
+        run: ./mvnw -B --no-transfer-progress verify
+
+      # Se conserva el .jar aunque el despliegue no lo use (la imagen se compila
+      # sola): sirve para descargar y reproducir localmente el binario exacto de
+      # una corrida concreta cuando algo falla solo en CI.
+      - name: Publicar el artefacto compilado
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          retention-days: 7
+          if-no-files-found: error
+
+  # =========================================================================
+  # Servicio de inferencia - lint, entrenamiento y pruebas
+  # =========================================================================
+  ml-service:
+    name: ML Service (Python 3.11)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ml-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ml-service/requirements-dev.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check app train tests
+
+      # El modelo se entrena aqui porque las pruebas necesitan un artefacto real
+      # que cargar. De paso, esto verifica en cada commit que el entrenamiento
+      # sigue siendo reproducible y que el dataset no se rompio.
+      - name: Entrenar el modelo
+        run: python -m train.train
+
+      - name: Ejecutar pruebas
+        run: pytest -v
+
+      # Las metricas quedan descargables desde la pestana Actions. Es la forma
+      # mas simple de responder "¿mejoro o empeoro el modelo con este cambio?"
+      # sin tener que reentrenar en local.
+      - name: Publicar metricas del modelo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-metrics
+          path: ml-service/models/metrics.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Construccion de imagenes - valida que los Dockerfile funcionen
+  # =========================================================================
+  docker:
+    name: Construccion de imagenes
+    runs-on: ubuntu-latest
+    needs: [backend, ml-service]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Guarda contra un fallo que este job NO detectaria de otro modo: aqui se
+      # construye para la arquitectura del runner (amd64), pero el CD despliega
+      # en linux/arm64, porque la VM Always Free de OCI es Ampere A1.
+      #
+      # Si una imagen base no tiene variante para esa arquitectura, la
+      # compilacion sale en verde aqui y revienta en el despliegue con
+      # "no match for platform in manifest: not found". Paso exactamente eso con
+      # eclipse-temurin:17-jre-alpine, que Temurin publica SOLO para amd64.
+      #
+      # Comprobar los manifiestos cuesta segundos; descubrirlo en produccion,
+      # un despliegue fallido.
+      - name: Verificar que las imagenes base existen para la plataforma de despliegue
+        env:
+          PLATAFORMA: ${{ vars.TARGET_PLATFORM || 'linux/arm64' }}
+        run: |
+          arquitectura="${PLATAFORMA#linux/}"
+          faltantes=0
+
+          for imagen in $(grep -rhoE '^FROM +[^ ]+' backend/Dockerfile ml-service/Dockerfile \
+                            | awk '{print $2}' | sort -u); do
+            if docker manifest inspect "$imagen" 2>/dev/null \
+                 | grep -q "\"architecture\": \"${arquitectura}\""; then
+              echo "OK    ${imagen} publica ${PLATAFORMA}"
+            else
+              echo "::error::${imagen} no existe para ${PLATAFORMA}. El despliegue en OCI fallaria."
+              faltantes=$((faltantes + 1))
+            fi
+          done
+
+          exit $faltantes
+
+      # cache-from/to type=gha reutiliza las capas entre corridas. En la practica
+      # es la diferencia entre reinstalar scikit-learn en cada push o no hacerlo.
+      - name: Construir la imagen del backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: false
+          load: true
+          tags: techmind/backend:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Construir la imagen del ml-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ml-service
+          push: false
+          load: true
+          tags: techmind/ml-service:ci
+          cache-from: type=gha,scope=ml-service
+          cache-to: type=gha,mode=max,scope=ml-service
+
+      # =====================================================================
+      # Vulnerabilidades conocidas en las imagenes
+      # =====================================================================
+      #
+      # El umbral esta puesto donde es accionable: CRITICAS y QUE TENGAN
+      # ARREGLO DISPONIBLE.
+      #
+      # `ignore-unfixed: true` es la clave. Las imagenes base arrastran siempre
+      # unas cuantas vulnerabilidades sin parche publicado; hacer fallar el
+      # build por algo que nadie puede arreglar convierte el escaneo en un
+      # obstaculo que el equipo termina desactivando. Con este filtro, un fallo
+      # significa "hay una actualizacion que deberias aplicar", que si merece
+      # detener el pipeline.
+      - name: Escanear la imagen del backend
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: techmind/backend:ci
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          vuln-type: os,library
+
+      - name: Escanear la imagen del ml-service
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: techmind/ml-service:ci
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          vuln-type: os,library
+
+      # Informe completo (todas las severidades) para cuando alguien quiera
+      # mirar el detalle. `if: always()` porque interesa sobre todo cuando el
+      # paso anterior fallo.
+      - name: Informe detallado de vulnerabilidades
+        if: always()
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: techmind/backend:ci
+          format: table
+          severity: CRITICAL,HIGH,MEDIUM
+          ignore-unfixed: false
+          exit-code: '0'
+          output: trivy-backend.txt
+
+      - name: Publicar el informe en el resumen
+        if: always()
+        run: |
+          {
+            echo "### Vulnerabilidades de la imagen del backend"
+            echo ""
+            echo '```'
+            head -60 trivy-backend.txt 2>/dev/null || echo "(sin informe)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Validar la sintaxis del compose aqui evita el escenario clasico: las dos
+      # imagenes construyen bien, el despliegue arranca, y falla por una comilla
+      # mal puesta en el YAML.
+      #
+      # Se valida TAMBIEN el archivo de produccion, y fusionado con el base, que
+      # es la unica forma en que se usa de verdad. Sin este paso, un error en
+      # docker-compose.prod.yml (una etiqueta !reset mal puesta, una clave que no
+      # fusiona como se esperaba, un puerto duplicado) solo se descubriria en la
+      # VM, a mitad de un despliegue a produccion.
+      #
+      # Los valores de entorno son ficticios: aqui interesa que el YAML resuelva,
+      # no desplegar nada. Las variables declaradas con ${VAR:?...} son
+      # obligatorias y sin ellas `config` falla.
+      - name: Validar los archivos de compose
+        env:
+          OCIR_REGISTRY: ejemplo.ocir.io
+          OCI_NAMESPACE: ejemplo
+          OCI_REGION: sa-saopaulo-1
+          IMAGE_TAG: ci
+          DB_USERNAME: ci
+          DB_PASSWORD: ci
+          TECHMIND_API_KEY: ci
+          CORS_ALLOWED_ORIGINS: http://localhost:3000
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+          echo "docker-compose.yml valido"
+
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+          echo "docker-compose.prod.yml valido (fusionado con el base)"
+
+          # El ml-service NO debe publicar puertos en produccion. Es una
+          # propiedad de seguridad, no un detalle de formato: si alguien quita el
+          # `ports: !reset null`, el modelo queda expuesto a Internet sin nada
+          # delante. Se comprueba sobre la configuracion ya fusionada, que es la
+          # unica que refleja lo que se despliega de verdad.
+          publicados=$(docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+            config --format json | jq '.services["ml-service"].ports | length')
+
+          if [ "$publicados" -eq 0 ]; then
+            echo "ml-service no publica puertos en produccion"
+          else
+            echo "::error::docker-compose.prod.yml publica ${publicados} puerto(s) del ml-service. Debe quedar interno."
+            exit 1
+          fi
+
+  # =========================================================================
+  # Prueba de humo - levanta el sistema completo y lo interroga
+  # =========================================================================
+  smoke-test:
+    name: Prueba de humo (extremo a extremo)
+    runs-on: ubuntu-latest
+    needs: [docker]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Levantar el sistema completo
+        run: docker compose up --build --detach --wait --wait-timeout 300
+
+      # --wait hace que el comando anterior solo retorne cuando los healthchecks
+      # pasan. Si el ml-service no logra cargar el modelo, el job falla aqui y no
+      # tres pasos mas adelante con un error confuso de conexion rechazada.
+
+      - name: Verificar el estado del ml-service
+        run: |
+          respuesta=$(curl --silent --fail http://localhost:8000/health)
+          echo "$respuesta"
+          echo "$respuesta" | grep -q '"modelo_cargado":true'
+
+      # Los tres ejemplos de uso que exige el brief del hackathon, ejecutados
+      # contra el sistema real en cada corrida. Documentacion que no puede
+      # quedar desactualizada, porque si dejara de funcionar, CI se pondria rojo.
+      - name: Ejemplo 1 - contenido de Backend
+        run: |
+          curl --silent --fail -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"titulo":"Introduccion a Spring Boot","texto":"En este contenido se presentan los conceptos basicos para la creacion de APIs REST utilizando Java y Spring Boot."}' \
+            | tee /dev/stderr | grep -q '"categoria"'
+
+      - name: Ejemplo 2 - contenido de DevOps
+        run: |
+          curl --silent --fail -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"titulo":"Tutorial de Docker","texto":"Introduccion a la contenerizacion de aplicaciones con Docker, escritura de un Dockerfile, construccion de imagenes y ejecucion de contenedores."}' \
+            | tee /dev/stderr | grep -q '"informacion_adicional"'
+
+      - name: Ejemplo 3 - contenido de Ciencia de Datos
+        run: |
+          curl --silent --fail -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"titulo":"Analisis exploratorio con Pandas","texto":"Carga, limpieza y exploracion de conjuntos de datos tabulares usando Pandas, tratamiento de valores nulos y calculo de estadisticas descriptivas."}' \
+            | tee /dev/stderr | grep -q '"probabilidad"'
+
+      # Dos comprobaciones distintas a proposito: /actuator/health es lo que
+      # decide si el contenedor esta sano (y por tanto si un despliegue se da
+      # por bueno), y /v3/api-docs confirma que springdoc sigue publicando el
+      # contrato que consume Swagger UI.
+      - name: Verificar la salud del backend
+        run: |
+          respuesta=$(curl --silent --fail http://localhost:8080/actuator/health)
+          echo "$respuesta"
+          echo "$respuesta" | grep -q '"status":"UP"'
+
+      - name: Verificar que springdoc publica el contrato
+        run: curl --silent --fail http://localhost:8080/v3/api-docs > /dev/null
+
+      # Comprueba el camino completo: cliente -> backend -> ml-service.
+      #
+      # Mientras ContenidoController siga vacio, el endpoint devuelve 404 y el
+      # script lo reporta como PENDIENTE sin fallar. En cuanto el equipo de
+      # backend lo implemente, este paso empieza a validarlo de verdad y falla
+      # si la integracion esta mal cableada (por ejemplo, si el cliente llama a
+      # una ruta distinta de /predict).
+      #
+      # Sin este paso, ese fallo no lo detectaria nada: los contenedores
+      # arrancan sanos, los healthchecks pasan, y el error solo aparece cuando
+      # alguien usa la API a mano.
+      - name: Integracion extremo a extremo
+        run: bash scripts/smoke-test.sh localhost
+
+      # `if: always()` es lo que hace util a este paso: los logs se necesitan
+      # justamente cuando algun paso anterior fallo.
+      - name: Logs de los contenedores
+        if: always()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Apagar
+        if: always()
+        run: docker compose down --volumes

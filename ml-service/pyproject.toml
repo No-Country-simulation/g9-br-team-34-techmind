@@ -1,0 +1,33 @@
+# Configuracion de herramientas del ml-service.
+#
+# Solo configura el tooling (ruff, pytest). Las dependencias siguen declaradas
+# en requirements.txt, que es lo que consume el Dockerfile.
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # isort: orden de imports
+    "UP",  # pyupgrade: sintaxis obsoleta para la version de Python objetivo
+    "B",   # flake8-bugbear: fallos logicos frecuentes
+]
+ignore = [
+    # Los mensajes de error largos en espanol pasan de 100 caracteres con
+    # frecuencia y partirlos empeora la legibilidad.
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# conftest.py debe fijar variables de entorno ANTES de importar la app, asi que
+# necesariamente tiene imports que no estan al principio del archivo.
+"tests/conftest.py" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Permite que `pytest` encuentre el paquete `app` sin instalar el proyecto.
+pythonpath = ["."]
+addopts = "-ra --strict-markers"

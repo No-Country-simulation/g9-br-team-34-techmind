@@ -1,0 +1,11 @@
+# Dependencias de desarrollo y pruebas.
+#
+# Van en un archivo aparte de requirements.txt para que NO entren en la imagen
+# de produccion: un runner de pruebas dentro del contenedor desplegado es codigo
+# que nunca se ejecuta y superficie de ataque que si existe.
+
+-r requirements.txt
+
+pytest==8.3.4
+httpx==0.28.1
+ruff==0.8.6

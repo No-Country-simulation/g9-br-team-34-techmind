@@ -1,0 +1,196 @@
+# Monitoreo del servicio en produccion.
+#
+# Consulta el endpoint de salud cada quince minutos. Si falla dos veces
+# seguidas, abre un issue; cuando vuelve, lo cierra solo.
+#
+# Por que un issue y no un correo: queda en el repositorio, con marca de tiempo,
+# y cualquiera del equipo lo ve sin configurar nada. Para un hackathon es la
+# unica forma de monitoreo que no exige montar (ni pagar) una herramienta
+# aparte.
+#
+# Limitaciones que conviene tener claras:
+#   - GitHub no garantiza la puntualidad del cron; con carga alta puede
+#     retrasarse varios minutos. Sirve para detectar caidas, no para medir
+#     disponibilidad con precision.
+#   - Los workflows programados se DESACTIVAN SOLOS tras 60 dias sin actividad
+#     en el repositorio. Si el proyecto queda quieto, hay que reactivarlo a mano.
+
+name: Monitoreo de produccion
+
+on:
+  schedule:
+    # Cada 15 minutos. Es el intervalo mas corto que GitHub respeta de verdad.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+# Sin `issues: write` el workflow detecta la caida pero no puede avisar.
+permissions:
+  contents: read
+  issues: write
+
+# Dos corridas simultaneas podrian abrir dos issues por la misma caida.
+concurrency:
+  group: monitoreo-produccion
+  cancel-in-progress: false
+
+jobs:
+  comprobar:
+    name: Comprobar salud
+    runs-on: ubuntu-latest
+
+    # Si OCI_HOST no esta configurado, el proyecto todavia no se desplego y no
+    # tiene sentido avisar de nada. `if` a nivel de job lo salta entero.
+    if: vars.OCI_HOST != ''
+
+    steps:
+      - name: Consultar el endpoint de salud
+        id: salud
+        env:
+          HOST: ${{ vars.OCI_HOST }}
+          PUERTO: ${{ vars.BACKEND_PORT || '8080' }}
+        run: |
+          # Dos intentos separados por 20 segundos. Un unico fallo puede ser un
+          # corte de red momentaneo del runner, y avisar por eso convierte al
+          # monitoreo en ruido que la gente aprende a ignorar. Es la diferencia
+          # entre una alerta util y una que nadie mira.
+          estado="caido"
+          for intento in 1 2; do
+            codigo=$(curl --silent --output /tmp/respuesta.json \
+              --write-out '%{http_code}' --max-time 15 \
+              "http://${HOST}:${PUERTO}/actuator/health" || echo "000")
+
+            echo "Intento ${intento}: HTTP ${codigo}"
+
+            if [ "$codigo" = "200" ] && grep -q '"status":"UP"' /tmp/respuesta.json; then
+              estado="arriba"
+              break
+            fi
+
+            [ "$intento" -eq 1 ] && sleep 20
+          done
+
+          echo "estado=${estado}" >> "$GITHUB_OUTPUT"
+          echo "url=http://${HOST}:${PUERTO}" >> "$GITHUB_OUTPUT"
+
+          if [ "$estado" = "arriba" ]; then
+            echo "El servicio responde correctamente."
+          else
+            echo "::warning::El servicio no responde en http://${HOST}:${PUERTO}"
+            cat /tmp/respuesta.json 2>/dev/null || echo "(sin cuerpo de respuesta)"
+          fi
+
+      # --------------------------------------------------------------------
+      - name: Abrir issue si esta caido
+        if: steps.salud.outputs.estado == 'caido'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const etiqueta = 'incidente-produccion';
+            const url = '${{ steps.salud.outputs.url }}';
+
+            // Se busca un issue abierto con la etiqueta antes de crear otro.
+            // Sin esta comprobacion, una caida de una hora generaria cuatro
+            // issues y el repositorio quedaria inutilizable.
+            const abiertos = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: etiqueta,
+            });
+
+            if (abiertos.data.length > 0) {
+              const issue = abiertos.data[0];
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `Sigue sin responder. Comprobado el ${new Date().toISOString()}.`,
+              });
+              core.info(`Ya existe el issue #${issue.number}; se agrego un comentario.`);
+              return;
+            }
+
+            // La etiqueta se crea si no existe. Un `addLabels` sobre una
+            // etiqueta inexistente falla, y perder el aviso por eso seria
+            // absurdo.
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: etiqueta,
+                color: 'd73a4a',
+                description: 'El servicio en produccion no responde',
+              });
+            } catch (e) {
+              // Ya existia. Es el caso normal a partir del segundo incidente.
+            }
+
+            const cuerpo = [
+              `El endpoint de salud no responde: ${url}/actuator/health`,
+              '',
+              `Detectado el ${new Date().toISOString()} (dos intentos fallidos).`,
+              '',
+              '### Que revisar, en orden',
+              '',
+              '1. Estado de los contenedores:',
+              '   ```',
+              `   ssh opc@${{ vars.OCI_HOST }}`,
+              '   cd /opt/techmind',
+              '   docker compose -f docker-compose.yml -f docker-compose.prod.yml ps',
+              '   ```',
+              '2. Logs recientes:',
+              '   ```',
+              '   docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200',
+              '   ```',
+              '3. Espacio en disco. Un disco lleno tumba los contenedores y el',
+              '   sintoma no lo dice: `df -h /` y `docker system df`.',
+              '4. Que la instancia siga encendida en la consola de OCI.',
+              '',
+              'Guia completa: `docs/devops/despliegue-oci.md`, parte 8.',
+              '',
+              'Este issue se cierra solo cuando el servicio vuelva a responder.',
+            ].join('\n');
+
+            const nuevo = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Produccion no responde (${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC)`,
+              body: cuerpo,
+              labels: [etiqueta],
+            });
+
+            core.setFailed(`El servicio esta caido. Issue #${nuevo.data.number}.`);
+
+      # --------------------------------------------------------------------
+      - name: Cerrar el issue si volvio
+        if: steps.salud.outputs.estado == 'arriba'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const etiqueta = 'incidente-produccion';
+
+            const abiertos = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: etiqueta,
+            });
+
+            for (const issue of abiertos.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `El servicio volvio a responder el ${new Date().toISOString()}. Se cierra automaticamente.`,
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'completed',
+              });
+
+              core.info(`Issue #${issue.number} cerrado.`);
+            }

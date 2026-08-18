@@ -1,0 +1,13 @@
+services:
+  api-techmind:
+    build: .
+    container_name: api-techmind
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+    volumes:
+      - ./data:/app/data   # persistencia de la BD H2 (DB_FILE_PATH=/app/data/techmind)
+    restart: unless-stopped

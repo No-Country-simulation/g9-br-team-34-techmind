@@ -1,0 +1,99 @@
+# TechMind - orquestacion para DESARROLLO LOCAL.
+#
+#   docker compose up --build
+#
+# Levanta los dos servicios del proyecto en una red privada:
+#
+#   ml-service (Python)  ->  el modelo de Ciencia de Datos, servido por HTTP
+#   backend    (Java)    ->  la API REST publica, que consume al anterior
+#
+# Para produccion en OCI se usa docker-compose.prod.yml, que parte de este
+# archivo y lo sobrescribe. Ver docs/devops/despliegue-oci.md.
+
+name: techmind
+
+services:
+
+  # -------------------------------------------------------------------------
+  # Servicio de inferencia (Ciencia de Datos)
+  # -------------------------------------------------------------------------
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    image: techmind/ml-service:dev
+    container_name: techmind-ml-service
+
+    environment:
+      # En local el modelo viaja dentro de la imagen: se entrena durante el
+      # build. Asi quien clona el repositorio levanta todo con un comando, sin
+      # necesitar credenciales de OCI.
+      MODEL_SOURCE: local
+      MODEL_PATH: /app/models/model.joblib
+      MAX_KEYWORDS: ${MAX_KEYWORDS:-5}
+      LOG_LEVEL: ${ML_LOG_LEVEL:-info}
+
+    # El puerto se publica SOLO en desarrollo, para poder probar el modelo
+    # directamente con curl sin pasar por el backend. En produccion este
+    # servicio no se expone: se accede unicamente desde la red interna.
+    ports:
+      - "${ML_SERVICE_PORT:-8000}:8000"
+
+    networks:
+      - techmind-net
+
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------------
+  # API REST (Backend)
+  # -------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: techmind/backend:dev
+    container_name: techmind-backend
+
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8080
+
+      # `ml-service` es el nombre DNS que Docker resuelve dentro de la red del
+      # compose. Nunca localhost: dentro de un contenedor, localhost es ese
+      # mismo contenedor, no la maquina anfitriona.
+      INFERENCE_SERVICE_URL: http://ml-service:8000
+      INFERENCE_SERVICE_TIMEOUT_MS: ${INFERENCE_SERVICE_TIMEOUT_MS:-5000}
+
+      DB_USERNAME: ${DB_USERNAME:-sa}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+
+      TECHMIND_API_KEY: ${TECHMIND_API_KEY:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+    volumes:
+      # La base H2 vive en un volumen y no dentro del contenedor: sin esto, cada
+      # `docker compose down` borraria todos los contenidos procesados.
+      - backend-data:/app/data
+
+    depends_on:
+      ml-service:
+        # `service_healthy` y no solo `service_started`: el ml-service tarda
+        # unos segundos en cargar el modelo, y arrancar el backend antes de eso
+        # produciria fallos de conexion en las primeras peticiones.
+        condition: service_healthy
+
+    networks:
+      - techmind-net
+
+    restart: unless-stopped
+
+networks:
+  techmind-net:
+    driver: bridge
+
+volumes:
+  backend-data:
+    driver: local
