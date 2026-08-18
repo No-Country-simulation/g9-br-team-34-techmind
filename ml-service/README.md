@@ -24,11 +24,11 @@ Servicio interno en FastAPI que expone el modelo de clasificación de contenido 
 
 Recibe un título y un texto, y devuelve:
 
-- **`categoria`** — una de las **7 categorías** que predice el modelo entrenado (Backend, Bases de Datos, Ciencia de Datos, DevOps, Frontend, Moviles, Seguridad), mediante un pipeline TF-IDF + Regresión Logística.
+- **`categoria`** — una de las **7 categorías** que predice el modelo (backend, base de datos, devops, frontend, machine learning, mobile, seguridad), en minúsculas tal como las entrena Ciencia de Datos. El modelo es el que el equipo de Ciencia de Datos entrena en su notebook (`data-science/`): dos vectorizadores TF-IDF (título y texto) + Regresión Logística.
 - **`probabilidad`** — confianza de la predicción, en `[0.0, 1.0]`.
-- **`informacion_adicional`** — las palabras clave con mayor peso TF-IDF dentro del texto (hasta `MAX_KEYWORDS`, default 5).
+- **`informacion_adicional`** — las palabras clave con mayor peso TF-IDF dentro del texto (hasta `MAX_KEYWORDS`, default 5), lematizadas como en el entrenamiento.
 
-Este servicio **no valida reglas de negocio** más allá de las cotas de longitud del propio esquema: asume que el backend ya validó la entrada. Tampoco entrena en tiempo de ejecución — el modelo se entrena una vez, en tiempo de build de la imagen, y se sirve como artefacto estático (ver [Entrenar el modelo](#entrenar-el-modelo)).
+Este servicio **no valida reglas de negocio** más allá de las cotas de longitud del propio esquema: asume que el backend ya validó la entrada. Tampoco entrena en tiempo de ejecución — el modelo se reempaqueta una vez, en tiempo de build de la imagen, y se sirve como artefacto estático (ver [Entrenar el modelo](#entrenar-el-modelo)).
 
 ## Endpoints
 
@@ -52,9 +52,9 @@ Documentación interactiva (OpenAPI/Swagger) en `http://localhost:8000/docs` una
 ```json
 // 200 OK
 {
-  "categoria": "Backend",
+  "categoria": "backend",
   "probabilidad": 0.89,
-  "informacion_adicional": ["Java", "Spring Boot", "API REST"]
+  "informacion_adicional": ["java", "spring boot", "rest"]
 }
 ```
 
@@ -66,7 +66,7 @@ Si el modelo no pudo cargarse al arrancar, responde `503` con la causa exacta de
 {
   "status": "ok",
   "modelo_cargado": true,
-  "categorias": ["Backend", "Bases de Datos", "Ciencia de Datos", "DevOps", "Frontend", "Moviles", "Seguridad"],
+  "categorias": ["backend", "base de datos", "devops", "frontend", "machine learning", "mobile", "seguridad"],
   "origen_modelo": "local:///app/models/model.joblib"
 }
 ```
@@ -94,14 +94,16 @@ uvicorn app.main:app --reload --port 8000
 python -m train.train
 ```
 
-Lee `train/dataset.csv`, entrena un pipeline `TfidfVectorizer` + `LogisticRegression` con validación cruzada estratificada (semilla fija, para que dos corridas sobre el mismo dataset produzcan el mismo modelo) y genera dos archivos en `models/`:
+Este script **no entrena**: toma los artefactos que entrega el equipo de Ciencia de Datos en `data-science/API/` (`modelo_clasificador.joblib`, `tfidf_titulo.joblib`, `tfidf_texto.joblib`), los reempaqueta en un único archivo con el contrato que lee `app/model.py` y evalúa al modelo sobre el dataset versionado (`data-science/data/v4.json`). Genera dos archivos en `models/`:
 
 - **`model.joblib`** — el artefacto que carga el servicio en producción.
 - **`metrics.json`** — métricas de la corrida (para CI y para el informe del equipo de Ciencia de Datos).
 
-**El único contrato que debe respetarse** para que `app/model.py` pueda cargarlo es la forma del artefacto serializado: un diccionario con las claves `pipeline` (el `Pipeline` de scikit-learn, con pasos nombrados `tfidf` y `clf`) y `categorias` (la lista de clases). El equipo de Ciencia de Datos puede reemplazar `dataset.csv` — o el propio `train.py` — sin tocar el resto del servicio, siempre que el artefacto resultante respete ese contrato.
+Para que el preprocesado en servir coincida con el del entrenamiento, el servicio usa la **misma limpieza que el notebook** (lematización spaCy en español, lista de excepciones de términos técnicos y normalizaciones) — ver `app/preprocess.py`, transposición literal de la celda de preprocesado del notebook. Por eso `requirements.txt` incluye `spacy` y el modelo `es_core_news_sm`; sin el mismo lematizador, las predicciones en producción se degradarían silenciosamente.
 
-> `train.py` es un andamio de DevOps, no el entregable final de Ciencia de Datos: existe para que el pipeline completo (entrenar → serializar → publicar en Object Storage → servir en un contenedor) se pueda demostrar de punta a punta desde el primer día del proyecto, sin quedar bloqueado esperando el notebook de modelado. El trabajo de exploración y modelado en profundidad vive en [`data-science/notebooks/`](#relación-con-data-science).
+**El único contrato que debe respetarse** para que `app/model.py` pueda cargarlo es la forma del artefacto serializado: un diccionario con las claves `modelo`, `vect_titulo`, `vect_texto`, `peso_titulo` y `categorias`. Si Ciencia de Datos reentrena y cambia el formato de entrega, el punto de adaptación es `train/train.py` — el resto del servicio no tiene por qué enterarse.
+
+> El reempaquetado en el build de la imagen corre con `CALCULAR_METRICAS=0`: las métricas solo las generan CI y el CD (son quienes suben `metrics.json`); el build solo necesita el artefacto servible, y evaluar el dataset completo encarecería cada build (especialmente emulado en el CD).
 
 ## Configuración
 
@@ -121,7 +123,7 @@ Todas las variables entran por entorno (`app/settings.py`, vía `pydantic-settin
 
 ## Origen del modelo: local vs. OCI
 
-- **`MODEL_SOURCE=local`** (desarrollo, `docker-compose.yml`) — el modelo se entrena en tiempo de build y viaja dentro de la propia imagen Docker. Quien clona el repositorio levanta todo con un solo comando, sin necesitar credenciales de nube.
+- **`MODEL_SOURCE=local`** (desarrollo, `docker-compose.yml`) — el modelo se reempaqueta en tiempo de build a partir de los artefactos de `data-science/` y viaja dentro de la propia imagen Docker. Quien clona el repositorio levanta todo con un solo comando, sin necesitar credenciales de nube.
 - **`MODEL_SOURCE=oci`** (producción, `docker-compose.prod.yml`) — el contenedor descarga `model.joblib` desde OCI Object Storage al arrancar, autenticándose como la propia instancia de OCI (`instance_principal`, sin claves privadas en disco). Si Object Storage no responde pero el volumen conserva una copia previa válida, el servicio arranca igual con esa copia en vez de quedar caído — un incidente transitorio de OCI no debe tumbar el servicio si ya hay un modelo utilizable en disco. Ese origen efectivo (recién descargado vs. copia local de respaldo) queda reflejado en el campo `origen_modelo` de `/health`, precisamente para poder distinguir ambos casos en producción.
 
 ## Pruebas
@@ -136,8 +138,10 @@ Requiere que exista `models/model.joblib` (correr `python -m train.train` antes 
 
 El repositorio tiene dos carpetas relacionadas con Ciencia de Datos y conviene no confundirlas:
 
-- **[`data-science/`](../data-science/)** — el espacio de trabajo exploratorio del equipo de Ciencia de Datos: notebooks de EDA, modelado y métricas, datasets versionados (`v2`, `v3`, `v4`) y los artefactos que produjeron.
-- **`ml-service/`** (este directorio) — el servicio productivo que sirve un modelo entrenado por HTTP. Consume el contrato de artefacto descrito arriba; no reproduce el trabajo de exploración.
+- **[`data-science/`](../data-science/)** — el espacio de trabajo del equipo de Ciencia de Datos: notebooks de EDA, modelado y métricas, datasets versionados (`v2`, `v3`, `v4`) y los **artefactos entrenados** en `data-science/API/`.
+- **`ml-service/`** (este directorio) — el servicio productivo que sirve ese modelo por HTTP. `train/train.py` reempaqueta los artefactos de `data-science/API/` en el formato que lee `app/model.py`; **no reproduce el trabajo de exploración ni reentrena**.
+
+El flujo real es: el notebook de Ciencia de Datos entrena y deja `data-science/API/*.joblib` → `train.py` los reempaqueta en `model.joblib` → el CD lo publica en OCI Object Storage → el contenedor lo descarga al arrancar (`MODEL_SOURCE=oci`). Lo que se sirve en producción es, literalmente, el modelo del notebook — no una copia de un dataset semilla.
 
 ## Decisiones de diseño
 
