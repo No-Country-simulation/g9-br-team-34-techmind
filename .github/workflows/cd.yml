@@ -236,7 +236,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
-          dockerfile: ${{ matrix.dockerfile }}
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: |
             ${{ vars.OCIR_REGISTRY }}/${{ vars.OCI_NAMESPACE }}/techmind/${{ matrix.servicio }}:${{ env.IMAGE_TAG }}
