@@ -6,10 +6,10 @@
 # no hay.
 
 # --- API ---
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pydantic==2.10.4
-pydantic-settings==2.7.1
+fastapi==0.141.1
+uvicorn[standard]==0.52.3
+pydantic==2.13.4
+pydantic-settings==2.15.0
 
 # --- Ciencia de Datos ---
 # 1.8.0 (no 1.6.0): los artefactos que entrega Ciencia de Datos en
