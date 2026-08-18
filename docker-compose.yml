@@ -19,15 +19,18 @@ services:
   # -------------------------------------------------------------------------
   ml-service:
     build:
-      context: ./ml-service
-      dockerfile: Dockerfile
+      # Contexto desde la raiz del repositorio: el Dockerfile reempaqueta los
+      # artefactos de Ciencia de Datos que viven en data-science/API/. El
+      # .dockerignore de la raiz excluye del contexto todo lo que no se usa.
+      context: .
+      dockerfile: ml-service/Dockerfile
     image: techmind/ml-service:dev
     container_name: techmind-ml-service
 
     environment:
-      # En local el modelo viaja dentro de la imagen: se entrena durante el
-      # build. Asi quien clona el repositorio levanta todo con un comando, sin
-      # necesitar credenciales de OCI.
+      # En local el modelo viaja dentro de la imagen: se reempaqueta durante el
+      # build a partir de los artefactos de data-science/. Asi quien clona el
+      # repositorio levanta todo con un comando, sin necesitar credenciales de OCI.
       MODEL_SOURCE: local
       MODEL_PATH: /app/models/model.joblib
       MAX_KEYWORDS: ${MAX_KEYWORDS:-5}

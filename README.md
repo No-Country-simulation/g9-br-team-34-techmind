@@ -31,7 +31,7 @@ TechMind recibe contenido técnico —texto plano, PDF, DOCX o una URL— y devu
 Un cliente envía contenido técnico —como texto directo, un archivo PDF/DOCX o una URL— y TechMind:
 
 1. Extrae y limpia el texto (si la entrada es un archivo o una URL).
-2. Lo clasifica en una de las **7 categorías** que predice el modelo entrenado (Backend, Bases de Datos, Ciencia de Datos, DevOps, Frontend, Moviles, Seguridad).
+2. Lo clasifica en una de las **7 categorías** que predice el modelo entrenado (backend, base de datos, devops, frontend, machine learning, mobile, seguridad).
 3. Extrae sus palabras clave más representativas.
 4. Persiste el resultado y lo expone vía API REST, con búsqueda, filtros, paginación y contenidos relacionados.
 
@@ -113,16 +113,16 @@ El `backend` es el único servicio expuesto a Internet. El `ml-service` solo es 
 │   └── Dockerfile              build multi-etapa: maven -> jre-jammy
 │
 ├── ml-service/                 Servicio de inferencia en FastAPI (Python 3.11)
-│   ├── app/                    API HTTP que sirve el modelo (main, model, schemas, settings)
-│   ├── train/                  script de entrenamiento y dataset semilla
+│   ├── app/                    API HTTP que sirve el modelo (main, model, preprocess, schemas, settings)
+│   ├── train/                  reempaqueta los artefactos de Ciencia de Datos (train.py)
 │   ├── tests/                  pruebas de contrato HTTP
-│   └── Dockerfile              build multi-etapa: entrena en build, sirve en runtime
+│   └── Dockerfile              build multi-etapa: reempaqueta en build, sirve en runtime
 │
-├── data-science/                Exploración y modelado (fuera del pipeline productivo)
+├── data-science/                Exploración, modelado y entrega del modelo definitivo
 │   ├── notebooks/               EDA, entrenamiento y métricas en Jupyter
 │   ├── data/                    datasets versionados (v2, v3, v4)
-│   ├── models/                  artefactos entrenados por el equipo de Ciencia de Datos
-│   └── API/                     prototipo original del servicio de inferencia
+│   ├── models/                  copias de los artefactos entrenados por Ciencia de Datos
+│   └── API/                     artefactos entrenados (modelo_clasificador, tfidf_titulo, tfidf_texto) que consume ml-service
 │
 ├── frontend/                    Cliente de demostración (HTML/CSS/JS, consume la API)
 │
@@ -144,7 +144,7 @@ El `backend` es el único servicio expuesto a Internet. El `ml-service` solo es 
 │
 ├── .github/workflows/
 │   ├── ci.yml                    compilación, pruebas e imágenes en cada push/PR
-│   ├── cd.yml                    entrenamiento, publicación y despliegue automático en OCI
+│   ├── cd.yml                    reempaquetado del modelo, publicación y despliegue automático en OCI
 │   └── monitoreo.yml             chequeo de salud periódico en producción
 │
 ├── caddy/Caddyfile               proxy inverso opcional con HTTPS automático
@@ -204,7 +204,7 @@ Si estás trabajando exclusivamente en un servicio, cada uno documenta su arranq
 | `make logs-backend` / `make logs-ml` | Logs de un servicio en particular |
 | `make ps` | Estado de los contenedores |
 | `make test` | Pruebas de backend y ml-service |
-| `make train` | Reentrena el modelo en local |
+| `make train` | Reempaqueta el modelo de Ciencia de Datos en local (genera `ml-service/models/`) |
 | `make lint` | Analiza el código Python (ruff) |
 | `make shell-backend` / `make shell-ml` | Abre una shell dentro de un contenedor |
 | `make rebuild` | Reconstruye ignorando la caché de Docker |
@@ -233,7 +233,7 @@ Todas las respuestas de error siguen un formato uniforme (`ErrorResponseDTO`), c
 
 El despliegue en Oracle Cloud Infrastructure es **automático**: cada merge a `main` dispara el workflow de CD ([`.github/workflows/cd.yml`](.github/workflows/cd.yml)), que:
 
-1. Entrena el modelo y publica el artefacto en OCI Object Storage.
+1. Reempaqueta los artefactos de Ciencia de Datos (`data-science/API/`) y publica `model.joblib` en OCI Object Storage.
 2. Construye y publica las imágenes de `backend` y `ml-service` en OCIR (OCI Container Registry).
 3. Actualiza los contenedores en la VM de producción vía SSH.
 4. Si los healthchecks no pasan, **revierte automáticamente** a la versión anterior.
@@ -247,7 +247,7 @@ La guía completa —aprovisionamiento con Terraform, secrets de GitHub Actions,
 | Documento | Contenido |
 |---|---|
 | [`backend/README.md`](backend/README.md) | Arquitectura interna del backend, capas, configuración, cómo correr sin Docker |
-| [`ml-service/README.md`](ml-service/README.md) | Servicio de inferencia, entrenamiento del modelo, contrato HTTP, cómo correr sin Docker |
+| [`ml-service/README.md`](ml-service/README.md) | Servicio de inferencia, reempaquetado del modelo, contrato HTTP, cómo correr sin Docker |
 | [`docs/contrato-backend-ds.md`](docs/contrato-backend-ds.md) | Contrato REST/JSON acordado entre Backend y Ciencia de Datos: campos, categorías, convenciones de nombres |
 | [`docs/pruebas-aceptacion-e2e.md`](docs/pruebas-aceptacion-e2e.md) | Batería de pruebas de aceptación end-to-end y defectos corregidos |
 | [`docs/devops/despliegue-oci.md`](docs/devops/despliegue-oci.md) | Guía de despliegue en OCI y runbook operativo |
