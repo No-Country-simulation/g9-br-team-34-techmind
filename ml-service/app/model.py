@@ -26,6 +26,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+import spacy
 import joblib
 import numpy as np
 from scipy.sparse import hstack
@@ -33,6 +34,30 @@ from scipy.sparse import hstack
 from .settings import settings
 
 logger = logging.getLogger(__name__)
+
+_nlp = spacy.load("es_core_news_sm", disable=["ner", "parser"])
+
+# Palabras propias del dominio técnico que NO deben tratarse como stopwords
+EXCEPCIONES = {
+    #Backend / lenguajes
+    "api", "rest", "soap", "orm", "jwt", "sdk", "cli", "php", "java",
+    "cplusplus", "csharp", "fsharp", "dotnet", "nodejs", "go", "rust",
+    # Frontend
+    "css", "html", "js", "ts", "ux", "ui", "reactjs", "vuejs", "angularjs",
+    "seo",
+    # Base de datos
+    "sql", "nosql",
+    # DevOps
+    "git", "ci", "cd", "cicd", "aws", "gcp", "k8s", "ssh", "vpn", "dns",
+    "ftp", "tcp", "ip", "http", "https", "json", "xml", "yaml", "npm",
+    "pip", "venv", "docker",
+    # Machine Learning
+    "ai", "ml", "nlp", "gpu", "cpu", "ram",
+    # Seguridad
+    "oauth", "sso",
+    # Mobile
+    "ios", "apk",
+}
 
 # Normalizaciones de texto identicas a las que aplico Ciencia de Datos antes de
 # vectorizar. Si esto se desalinea del preprocesamiento usado al entrenar, el
@@ -51,13 +76,26 @@ NORMALIZACIONES = {
 
 
 def limpiar_texto(texto: str) -> str:
-    """Normaliza un texto exactamente como lo hizo Ciencia de Datos al entrenar."""
+    """Normaliza, quita stopwords, lematiza. Pensado para alimentar TF-IDF."""
     texto = texto.lower()
+
+    # Protege términos compuestos ANTES de quitar símbolos como + # .
     for patron, reemplazo in NORMALIZACIONES.items():
         texto = re.sub(patron, reemplazo, texto)
-    texto = re.sub(r"http\S+|www\.\S+", " ", texto)
-    texto = re.sub(r"[^\w\sáéíóúñü]", " ", texto)
-    return re.sub(r"\s+", " ", texto).strip()
+
+    texto = re.sub(r"http\S+|www\.\S+", " ", texto)          # URLs
+    texto = re.sub(r"[^\w\sáéíóúñü]", " ", texto)              # puntuación, conserva tildes/ñ
+    texto = re.sub(r"\d+", " ", texto)                         # números
+    texto = re.sub(r"\s+", " ", texto).strip()
+
+    doc = _nlp(texto)
+    tokens = [
+        tok.lemma_ for tok in doc
+        if (not tok.is_stop or tok.text in EXCEPCIONES)
+        and not tok.is_punct
+        and len(tok.text) > 1
+    ]
+    return " ".join(tokens)
 
 
 @dataclass

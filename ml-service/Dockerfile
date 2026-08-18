@@ -36,6 +36,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # linea de codigo.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m spacy download es_core_news_sm
 
 # ---------------------------------------------------------------------------
 # Etapa 2: imagen final
