@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     # Peso relativo del titulo frente al texto al combinar ambos vectores
     # TF-IDF antes de clasificar. Viene del entrenamiento de Ciencia de Datos:
     # cambiarlo aca sin reentrenar el modelo desalinea inferencia de entrenamiento.
-    peso_titulo: float = 2.0
+    peso_titulo: float = 0.5
 
     # --- OCI Object Storage (solo si model_source="oci") ---
     # auth_method:
