@@ -1,8 +1,16 @@
 """Carga del modelo serializado y ejecucion de la inferencia.
 
-Responsabilidad de este modulo: tomar el artefacto `.joblib` que produce
-`train/train.py` (o el que entregue el equipo de Ciencia de Datos) y exponerlo
-como un objeto con un metodo `predict`. No entrena, no conoce el dataset.
+Responsabilidad de este modulo: tomar los artefactos `.joblib` que entrega el
+equipo de Ciencia de Datos y exponerlos como un objeto con un metodo
+`predict`. No entrena, no conoce el dataset.
+
+El artefacto real de Ciencia de Datos NO es un unico Pipeline de scikit-learn:
+son tres piezas serializadas por separado -- `modelo_clasificador.joblib`
+(un `LogisticRegression` ya entrenado) y dos `TfidfVectorizer`
+(`tfidf_titulo.joblib`, `tfidf_texto.joblib`) -- que se combinan a mano en
+tiempo de inferencia, replicando exactamente el preprocesamiento y el peso de
+titulo que Ciencia de Datos uso al entrenar. Este modulo es el unico lugar del
+servicio que conoce ese detalle: el resto habla con `ClassifierModel.predict`.
 
 Esa separacion es deliberada: el contenedor de produccion nunca debe entrenar.
 Entrenar en el arranque haria que el tiempo de despliegue dependiera del tamano
@@ -14,24 +22,42 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
 import joblib
 import numpy as np
+from scipy.sparse import hstack
 
 from .settings import settings
 
 logger = logging.getLogger(__name__)
 
-# Claves del diccionario que `train.py` serializa. Se nombran una sola vez aca
-# para que el contrato del artefacto no quede repetido en dos archivos.
-KEY_PIPELINE = "pipeline"
-KEY_CATEGORIAS = "categorias"
+# Normalizaciones de texto identicas a las que aplico Ciencia de Datos antes de
+# vectorizar. Si esto se desalinea del preprocesamiento usado al entrenar, el
+# modelo predice sobre tokens que nunca vio -- silenciosamente peor, sin error.
+NORMALIZACIONES = {
+    r"\bc\+\+": "cplusplus",
+    r"\bc#": "csharp",
+    r"\bf#": "fsharp",
+    r"\.net\b": "dotnet",
+    r"\bnode\.js\b": "nodejs",
+    r"\bvue\.js\b": "vuejs",
+    r"\breact\.js\b": "reactjs",
+    r"\bangular\.js\b": "angularjs",
+    r"\bci\s*/\s*cd\b": "cicd",
+}
 
-# Nombres de los pasos dentro del Pipeline de scikit-learn.
-STEP_TFIDF = "tfidf"
-STEP_CLF = "clf"
+
+def limpiar_texto(texto: str) -> str:
+    """Normaliza un texto exactamente como lo hizo Ciencia de Datos al entrenar."""
+    texto = texto.lower()
+    for patron, reemplazo in NORMALIZACIONES.items():
+        texto = re.sub(patron, reemplazo, texto)
+    texto = re.sub(r"http\S+|www\.\S+", " ", texto)
+    texto = re.sub(r"[^\w\sáéíóúñü]", " ", texto)
+    return re.sub(r"\s+", " ", texto).strip()
 
 
 @dataclass
@@ -42,15 +68,24 @@ class InferenceResult:
 
 
 class ClassifierModel:
-    """Envuelve el pipeline entrenado y le da una interfaz estable.
+    """Envuelve el clasificador y los dos vectorizadores TF-IDF entrenados.
 
-    El resto del servicio habla con esta clase y no con scikit-learn. Si manana
-    Ciencia de Datos cambia TF-IDF + Regresion Logistica por embeddings, el
-    cambio queda contenido aca dentro.
+    El resto del servicio habla con esta clase y no con scikit-learn
+    directamente. Si manana Ciencia de Datos cambia de arquitectura, el cambio
+    queda contenido aca dentro.
     """
 
-    def __init__(self, pipeline, categorias: list[str], origen: str) -> None:
-        self._pipeline = pipeline
+    def __init__(
+        self,
+        modelo,
+        vect_titulo,
+        vect_texto,
+        categorias: list[str],
+        origen: str,
+    ) -> None:
+        self._modelo = modelo
+        self._vect_titulo = vect_titulo
+        self._vect_texto = vect_texto
         self._categorias = categorias
         self._origen = origen
 
@@ -65,14 +100,20 @@ class ClassifierModel:
     def predict(self, titulo: str, texto: str) -> InferenceResult:
         """Clasifica un contenido y extrae sus palabras clave.
 
-        El titulo se concatena al texto en lugar de ignorarse porque suele ser
-        la senal mas densa del documento: "Tutorial de Docker" aporta mas por
-        palabra que cualquier parrafo del cuerpo.
+        Replica el pipeline de inferencia de Ciencia de Datos: titulo y texto
+        se limpian y vectorizan por separado, el vector del titulo se pesa
+        `PESO_TITULO` veces (el titulo suele ser la senal mas densa del
+        documento) y ambos se concatenan antes de clasificar.
         """
-        documento = f"{titulo}. {texto}"
+        titulo_limpio = limpiar_texto(titulo)
+        texto_limpio = limpiar_texto(texto)
 
-        categoria, probabilidad = self._clasificar(documento)
-        palabras_clave = self._extraer_palabras_clave(documento)
+        vt = self._vect_titulo.transform([titulo_limpio]) * settings.peso_titulo
+        vx = self._vect_texto.transform([texto_limpio])
+        vector = hstack([vt, vx])
+
+        categoria, probabilidad = self._clasificar(vector)
+        palabras_clave = self._extraer_palabras_clave(vector)
 
         return InferenceResult(
             categoria=categoria,
@@ -80,46 +121,49 @@ class ClassifierModel:
             palabras_clave=palabras_clave,
         )
 
-    def _clasificar(self, documento: str) -> tuple[str, float]:
-        probabilidades = self._pipeline.predict_proba([documento])[0]
+    def _clasificar(self, vector) -> tuple[str, float]:
+        probabilidades = self._modelo.predict_proba(vector)[0]
         indice = int(np.argmax(probabilidades))
 
         # `classes_` viene del clasificador y no de `self._categorias`: es el
         # orden real de las columnas de `predict_proba`. Usar la otra lista
         # asumiria que ambos ordenes coinciden, y un dia no coincidirian.
-        categoria = str(self._pipeline.named_steps[STEP_CLF].classes_[indice])
+        categoria = str(self._modelo.classes_[indice])
         probabilidad = round(float(probabilidades[indice]), 4)
 
         return categoria, probabilidad
 
-    def _extraer_palabras_clave(self, documento: str) -> list[str]:
+    def _extraer_palabras_clave(self, vector) -> list[str]:
         """Devuelve los terminos con mayor peso TF-IDF dentro del documento.
 
-        Se reutiliza el vectorizador ya entrenado en vez de contar frecuencias:
-        TF-IDF ya descarta lo que aparece en todos los documentos del corpus, de
-        modo que "utilizando" o "contenido" no compiten con "spring boot".
+        Combina el vocabulario de ambos vectorizadores (titulo + texto) en el
+        mismo orden en que se concatenaron los vectores con `hstack`.
         """
-        vectorizador = self._pipeline.named_steps[STEP_TFIDF]
-        vector = vectorizador.transform([documento])
-
-        # La matriz es dispersa: solo iteramos sobre los terminos presentes en
-        # este documento, no sobre todo el vocabulario.
-        fila = vector.tocoo()
-        if fila.nnz == 0:
+        nombres = list(self._vect_titulo.get_feature_names_out()) + list(
+            self._vect_texto.get_feature_names_out()
+        )
+        fila = vector.toarray()[0]
+        if not fila.any():
             return []
 
-        nombres = vectorizador.get_feature_names_out()
-        pares = sorted(
-            zip(fila.col, fila.data, strict=False),
-            key=lambda par: par[1],
-            reverse=True,
-        )
-
-        return [str(nombres[indice]) for indice, _ in pares[: settings.max_keywords]]
+        indices = fila.argsort()[::-1]
+        return [
+            str(nombres[i]) for i in indices[: settings.max_keywords] if fila[i] > 0
+        ]
 
 
-def _descargar_desde_oci(destino: Path) -> None:
-    """Baja el artefacto del modelo desde OCI Object Storage.
+# Las tres piezas del artefacto: nombre de atributo en Settings para la ruta
+# local, nombre de atributo en Settings para el objeto OCI. Se recorren juntas
+# para no repetir la misma logica de descarga/carga tres veces.
+_ARCHIVOS_MODELO = (
+    ("model_file_clasificador", "oci_object_clasificador"),
+    ("model_file_tfidf_titulo", "oci_object_tfidf_titulo"),
+    ("model_file_tfidf_texto", "oci_object_tfidf_texto"),
+)
+
+
+def _descargar_desde_oci(destino: Path, objeto: str) -> None:
+    """Baja un objeto puntual del artefacto desde OCI Object Storage.
 
     Se importa `oci` aca dentro y no arriba del archivo a proposito: cuando
     `model_source=local` el SDK no hace falta, y un import de nivel de modulo
@@ -129,10 +173,9 @@ def _descargar_desde_oci(destino: Path) -> None:
     import oci  # noqa: PLC0415  (import diferido, ver docstring)
 
     logger.info(
-        "Descargando modelo desde OCI Object Storage "
-        "(bucket=%s, objeto=%s, auth=%s)",
+        "Descargando %s desde OCI Object Storage (bucket=%s, auth=%s)",
+        objeto,
         settings.oci_bucket_name,
-        settings.oci_object_name,
         settings.oci_auth_method,
     )
 
@@ -154,21 +197,25 @@ def _descargar_desde_oci(destino: Path) -> None:
     respuesta = cliente.get_object(
         namespace_name=namespace,
         bucket_name=settings.oci_bucket_name,
-        object_name=settings.oci_object_name,
+        object_name=objeto,
     )
 
     destino.parent.mkdir(parents=True, exist_ok=True)
 
     # Se escribe primero a un archivo temporal y despues se renombra. Si la
     # descarga se corta a la mitad, lo que queda es un `.tmp` incompleto y no un
-    # `model.joblib` corrupto que el proximo arranque intentaria cargar.
+    # artefacto corrupto que el proximo arranque intentaria cargar.
     temporal = destino.with_suffix(destino.suffix + ".tmp")
     with open(temporal, "wb") as archivo:
         for fragmento in respuesta.data.raw.stream(1024 * 1024, decode_content=False):
             archivo.write(fragmento)
     temporal.replace(destino)
 
-    logger.info("Modelo descargado en %s (%d bytes)", destino, destino.stat().st_size)
+    logger.info("%s descargado en %s (%d bytes)", objeto, destino, destino.stat().st_size)
+
+
+def _resolver_ruta(atributo_archivo: str) -> Path:
+    return settings.model_dir / getattr(settings, atributo_archivo)
 
 
 def cargar_modelo() -> ClassifierModel:
@@ -176,52 +223,70 @@ def cargar_modelo() -> ClassifierModel:
 
     Se llama una sola vez, en el arranque. Esta funcion solo carga y propaga el
     error; la politica de que hacer ante un fallo la decide `main.py`.
+
+    Carga las TRES piezas del artefacto (clasificador + 2 vectorizadores). Si
+    cualquiera de las tres falta o no puede descargarse, el modelo completo se
+    considera no disponible: una combinacion parcial (por ejemplo, el
+    clasificador nuevo con un vectorizador viejo) prediria de forma incorrecta
+    y silenciosa, que es peor que no predecir.
     """
-    destino = settings.model_path
+    rutas: dict[str, Path] = {
+        atributo_archivo: _resolver_ruta(atributo_archivo)
+        for atributo_archivo, _ in _ARCHIVOS_MODELO
+    }
 
     if settings.model_source == "oci":
         try:
-            _descargar_desde_oci(destino)
-            origen = f"oci://{settings.oci_bucket_name}/{settings.oci_object_name}"
+            for atributo_archivo, atributo_objeto in _ARCHIVOS_MODELO:
+                _descargar_desde_oci(
+                    rutas[atributo_archivo], getattr(settings, atributo_objeto)
+                )
+            origen = f"oci://{settings.oci_bucket_name}/"
         except Exception as exc:  # noqa: BLE001 - cualquier fallo de red/credenciales
             # Si Object Storage no responde pero el volumen conserva la ultima
-            # copia buena, el servicio arranca con ella en vez de quedarse sin
-            # modelo. Un incidente de OCI, un token vencido o una policy mal
-            # puesta no deberian dejar la API caida cuando el artefacto que hace
-            # falta ya esta en disco.
+            # copia buena de las TRES piezas, el servicio arranca con ella en
+            # vez de quedarse sin modelo. Un incidente de OCI, un token vencido
+            # o una policy mal puesta no deberian dejar la API caida cuando el
+            # artefacto que hace falta ya esta en disco.
             #
-            # Si NO hay copia previa no hay nada que servir, y entonces si
-            # conviene propagar: /health devolvera 503 con la causa exacta y el
-            # backend no llegara a arrancar contra un servicio inutil.
-            if not destino.exists():
+            # Si falta alguna pieza no hay nada seguro que servir, y entonces
+            # si conviene propagar: /health devolvera 503 con la causa exacta.
+            if not all(ruta.exists() for ruta in rutas.values()):
                 raise
 
             logger.warning(
                 "Fallo la descarga desde Object Storage (%s: %s). "
-                "Se usa la copia local previa de %s.",
+                "Se usa la copia local previa en %s.",
                 type(exc).__name__,
                 exc,
-                destino,
+                settings.model_dir,
             )
-            # El origen lo reporta /health: quien mire el estado tiene que poder
-            # distinguir "modelo recien bajado" de "modelo viejo porque OCI no
-            # respondio", que son dos situaciones muy distintas.
-            origen = f"local-fallback://{destino}"
+            origen = f"local-fallback://{settings.model_dir}"
     else:
-        origen = f"local://{destino}"
+        origen = f"local://{settings.model_dir}"
 
-    if not destino.exists():
+    faltantes = [ruta for ruta in rutas.values() if not ruta.exists()]
+    if faltantes:
         raise FileNotFoundError(
-            f"No se encontro el modelo en {destino}. "
-            "Ejecuta 'python -m train.train' para generarlo, "
-            "o define MODEL_SOURCE=oci para descargarlo de Object Storage."
+            f"Faltan artefactos del modelo: {[str(r) for r in faltantes]}. "
+            "Copia los .joblib que entrega Ciencia de Datos a MODEL_DIR, "
+            "o define MODEL_SOURCE=oci para descargarlos de Object Storage."
         )
 
-    artefacto = joblib.load(destino)
+    modelo = joblib.load(rutas["model_file_clasificador"])
+    vect_titulo = joblib.load(rutas["model_file_tfidf_titulo"])
+    vect_texto = joblib.load(rutas["model_file_tfidf_texto"])
 
-    pipeline = artefacto[KEY_PIPELINE]
-    categorias = list(artefacto[KEY_CATEGORIAS])
+    # No hay archivo de categorias aparte: `classes_` del clasificador ya
+    # entrenado es la fuente de verdad, igual que en la inferencia.
+    categorias = sorted(str(c) for c in modelo.classes_)
 
     logger.info("Modelo cargado desde %s con %d categorias", origen, len(categorias))
 
-    return ClassifierModel(pipeline=pipeline, categorias=categorias, origen=origen)
+    return ClassifierModel(
+        modelo=modelo,
+        vect_titulo=vect_titulo,
+        vect_texto=vect_texto,
+        categorias=categorias,
+        origen=origen,
+    )

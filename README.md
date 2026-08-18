@@ -4,7 +4,6 @@
 
 TechMind recibe contenido técnico —texto plano, PDF, DOCX o una URL— y devuelve una categoría temática, un puntaje de confianza y las palabras clave más relevantes, todo a través de una API REST en JSON. El objetivo es transformar documentación dispersa en una base de conocimiento clasificada y consultable.
 
-Proyecto desarrollado en el marco del Hackathon ONE (Alura + Oracle), G9 LATAM — Equipo 34.
 
 [![CI](https://github.com/No-Country-simulation/g9-br-team-34-techmind/actions/workflows/ci.yml/badge.svg)](https://github.com/No-Country-simulation/g9-br-team-34-techmind/actions/workflows/ci.yml)
 [![CD - Despliegue en OCI](https://github.com/No-Country-simulation/g9-br-team-34-techmind/actions/workflows/cd.yml/badge.svg)](https://github.com/No-Country-simulation/g9-br-team-34-techmind/actions/workflows/cd.yml)
@@ -269,6 +268,3 @@ El proyecto implementa un pipeline completo y operativo:
 - ✅ Despliegue automatizado en OCI con CI/CD, rollback automático y monitoreo de salud
 - ✅ 37/37 casos de la batería de pruebas de aceptación end-to-end en verde ([detalle](docs/pruebas-aceptacion-e2e.md))
 
-## Licencia
-
-Este proyecto fue desarrollado con fines académicos para el Hackathon ONE (Alura + Oracle), siguiendo los requisitos establecidos en la propuesta del desafío.

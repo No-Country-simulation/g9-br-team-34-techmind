@@ -12,7 +12,12 @@ pydantic==2.10.4
 pydantic-settings==2.7.1
 
 # --- Ciencia de Datos ---
-scikit-learn==1.6.0
+# scikit-learn fijado a la version con la que Ciencia de Datos serializo los
+# .joblib (verificar contra el entorno real del equipo si vuelven a reentrenar:
+# un desajuste de version rompe la carga del artefacto de forma sutil, no con
+# un error obvio).
+scikit-learn==1.8.0
+scipy==1.14.1
 pandas==2.2.3
 numpy==2.2.1
 joblib==1.4.2

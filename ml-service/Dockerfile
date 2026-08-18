@@ -1,13 +1,16 @@
 # Servicio de inferencia TechMind - imagen de produccion.
 #
-# Construccion en dos etapas. La etapa `builder` instala las dependencias y
-# entrena el modelo; la etapa final se queda solo con el entorno virtual, el
-# codigo del servicio y el artefacto entrenado.
+# Construccion en dos etapas. La etapa `builder` instala las dependencias; la
+# etapa final se queda solo con el entorno virtual, el codigo del servicio y
+# los artefactos del modelo que entrega Ciencia de Datos.
 #
-# Se entrena en tiempo de BUILD y no en tiempo de ARRANQUE a proposito: el
-# arranque del contenedor debe ser rapido y deterministico, y dos replicas del
-# mismo servicio tienen que servir exactamente el mismo modelo. Entrenar al
-# arrancar rompe las dos cosas.
+# NO se entrena en tiempo de build: los tres .joblib (clasificador +
+# vectorizadores de titulo y texto) son el entregable real de Ciencia de
+# Datos y viven versionados en `models/`, tal cual los produjo el equipo. El
+# contenedor de produccion solo los sirve, nunca los genera -- asi dos
+# replicas del mismo servicio garantizan servir exactamente el mismo modelo.
+# `train/` sigue existiendo como andamio de referencia (ver su README) pero
+# ya no participa del build.
 
 # ---------------------------------------------------------------------------
 # Etapa 1: dependencias + entrenamiento
@@ -34,12 +37,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app/ ./app/
-COPY train/ ./train/
-
-# Genera /build/models/model.joblib y /build/models/metrics.json.
-RUN python -m train.train
-
 # ---------------------------------------------------------------------------
 # Etapa 2: imagen final
 # ---------------------------------------------------------------------------
@@ -63,7 +60,7 @@ RUN groupadd --system --gid 1000 techmind \
 WORKDIR /app
 
 COPY --from=builder /opt/venv /opt/venv
-COPY --from=builder --chown=techmind:techmind /build/models/ /app/models/
+COPY --chown=techmind:techmind models/ /app/models/
 COPY --chown=techmind:techmind app/ /app/app/
 
 # `train/` NO se copia: la imagen de produccion no entrena, y todo lo que no
