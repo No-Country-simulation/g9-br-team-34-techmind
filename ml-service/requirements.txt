@@ -16,11 +16,11 @@ pydantic-settings==2.7.1
 # .joblib (verificar contra el entorno real del equipo si vuelven a reentrenar:
 # un desajuste de version rompe la carga del artefacto de forma sutil, no con
 # un error obvio).
-scikit-learn==1.8.0
-scipy==1.14.1
+scikit-learn==1.6.1
+scipy==1.16.3
 pandas==2.2.3
-numpy==2.2.1
-joblib==1.4.2
+numpy==2.0.2
+joblib==1.5.3
 spacy==3.8.15
 
 # --- Integracion OCI (descarga del modelo desde Object Storage) ---
