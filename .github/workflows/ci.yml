@@ -186,7 +186,7 @@ jobs:
           # El Dockerfile del ml-service reempaqueta los artefactos de
           # data-science/, asi que se construye desde la raiz del repositorio.
           context: .
-          dockerfile: ml-service/Dockerfile
+          file: ml-service/Dockerfile
           push: false
           load: true
           tags: techmind/ml-service:ci
