@@ -18,9 +18,10 @@ __pycache__/
 tests/
 requirements-dev.txt
 
-# El modelo se entrena dentro de la imagen. Copiar el artefacto local aqui haria
-# que la imagen dependiera de lo que cada persona tenga en su maquina.
-models/
+# El modelo YA NO se entrena dentro de la imagen: los 3 .joblib son el
+# entregable real de Ciencia de Datos y viven versionados en models/, el
+# Dockerfile los copia directo. Por eso, a diferencia de antes, models/ NO
+# se excluye del contexto de build.
 
 .env
 .env.*
