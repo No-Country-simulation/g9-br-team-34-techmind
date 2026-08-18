@@ -15,11 +15,11 @@ pydantic-settings==2.7.1
 # 1.8.0 (no 1.6.0): los artefactos que entrega Ciencia de Datos en
 # data-science/API/ se serializaron con scikit-learn 1.8.0 y numpy 2.x; cargarlos
 # con una version anterior rompe (o degrada silenciosamente) la deserializacion.
-scikit-learn==1.8.0
+scikit-learn==1.9.0
 scipy==1.15.2
-pandas==2.2.3
-numpy==2.2.1
-joblib==1.4.2
+pandas==3.0.5
+numpy==2.5.2
+joblib==1.5.3
 
 # --- Preprocesado en espanol (lematizacion) ---
 # La limpieza del notebook usa spaCy: sin el mismo lematizador que se aplico al
