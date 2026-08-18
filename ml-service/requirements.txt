@@ -16,7 +16,7 @@ pydantic-settings==2.7.1
 # .joblib (verificar contra el entorno real del equipo si vuelven a reentrenar:
 # un desajuste de version rompe la carga del artefacto de forma sutil, no con
 # un error obvio).
-scikit-learn==1.6.1
+scikit-learn==1.8.0
 scipy==1.16.3
 pandas==2.2.3
 numpy==2.0.2
