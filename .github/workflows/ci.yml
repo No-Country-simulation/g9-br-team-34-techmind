@@ -40,10 +40,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configurar JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -67,7 +67,7 @@ jobs:
       # una corrida concreta cuando algo falla solo en CI.
       - name: Publicar el artefacto compilado
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-jar
           path: backend/target/*.jar
@@ -86,10 +86,10 @@ jobs:
         working-directory: ml-service
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configurar Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -116,7 +116,7 @@ jobs:
       # sin tener que reentrenar en local.
       - name: Publicar metricas del modelo
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: model-metrics
           path: ml-service/models/metrics.json
@@ -132,10 +132,10 @@ jobs:
     needs: [backend, ml-service]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configurar Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Guarda contra un fallo que este job NO detectaria de otro modo: aqui se
       # construye para la arquitectura del runner (amd64), pero el CD despliega
@@ -171,7 +171,7 @@ jobs:
       # cache-from/to type=gha reutiliza las capas entre corridas. En la practica
       # es la diferencia entre reinstalar scikit-learn en cada push o no hacerlo.
       - name: Construir la imagen del backend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           push: false
@@ -181,7 +181,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=backend
 
       - name: Construir la imagen del ml-service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           # El Dockerfile del ml-service reempaqueta los artefactos de
           # data-science/, asi que se construye desde la raiz del repositorio.
@@ -305,7 +305,7 @@ jobs:
     needs: [docker]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Levantar el sistema completo
         run: docker compose up --build --detach --wait --wait-timeout 300
