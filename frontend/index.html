@@ -263,6 +263,102 @@
   .sow-msg{font-size:.78rem;color:var(--sage);line-height:1.55;flex:1;min-width:150px}
   .sow-msg.err{color:var(--warn)}
 
+  /* ---------- S5-02 · Componente de error ---------- */
+  #alerts{position:fixed;right:clamp(.8rem,2.4vw,1.4rem);bottom:clamp(.8rem,2.4vw,1.4rem);
+    z-index:70;display:flex;flex-direction:column;gap:.6rem;width:min(360px,90vw);
+    pointer-events:none}
+  .alert{pointer-events:auto;background:linear-gradient(165deg,#1a1013,#140d10);
+    border:1px solid #3a2529;border-left:3px solid var(--warn);border-radius:13px;
+    padding:.95rem 1.05rem;box-shadow:0 10px 34px rgba(0,0,0,.5);
+    animation:alertIn .34s cubic-bezier(.4,0,.2,1)}
+  .alert.leaving{animation:alertOut .28s ease forwards}
+  @keyframes alertIn{from{opacity:0;transform:translateY(14px) scale(.97)}
+                     to{opacity:1;transform:none}}
+  @keyframes alertOut{to{opacity:0;transform:translateY(8px) scale(.98)}}
+  .alert-head{display:flex;align-items:flex-start;gap:.6rem}
+  .alert-ico{width:17px;height:17px;flex:none;color:var(--warn);margin-top:.05rem}
+  .alert-title{font-family:var(--display);font-size:.9rem;font-weight:600;
+    letter-spacing:-.02em;line-height:1.3;flex:1}
+  .alert-x{background:none;border:0;color:var(--sage);cursor:pointer;font-size:1.1rem;
+    line-height:1;padding:0 .15rem;flex:none;border-radius:5px}
+  .alert-x:hover{color:var(--bone)}
+  .alert-x:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+  .alert-body{font-size:.79rem;color:var(--mute);line-height:1.6;margin-top:.4rem;
+    padding-left:1.55rem}
+  .alert-act{margin-top:.7rem;margin-left:1.55rem;font-family:var(--mono);font-size:.63rem;
+    letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid #4a3036;
+    color:#e5a3ab;border-radius:100px;padding:.42rem .9rem;cursor:pointer;
+    transition:border-color .2s,color .2s}
+  .alert-act:hover{border-color:var(--warn);color:var(--warn)}
+  .alert-act:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+  /* Variante para avisos que no son fallos, como una eliminación hecha. */
+  .alert.ok{border-color:#1e3a35;border-left-color:var(--teal);
+    background:linear-gradient(165deg,#0d1a18,#0a1413)}
+  .alert.ok .alert-ico{color:var(--teal)}
+  .alert.ok .alert-act{border-color:#265049;color:#8fd8ce}
+  .alert.ok .alert-act:hover{border-color:var(--teal);color:var(--teal)}
+
+  /* ---------- S5-04 · Controles de zoom ---------- */
+  #zoomctl{position:absolute;right:clamp(.85rem,2.4vw,1.4rem);bottom:clamp(.85rem,2.4vw,1.4rem);
+    z-index:15;display:flex;flex-direction:column;gap:.35rem;opacity:0;pointer-events:none;
+    transition:opacity .5s}
+  #zoomctl.show{opacity:1;pointer-events:auto}
+  #zoomctl button{width:34px;height:34px;display:grid;place-items:center;
+    background:rgba(11,17,22,.82);border:1px solid var(--hairline);border-radius:9px;
+    color:var(--bone);cursor:pointer;backdrop-filter:blur(10px);
+    transition:border-color .2s,background .2s}
+  #zoomctl button:hover{border-color:#3a505a;background:rgba(17,26,33,.92)}
+  #zoomctl button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  #zoomctl svg{width:15px;height:15px}
+  #zoomPct{font-family:var(--mono);font-size:.58rem;color:var(--sage);text-align:center;
+    padding:.2rem 0;letter-spacing:.05em}
+
+  /* ---------- S5-16 · Dashboard de métricas ---------- */
+  #dash{position:absolute;inset:0;background:var(--void);z-index:32;overflow-y:auto;
+    opacity:0;pointer-events:none;transform:translateY(18px);
+    transition:opacity .4s ease,transform .45s cubic-bezier(.5,.1,.2,1)}
+  #dash.open{opacity:1;pointer-events:auto;transform:none}
+  .dash-wrap{max-width:1120px;margin:0 auto;padding:5.6rem clamp(1.05rem,4vw,2.4rem) 4rem}
+  .dash-title{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.2rem);font-weight:700;
+    letter-spacing:-.04em}
+  .dash-sub{font-size:.86rem;color:var(--sage);margin-top:.5rem;line-height:1.6}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem;
+    margin-top:1.9rem}
+  .kpi{background:var(--surface);border:1px solid var(--hairline);border-radius:14px;
+    padding:1.1rem 1.2rem}
+  .kpi .n{font-family:var(--display);font-size:1.95rem;font-weight:700;letter-spacing:-.04em;
+    line-height:1}
+  .kpi .l{font-family:var(--mono);font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--sage);margin-top:.5rem}
+  .kpi .h{font-size:.72rem;color:var(--sage);margin-top:.45rem;line-height:1.5}
+  .panels{display:grid;grid-template-columns:1fr;gap:1.6rem;margin-top:2.2rem}
+  @media(min-width:880px){.panels{grid-template-columns:1fr 1fr}}
+  .panel{background:var(--surface);border:1px solid var(--hairline);border-radius:16px;
+    padding:1.3rem}
+  .panel h3{font-family:var(--display);font-size:1rem;font-weight:600;letter-spacing:-.02em}
+  .panel .why{font-size:.74rem;color:var(--sage);line-height:1.55;margin-top:.35rem;
+    margin-bottom:1.1rem}
+  .row{display:grid;grid-template-columns:minmax(88px,auto) 1fr auto;gap:.7rem;
+    align-items:center;padding:.36rem 0;font-size:.79rem}
+  .row .lbl{color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track{height:7px;background:#16222a;border-radius:7px;overflow:hidden}
+  .track i{display:block;height:100%;border-radius:7px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+  .val{font-family:var(--mono);font-size:.71rem;color:var(--sage);white-space:nowrap}
+  .spark{display:flex;align-items:flex-end;gap:3px;height:96px;margin-top:.4rem}
+  .spark div{flex:1;min-width:5px;background:var(--teal);border-radius:3px 3px 0 0;opacity:.75;
+    transition:opacity .2s}
+  .spark div:hover{opacity:1}
+  .spark-x{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.58rem;
+    color:var(--sage);margin-top:.5rem}
+  .cloud{display:flex;flex-wrap:wrap;gap:.4rem}
+  .cloud button{font-family:var(--mono);background:rgba(255,255,255,.04);
+    border:1px solid var(--hairline);border-radius:7px;padding:.34rem .6rem;color:var(--bone);
+    cursor:pointer;transition:border-color .2s,color .2s}
+  .cloud button:hover{border-color:var(--teal);color:var(--teal)}
+  .cloud .c{color:var(--sage);margin-left:.35rem;font-size:.85em}
+  .dash-foot{font-family:var(--mono);font-size:.62rem;color:var(--sage);margin-top:2rem;
+    padding-top:1.1rem;border-top:1px solid var(--hairline)}
+
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
   }
@@ -309,9 +405,31 @@
     </button>
     <button class="pill hide" id="back" title="Volver a la vista anterior">← Volver</button>
     <div class="spacer"></div>
+    <button class="pill hide" id="dashBtn" title="Ver métricas del repositorio">Métricas</button>
     <button class="pill solid" id="sowBtn" title="Analizar un texto o un PDF y sumarlo a tu árbol">+ Analizar contenido</button>
     <div class="chip" id="chip" title="Resumen de lo que hay en tu árbol"></div>
   </header>
+
+  <div id="dash"><div class="dash-wrap" id="dashWrap"></div></div>
+
+  <div id="zoomctl">
+    <button id="zIn" title="Acercar (rueda del mouse)" aria-label="Acercar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M12 5v14"/><path d="M5 12h14"/></svg>
+    </button>
+    <div id="zoomPct">100%</div>
+    <button id="zOut" title="Alejar (rueda del mouse)" aria-label="Alejar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M5 12h14"/></svg>
+    </button>
+    <button id="zFit" title="Reencuadrar y soltar los nodos movidos" aria-label="Reencuadrar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 8V5a2 2 0 0 1 2-2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/>
+        <path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/></svg>
+    </button>
+  </div>
+
+  <div id="alerts" aria-live="polite" aria-atomic="false"></div>
 
   <div id="sow">
     <div class="sow-box">
@@ -353,6 +471,90 @@
 const API_BASE = 'https://logitree-backend.onrender.com';
 const API_KEY  = '';   // TM-039: cuando el filtro X-API-Key esté activo, poner la clave acá
 /* ══════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════
+   S5-01 · Catálogo de mensajes de error
+   Traduce fallos técnicos a algo que una persona pueda leer y accionar.
+   Documentado en docs/S5-01-catalogo-errores.md
+   ══════════════════════════════════════════════════════════ */
+const CATALOGO_ERRORES = {
+  sin_conexion: {
+    titulo: 'No se pudo conectar',
+    detalle: 'El navegador no pudo alcanzar la API. Puede estar apagada, o tu origen no está permitido en CORS.',
+    accion: 'Reintentar'
+  },
+  datos_invalidos: {
+    titulo: 'Revisá los datos',
+    detalle: 'Alguno de los campos no cumple con lo que la API espera.'
+  },
+  id_invalido: {
+    titulo: 'Identificador con formato inválido',
+    detalle: 'El id de la dirección no tiene forma de UUID.',
+    accion: 'Volver al inicio'
+  },
+  archivo_invalido: {
+    titulo: 'No se pudo leer el archivo',
+    detalle: 'El archivo no llegó completo o el formato no está soportado. Se aceptan PDF y DOCX.'
+  },
+  no_encontrado: {
+    titulo: 'No encontramos ese contenido',
+    detalle: 'Puede haber sido eliminado, o el enlace apunta a algo que ya no existe.',
+    accion: 'Volver al inicio'
+  },
+  archivo_muy_grande: {
+    titulo: 'El archivo pesa demasiado',
+    detalle: 'Supera el tamaño máximo que acepta el servidor.'
+  },
+  no_procesable: {
+    titulo: 'No pudimos analizar este contenido',
+    detalle: 'El texto llegó bien, pero el modelo no encontró suficiente contenido útil. Suele pasar con textos muy cortos o muy repetitivos.'
+  },
+  extraccion_fallida: {
+    titulo: 'No pudimos extraer el texto',
+    detalle: 'El archivo o la página no tienen texto legible. Los PDF escaneados necesitan OCR, que todavía no está disponible.'
+  },
+  servicio_caido: {
+    titulo: 'El clasificador no está disponible',
+    detalle: 'El servicio que analiza los contenidos no está respondiendo. Es temporal.',
+    accion: 'Reintentar'
+  },
+  error_interno: {
+    titulo: 'Algo salió mal de nuestro lado',
+    detalle: 'Ocurrió un error inesperado. Ya quedó registrado para que lo revisemos.',
+    accion: 'Reintentar'
+  },
+  desconocido: {
+    titulo: 'No pudimos completar la operación',
+    detalle: 'Ocurrió algo que no esperábamos.',
+    accion: 'Reintentar'
+  }
+};
+
+/** Status HTTP → clave del catálogo, para los que no necesitan contexto. */
+const POR_STATUS = { 404:'no_encontrado', 413:'archivo_muy_grande',
+                     422:'no_procesable', 500:'error_interno', 503:'servicio_caido' };
+
+/**
+ * Traduce un error a algo mostrable.
+ *
+ * <p>Si el backend mandó un mensaje propio en ErrorResponseDTO, ese gana como
+ * detalle: siempre es más específico que el texto genérico del catálogo.
+ *
+ * @param e         error capturado
+ * @param claveHint clave sugerida por quien llamó, para desambiguar los 400
+ */
+function traducirError(e, claveHint){
+  if(e && String(e.message||'').includes('Failed to fetch'))
+    return { ...CATALOGO_ERRORES.sin_conexion, clave:'sin_conexion' };
+
+  const clave = (e && e.status === 400 && claveHint) ? claveHint
+              : (e && POR_STATUS[e.status]) || claveHint || 'desconocido';
+  const base = CATALOGO_ERRORES[clave] || CATALOGO_ERRORES.desconocido;
+
+  // El mensaje del backend es más preciso; sólo se descarta si viene vacío.
+  const propio = e && e.cuerpo && e.cuerpo.message;
+  return { ...base, clave, detalle: propio ? propio : base.detalle };
+}
 
 /** Tope de tamaño de página que impone el backend (TM-062). */
 const MAX_SIZE = 50;
@@ -414,7 +616,8 @@ const api = {
   relacionados: (id, limite=5) => pedir(`/api/v1/contenidos/${id}/relacionados?limite=${limite}`),
   crear: body => pedir('/api/v1/contenidos', {
     method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }),
-  borrar: id => pedir('/api/v1/contenidos/' + id, { method:'DELETE' })
+  borrar: id => pedir('/api/v1/contenidos/' + id, { method:'DELETE' }),
+  metricas: () => pedir('/api/v1/metricas')   // S5-14
 };
 
 /**
@@ -511,9 +714,10 @@ async function germinar(){
     elEnter.classList.add('ready');
   }catch(e){
     avance(100,'Sin conexión');
-    elFailMsg.innerHTML = e.message.includes('Failed to fetch')
-      ? `El navegador no pudo alcanzar <code>${API_BASE}</code>. Verificá que el backend esté corriendo y que tu origen esté en <code>CORS_ALLOWED_ORIGINS</code>: el valor por defecto sólo acepta <code>localhost:3000</code>, y Live Server suele usar otro puerto.`
-      : e.message;
+    const t = traducirError(e);
+    elFailMsg.innerHTML = t.clave === 'sin_conexion'
+      ? `No se pudo alcanzar <code>${esc(API_BASE)}</code>. Verificá que el backend esté corriendo y que tu origen esté permitido en <code>CORS_ALLOWED_ORIGINS</code>.`
+      : esc(t.detalle);
     elFail.classList.add('show');
   }
 }
@@ -529,6 +733,12 @@ addEventListener('resize',()=>{medir();ubicar();});
 const ANILLO=318, RC=64, RB=190;
 const nodos=[], porId={};
 function ubicar(){
+  // S5-03: se recuerda lo que el usuario movió, porque ubicar() reconstruye
+  // el arreglo entero y si no, cada alta de contenido deshace sus arrastres.
+  const fijados=new Map();
+  nodos.forEach(nd=>{ if(!nd.fijo) return;
+    fijados.set(nd.tipo==='rama'?'r:'+nd.rama.clave:'c:'+nd.cont.id,{x:nd.x,y:nd.y}); });
+
   nodos.length=0; for(const k in porId) delete porId[k];
   const n=S.ramas.length||1;
   S.ramas.forEach((r,i)=>{
@@ -539,6 +749,12 @@ function ubicar(){
       c._ang=(k+.5)/arr.length*Math.PI*2+i*1.7;
       const nd={tipo:'hoja',cont:c,rama:r,r:5.5,x:r.x,y:r.y};
       nodos.push(nd); porId[c.id]=nd;});});
+
+  nodos.forEach(nd=>{
+    const k=nd.tipo==='rama'?'r:'+nd.rama.clave:'c:'+nd.cont.id;
+    const pos=fijados.get(k);
+    if(pos){ nd.fijo=true; nd.x=pos.x; nd.y=pos.y;
+      if(nd.tipo==='rama'){ nd.rama.x=pos.x; nd.rama.y=pos.y; } }});
 }
 
 const cam={x:0,y:0,z:.28,tx:0,ty:0,tz:1.12};
@@ -549,7 +765,11 @@ function frame(){
   if(S.modo==='rama') entrada=Math.min(1,entrada+.02);
   cam.x+=(cam.tx-cam.x)*.062; cam.y+=(cam.ty-cam.y)*.062; cam.z+=(cam.tz-cam.z)*.055;
   S.ramas.forEach(r=>{const m=(S.modo==='rama'&&S.rama===r)?1:0; r.abierto+=(m-r.abierto)*.075;});
-  nodos.forEach(nd=>{ if(nd.tipo!=='hoja')return;
+  nodos.forEach(nd=>{
+    // S5-03: un nodo movido a mano conserva su lugar. Sin esto, la órbita
+    // lo devolvería a su posición calculada en el frame siguiente.
+    if(nd.fijo) return;
+    if(nd.tipo!=='hoja')return;
     const r=nd.rama,c=nd.cont;
     const radio=RC+(RB-RC)*r.abierto;
     const orbe=Math.sin(reloj*1.15+c._ang*2.3)*(2+5*r.abierto);
@@ -636,26 +856,140 @@ function nodoEn(mx,my){
     const d=Math.hypot(px-mx,py-my); if(d<dm){dm=d;best=nd;}});
   return best;}
 
-cv.addEventListener('mousemove',e=>{
+/* ══════════════════════════════════════════════════════════
+   S5-03 · Arrastre de nodos   |   S5-04 · Zoom y desplazamiento
+   ══════════════════════════════════════════════════════════ */
+const ZOOM_MIN=.35, ZOOM_MAX=3.2;
+let arrastre=null;     // {nodo, dx, dy, movido}
+let paneo=null;        // {x, y, camX, camY, movido}
+
+/** Convierte coordenadas de pantalla al plano del mapa. */
+function aPlano(px,py){
+  return [ (px-W/2)/cam.z+cam.x, (py-H/2)/cam.z+cam.y ];
+}
+
+cv.addEventListener('mousedown',e=>{
+  if(e.button!==0) return;
   const b=cv.getBoundingClientRect();
-  hover=nodoEn(e.clientX-b.left,e.clientY-b.top);
-  cv.style.cursor=hover?'pointer':(S.modo==='rama'?'zoom-out':'default');
-  // El canvas no admite title nativo: el texto se pone en el propio elemento.
+  const mx=e.clientX-b.left, my=e.clientY-b.top;
+  const nd=nodoEn(mx,my);
+  const [wx,wy]=aPlano(mx,my);
+
+  if(nd){
+    // Se guarda el desfase entre el cursor y el centro del nodo para que no
+    // salte al empezar a arrastrar.
+    arrastre={ nodo:nd, dx:nd.x-wx, dy:nd.y-wy, movido:false };
+  }else{
+    paneo={ x:mx, y:my, camX:cam.tx, camY:cam.ty, movido:false };
+    cv.style.cursor='grabbing';
+  }
+});
+
+addEventListener('mousemove',e=>{
+  const b=cv.getBoundingClientRect();
+  const mx=e.clientX-b.left, my=e.clientY-b.top;
+
+  if(arrastre){
+    const [wx,wy]=aPlano(mx,my);
+    const nd=arrastre.nodo;
+    nd.fijo=true; nd.x=wx+arrastre.dx; nd.y=wy+arrastre.dy;
+    // Si es una rama, sus cursos la siguen: cuelgan de ella.
+    if(nd.tipo==='rama'){ nd.rama.x=nd.x; nd.rama.y=nd.y; }
+    arrastre.movido=true;
+    cv.style.cursor='grabbing';
+    return;
+  }
+
+  if(paneo){
+    // El desplazamiento se aplica sobre el destino de la cámara y no sobre su
+    // posición: así el suavizado del frame sigue funcionando.
+    cam.tx=paneo.camX-(mx-paneo.x)/cam.z;
+    cam.ty=paneo.camY-(my-paneo.y)/cam.z;
+    if(Math.hypot(mx-paneo.x,my-paneo.y)>3) paneo.movido=true;
+    return;
+  }
+
+  hover=nodoEn(mx,my);
+  cv.style.cursor=hover?'grab':(S.modo==='rama'?'zoom-out':'grab');
+  // El canvas no admite title por elemento: el texto va en el propio canvas.
   cv.title = hover
     ? (hover.tipo==='rama'
-        ? `${hover.rama.nombre} — ${porRama(hover.rama.clave).length} contenidos. Clic para abrir la rama.`
-        : `${hover.cont.titulo} — clic para ver el detalle`)
-    : (S.modo==='rama' ? 'Clic en el vacío para volver a la copa' : 'Elegí una rama para abrirla');});
-cv.addEventListener('click',e=>{
+        ? `${hover.rama.nombre} — ${porRama(hover.rama.clave).length} contenidos. Clic para abrir, arrastrá para mover.`
+        : `${hover.cont.titulo} — clic para ver el detalle, arrastrá para mover`)
+    : (S.modo==='rama'
+        ? 'Arrastrá para desplazar · rueda para acercar · clic en el vacío para volver'
+        : 'Arrastrá para desplazar · rueda para acercar · clic en una rama para abrirla');
+});
+
+addEventListener('mouseup',()=>{
+  // Un arrastre corto es un clic: recién con movimiento real se descarta.
+  if(arrastre && !arrastre.movido){
+    const nd=arrastre.nodo;
+    if(nd.tipo==='rama') irARama(nd.rama); else abrirDetalle(nd.cont.id);
+  }
+  if(paneo && !paneo.movido && S.modo==='rama') irACopa();
+  arrastre=null; paneo=null;
+  cv.style.cursor=hover?'grab':'grab';
+});
+
+/**
+ * S5-04 — Acercar y alejar con la rueda.
+ *
+ * <p>El punto bajo el cursor queda quieto: se ajusta el centro de la cámara en
+ * proporción al cambio de escala. Sin eso, acercarse desplaza el mapa y hay que
+ * corregir a mano cada vez.
+ */
+cv.addEventListener('wheel',e=>{
+  e.preventDefault();
   const b=cv.getBoundingClientRect();
-  const nd=nodoEn(e.clientX-b.left,e.clientY-b.top);
-  if(!nd){ if(S.modo==='rama') irACopa(); return; }
-  if(nd.tipo==='rama') irARama(nd.rama); else abrirDetalle(nd.cont.id);});
+  const mx=e.clientX-b.left, my=e.clientY-b.top;
+  const [wx,wy]=aPlano(mx,my);
+
+  const factor=Math.exp(-e.deltaY*0.0016);
+  const nuevo=Math.min(ZOOM_MAX,Math.max(ZOOM_MIN,cam.tz*factor));
+  const real=nuevo/cam.tz;
+  if(real===1) return;
+
+  cam.tx=wx-(wx-cam.tx)/real;
+  cam.ty=wy-(wy-cam.ty)/real;
+  cam.tz=nuevo;
+},{passive:false});
+
+/** Doble clic en el vacío: vuelve al encuadre inicial. */
+cv.addEventListener('dblclick',e=>{
+  const b=cv.getBoundingClientRect();
+  if(nodoEn(e.clientX-b.left,e.clientY-b.top)) return;
+  reencuadrar();
+});
+
+/** Devuelve la cámara al encuadre de la vista actual. */
+function reencuadrar(){
+  if(S.modo==='rama'&&S.rama){ cam.tx=S.rama.x+Math.min(200,W*.19); cam.ty=S.rama.y; cam.tz=1.4; }
+  else { cam.tx=0; cam.ty=0; cam.tz=1.12; }
+}
+
+/** Suelta las posiciones fijadas a mano y devuelve el orden calculado. */
+function reordenar(){
+  nodos.forEach(nd=>{ nd.fijo=false; });
+  ubicar();
+  reencuadrar();
+}
 addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     if(elSow.classList.contains('open')) cerrarSow();
+    else if(elDash.classList.contains('open')) cerrarDash();
     else if(elDetail.classList.contains('open')) cerrarDetalle();
     else if(S.modo==='rama') irACopa();}});
+
+/* S5-04 — Controles visibles: la rueda no se descubre sola. */
+const elZoomCtl=document.getElementById('zoomctl'), elZoomPct=document.getElementById('zoomPct');
+function zoomPaso(factor){
+  cam.tz=Math.min(ZOOM_MAX,Math.max(ZOOM_MIN,cam.tz*factor));
+}
+document.getElementById('zIn').addEventListener('click',()=>zoomPaso(1.25));
+document.getElementById('zOut').addEventListener('click',()=>zoomPaso(0.8));
+document.getElementById('zFit').addEventListener('click',reordenar);
+setInterval(()=>{ elZoomPct.textContent=Math.round(cam.z*100)+'%'; },140);
 
 /* ---------- vistas ---------- */
 const elChip=document.getElementById('chip'), elHint=document.getElementById('hint'),
@@ -767,6 +1101,7 @@ function pintarShelf(r){
 
 async function abrirDetalle(id){
   S.sel=id;
+  if(elDash.classList.contains('open')) elDash.classList.remove('open');
   elDWrap.innerHTML='<p class="empty" style="grid-column:1/-1">Cargando…</p>';
   elDetail.classList.add('open'); elDetail.scrollTop=0;
   elHint.classList.add('gone'); elBack.classList.remove('hide');
@@ -818,12 +1153,20 @@ async function abrirDetalle(id){
       }));
     document.getElementById('del').addEventListener('click',async()=>{
       if(!confirm('¿Eliminar este contenido? No se puede deshacer.')) return;
-      await api.borrar(id);
-      S.contenidos=S.contenidos.filter(x=>x.id!==id);
-      S.aristas=S.aristas.filter(e=>e.a!==id&&e.b!==id);
-      ubicar(); cerrarDetalle(); if(S.modo==='rama') pintarShelf(S.rama); pintarChip(); pintarHearth();});
+      try{
+        await api.borrar(id);
+        S.contenidos=S.contenidos.filter(x=>x.id!==id);
+        S.aristas=S.aristas.filter(e=>e.a!==id&&e.b!==id);
+        ubicar(); cerrarDetalle();
+        if(S.modo==='rama') pintarShelf(S.rama);
+        pintarChip(); pintarHearth();
+        avisar({ ok:true, titulo:'Contenido eliminado',
+                 detalle:'Se quitó del árbol y de la base.', duracion:4000 });
+      }catch(err){ avisarError(err); }});
   }catch(e){
-    elDWrap.innerHTML=`<p class="empty" style="grid-column:1/-1">No se pudo cargar: ${esc(e.message)}</p>`;}
+    const t = traducirError(e, 'id_invalido');
+    elDWrap.innerHTML=`<p class="empty" style="grid-column:1/-1">${esc(t.detalle)}</p>`;
+    avisarError(e, 'id_invalido');}
 }
 function cerrarDetalle(){
   elDetail.classList.remove('open'); elHint.classList.remove('gone');
@@ -847,8 +1190,10 @@ async function buscar(q){
     elSeekOut.querySelectorAll('.sr').forEach(b=>
       b.addEventListener('click',()=>{ elSeekOut.classList.remove('show'); abrirDetalle(b.dataset.id); }));
   }catch(e){
-    elSeekOut.innerHTML=`<p class="sr-empty">Error al buscar: ${esc(e.message)}</p>`;
-    elSeekOut.classList.add('show');}
+    const t = traducirError(e);
+    elSeekOut.innerHTML=`<p class="sr-empty">${esc(t.titulo)}</p>`;
+    elSeekOut.classList.add('show');
+    avisarError(e);}
 }
 elSeekIn.addEventListener('input',e=>{ clearTimeout(tecla);
   tecla=setTimeout(()=>buscar(e.target.value),320); });
@@ -911,7 +1256,11 @@ async function leerPdf(file){
       ? `Se leyeron ${leidas} de ${pdf.numPages} páginas — el resto excede el límite de ${LIMITE} caracteres`
       : `Se leyeron las ${pdf.numPages} páginas completas`;
     medirTexto();
-  }catch(e){ elDropHint.textContent='No se pudo leer el PDF: '+e.message; }
+  }catch(e){
+    elDropHint.textContent='No se pudo leer el PDF';
+    avisar({ titulo:'No se pudo leer el PDF',
+             detalle:'El archivo puede estar dañado o protegido con contraseña.' });
+    console.error('[LogiTree] pdf', e); }
 }
 
 elGo.addEventListener('click',async()=>{
@@ -936,12 +1285,206 @@ elGo.addEventListener('click',async()=>{
     elDropHint.textContent='o hacé clic para elegirlo · se leen las primeras páginas';
     abrirDetalle(c.id);
   }catch(e){
+    const t = traducirError(e, 'datos_invalidos');
     elMsg.classList.add('err');
-    elMsg.textContent = e.status===503 ? 'El servicio de inferencia no responde. ¿Está levantado?'
-                      : e.status===422 ? 'El modelo no pudo procesar este texto.'
-                      : e.message;
+    elMsg.textContent = t.detalle;
     elGo.disabled=false;}
 });
+
+/* ══════════════════════════════════════════════════════════
+   S5-16 · Dashboard de métricas
+   Consume GET /api/v1/metricas (S5-14). El alcance de lo que se
+   muestra sale del spike S5-15.
+   ══════════════════════════════════════════════════════════ */
+const elDash=document.getElementById('dash'), elDashWrap=document.getElementById('dashWrap');
+
+/** Barra proporcional al máximo de su grupo, no al total. */
+function barra(valor,max,color){
+  const pct = max>0 ? (valor/max*100) : 0;
+  return `<div class="track"><i style="width:${pct.toFixed(1)}%;background:${color}"></i></div>`;
+}
+
+async function abrirDash(){
+  elDashWrap.innerHTML='<p class="dash-sub">Calculando métricas…</p>';
+  elDash.classList.add('open'); elDash.scrollTop=0;
+  elHint.classList.add('gone'); elBack.classList.remove('hide');
+  elBack.textContent='← Volver al árbol';
+  try{
+    const m=await api.metricas();
+
+    if(!m.totalContenidos){
+      elDashWrap.innerHTML=`
+        <h1 class="dash-title">Métricas</h1>
+        <p class="dash-sub">Todavía no hay contenidos analizados. Cuando sumes el primero,
+          acá vas a ver cómo se comporta el modelo sobre tu repositorio.</p>`;
+      return;
+    }
+
+    const maxCat=Math.max(...m.confianzaPorCategoria.map(c=>c.cantidad),1);
+    const maxTramo=Math.max(...m.distribucionConfianza.map(t=>t.cantidad),1);
+    const maxDia=Math.max(...m.procesadosPorDia.map(d=>d.cantidad),1);
+    const maxKw=Math.max(...m.palabrasClaveTop.map(k=>k.cantidad),1);
+    const dias=m.procesadosPorDia;
+
+    elDashWrap.innerHTML=`
+      <h1 class="dash-title">Métricas del repositorio</h1>
+      <p class="dash-sub">Todo lo de acá sale de los contenidos ya analizados. No hay
+        estimaciones ni proyecciones: sólo lo que la base puede sostener.</p>
+
+      <div class="kpis">
+        <div class="kpi"><div class="n">${m.totalContenidos}</div>
+          <div class="l">Contenidos</div></div>
+        <div class="kpi"><div class="n">${m.totalCategorias}</div>
+          <div class="l">Categorías activas</div></div>
+        <div class="kpi"><div class="n">${(m.confianzaMedia*100).toFixed(0)}%</div>
+          <div class="l">Confianza media</div>
+          <div class="h">Qué tan seguro está el modelo, en promedio</div></div>
+        <div class="kpi"><div class="n">${m.palabrasClavePorContenido}</div>
+          <div class="l">Palabras clave por contenido</div></div>
+        <div class="kpi"><div class="n">${Math.round(m.longitudMediaTexto).toLocaleString('es')}</div>
+          <div class="l">Caracteres por texto</div></div>
+      </div>
+
+      <div class="panels">
+        <div class="panel">
+          <h3>Confianza por categoría</h3>
+          <p class="why">De la más dudosa a la más firme. Donde el modelo duda es
+            donde conviene revisar los datos de entrenamiento.</p>
+          ${m.confianzaPorCategoria.map(c=>{
+            const col=colorDe(claveCat(c.categoria));
+            return `<div class="row">
+              <span class="lbl">${esc(c.categoria)}</span>
+              ${barra(c.confianzaMedia,1,col)}
+              <span class="val">${(c.confianzaMedia*100).toFixed(0)}% · ${c.cantidad}</span>
+            </div>`;}).join('')}
+        </div>
+
+        <div class="panel">
+          <h3>Distribución de confianza</h3>
+          <p class="why">Un promedio alto puede esconder muchos casos flojos.
+            Acá se ve cuántos hay en cada tramo.</p>
+          ${m.distribucionConfianza.map(t=>`<div class="row">
+              <span class="lbl">${esc(t.etiqueta)}</span>
+              ${barra(t.cantidad,maxTramo,t.desde>=0.85?'#14b8a6':t.desde>=0.7?'#38bdf8':t.desde>=0.5?'#fb923c':'#fb7185')}
+              <span class="val">${t.cantidad}</span>
+            </div>`).join('')}
+        </div>
+
+        <div class="panel">
+          <h3>Contenidos por día</h3>
+          <p class="why">Cómo fue creciendo el repositorio.</p>
+          <div class="spark">
+            ${dias.map(d=>`<div style="height:${(d.cantidad/maxDia*100).toFixed(1)}%"
+                title="${esc(d.fecha)}: ${d.cantidad}"></div>`).join('')}
+          </div>
+          <div class="spark-x">
+            <span>${dias.length?esc(dias[0].fecha):''}</span>
+            <span>${dias.length?esc(dias[dias.length-1].fecha):''}</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Palabras clave más frecuentes</h3>
+          <p class="why">El vocabulario dominante. Clic en cualquiera para buscarla.</p>
+          <div class="cloud">
+            ${m.palabrasClaveTop.map(k=>`<button data-k="${esc(k.palabraClave)}"
+              style="font-size:${(0.72+k.cantidad/maxKw*0.32).toFixed(2)}rem"
+              title="Buscar “${esc(k.palabraClave)}”">${esc(k.palabraClave)}<span class="c">${k.cantidad}</span></button>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <p class="dash-foot">Calculado el ${fecha(m.calculadoEn)} · GET /api/v1/metricas</p>`;
+
+    elDashWrap.querySelectorAll('.cloud button').forEach(b=>
+      b.addEventListener('click',()=>{
+        cerrarDash(); irACopa();
+        elSeekIn.value=b.dataset.k; buscar(b.dataset.k); elSeekIn.focus(); }));
+
+  }catch(e){
+    elDashWrap.innerHTML='<p class="dash-sub">No se pudieron cargar las métricas.</p>';
+    avisarError(e);
+  }
+}
+function cerrarDash(){
+  elDash.classList.remove('open'); elHint.classList.remove('gone');
+  if(S.modo==='rama'){ elBack.classList.remove('hide'); elBack.textContent='← Volver a la copa'; }
+  else elBack.classList.add('hide');
+}
+document.getElementById('dashBtn').addEventListener('click',abrirDash);
+
+/* ══════════════════════════════════════════════════════════
+   S5-02 · Componente de error
+   Un único lugar que muestra fallos. Antes cada pantalla los
+   mostraba a su manera y varios se perdían en la consola.
+   ══════════════════════════════════════════════════════════ */
+const elAlerts = document.getElementById('alerts');
+
+/**
+ * Muestra un aviso.
+ *
+ * @param cfg.titulo   qué pasó, en una línea
+ * @param cfg.detalle  por qué y qué implica
+ * @param cfg.accion   texto del botón, opcional
+ * @param cfg.alActuar qué hace ese botón
+ * @param cfg.ok       true para avisos que no son fallos
+ * @param cfg.duracion ms hasta cerrarse solo; 0 lo deja fijo
+ */
+function avisar(cfg){
+  const el = document.createElement('div');
+  el.className = 'alert' + (cfg.ok ? ' ok' : '');
+  el.setAttribute('role', cfg.ok ? 'status' : 'alert');
+
+  const ico = cfg.ok
+    ? '<path d="M20 6 9 17l-5-5"/>'
+    : '<circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/>';
+
+  el.innerHTML = `
+    <div class="alert-head">
+      <svg class="alert-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ico}</svg>
+      <span class="alert-title">${esc(cfg.titulo)}</span>
+      <button class="alert-x" aria-label="Cerrar aviso">&times;</button>
+    </div>
+    ${cfg.detalle ? `<p class="alert-body">${esc(cfg.detalle)}</p>` : ''}
+    ${cfg.accion ? `<button class="alert-act">${esc(cfg.accion)}</button>` : ''}`;
+
+  const cerrar = () => {
+    if(el.classList.contains('leaving')) return;
+    el.classList.add('leaving');
+    setTimeout(() => el.remove(), 280);
+  };
+
+  el.querySelector('.alert-x').addEventListener('click', cerrar);
+  const act = el.querySelector('.alert-act');
+  if(act) act.addEventListener('click', () => { cerrar(); if(cfg.alActuar) cfg.alActuar(); });
+
+  elAlerts.appendChild(el);
+
+  // Los avisos con acción no se cierran solos: quien los lee todavía
+  // tiene algo que decidir.
+  const ms = cfg.duracion !== undefined ? cfg.duracion : (cfg.accion ? 0 : 7000);
+  if(ms > 0) setTimeout(cerrar, ms);
+  return cerrar;
+}
+
+/**
+ * Traduce un error con el catálogo y lo muestra.
+ *
+ * @param e         error capturado
+ * @param claveHint clave del catálogo para desambiguar los 400
+ * @param alActuar  qué hacer si el aviso ofrece acción
+ */
+function avisarError(e, claveHint, alActuar){
+  const t = traducirError(e, claveHint);
+  console.error('[LogiTree]', t.clave, e);
+  return avisar({
+    titulo: t.titulo,
+    detalle: t.detalle,
+    accion: t.accion,
+    alActuar: alActuar || (t.accion === 'Volver al inicio' ? irACopa : undefined)
+  });
+}
 
 /* ---------- utilidades ---------- */
 function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>
@@ -953,11 +1496,15 @@ function fecha(f){ if(!f) return '—';
 /* ---------- entrada ---------- */
 document.getElementById('home').addEventListener('click',irACopa);
 elBack.addEventListener('click',()=>{
-  if(elDetail.classList.contains('open')){ cerrarDetalle(); S.sel=null; } else irACopa();});
+  if(elDash.classList.contains('open')) cerrarDash();
+  else if(elDetail.classList.contains('open')){ cerrarDetalle(); S.sel=null; }
+  else irACopa();});
 elEnter.addEventListener('click',()=>{
   document.getElementById('germination').classList.add('dispersed');
   cv.classList.add('live'); document.getElementById('topbar').classList.add('live');
-  setTimeout(()=>{ elHearth.classList.add('show'); elSeek.classList.add('show'); },700);
+  setTimeout(()=>{ elHearth.classList.add('show'); elSeek.classList.add('show');
+    elZoomCtl.classList.add('show');
+    document.getElementById('dashBtn').classList.remove('hide'); },700);
   cam.tz=1.12; pintarChip(); pintarHearth();
   setTimeout(()=>{ document.getElementById('germination').style.display='none';
     if(!S.contenidos.length) abrirSow(); },1400);});

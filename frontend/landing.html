@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LogiTree · Organiza. Conecta. Descubre conocimiento.</title>
+<meta name="description" content="LogiTree clasifica tus contenidos técnicos, extrae sus palabras clave y los conecta entre sí en un mapa navegable.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --void:#04070a;--surface:#0b1116;--raise:#101922;--hairline:#1c2a33;
+    --bone:#e8f1ee;--mute:#a9bcb7;--sage:#7d9490;--teal:#14b8a6;
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  html{scroll-behavior:smooth}
+  body{background:var(--void);color:var(--bone);font-family:var(--body);
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 clamp(1.1rem,4vw,2rem)}
+
+  /* ---------- barra ---------- */
+  header{position:fixed;top:0;left:0;right:0;z-index:40;
+    background:linear-gradient(#04070aee,#04070a00);backdrop-filter:blur(6px)}
+  .nav{display:flex;align-items:center;gap:1.4rem;padding:1.05rem 0}
+  .mark{display:flex;align-items:center;gap:.55rem;font-family:var(--display);
+    font-weight:600;letter-spacing:-.03em;font-size:1.02rem}
+  .mark em{font-style:normal;color:var(--teal)}
+  .mark svg{width:21px;height:21px;color:var(--teal)}
+  .nav-links{margin-left:auto;display:none;gap:1.6rem;font-size:.85rem;color:var(--mute)}
+  @media(min-width:760px){.nav-links{display:flex}}
+  .nav-links a:hover{color:var(--bone)}
+  .cta{font-family:var(--display);font-size:.85rem;font-weight:500;color:#04070a;
+    background:var(--teal);border-radius:100px;padding:.6rem 1.3rem;
+    transition:filter .2s;white-space:nowrap}
+  .cta:hover{filter:brightness(1.13)}
+  .cta:focus-visible{outline:2px solid var(--bone);outline-offset:3px}
+
+  /* ---------- portada ---------- */
+  .hero{position:relative;min-height:100svh;display:grid;place-items:center;
+    text-align:center;overflow:hidden}
+  #cnv{position:absolute;inset:0;width:100%;height:100%}
+  .hero-in{position:relative;z-index:2;padding:6rem 0 4rem}
+  .kicker{font-family:var(--mono);font-size:.63rem;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--teal);margin-bottom:1.3rem}
+  h1{font-family:var(--display);font-size:clamp(2.4rem,7vw,4.4rem);font-weight:700;
+    letter-spacing:-.045em;line-height:1.04}
+  h1 em{font-style:normal;color:var(--teal)}
+  .lead{font-size:clamp(1rem,2.2vw,1.18rem);color:var(--mute);line-height:1.7;
+    max-width:56ch;margin:1.4rem auto 0}
+  .hero-cta{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-top:2.2rem}
+  .ghost{font-family:var(--display);font-size:.88rem;font-weight:500;color:var(--bone);
+    border:1px solid var(--hairline);border-radius:100px;padding:.72rem 1.5rem;
+    transition:border-color .2s}
+  .ghost:hover{border-color:#3a505a}
+  .big{font-size:.95rem;padding:.85rem 1.9rem}
+  .scroll-hint{position:absolute;bottom:1.6rem;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--sage);z-index:2;animation:bob 2.6s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,6px)}}
+
+  /* ---------- secciones ---------- */
+  section{padding:clamp(4rem,10vw,7rem) 0}
+  .eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--teal);margin-bottom:.9rem}
+  h2{font-family:var(--display);font-size:clamp(1.7rem,4.2vw,2.5rem);font-weight:700;
+    letter-spacing:-.04em;line-height:1.14}
+  .sub{font-size:.98rem;color:var(--mute);line-height:1.7;max-width:60ch;margin-top:1rem}
+
+  .problem{background:var(--surface);border-top:1px solid var(--hairline);
+    border-bottom:1px solid var(--hairline)}
+  .pgrid{display:grid;gap:1.6rem;margin-top:2.4rem}
+  @media(min-width:760px){.pgrid{grid-template-columns:repeat(3,1fr)}}
+  .pcard{border-left:2px solid #223038;padding-left:1.2rem}
+  .pcard h3{font-family:var(--display);font-size:1.02rem;font-weight:600;letter-spacing:-.02em}
+  .pcard p{font-size:.86rem;color:var(--sage);line-height:1.65;margin-top:.5rem}
+
+  .steps{display:grid;gap:1rem;margin-top:2.6rem;counter-reset:paso}
+  @media(min-width:760px){.steps{grid-template-columns:repeat(4,1fr)}}
+  .step{background:var(--surface);border:1px solid var(--hairline);border-radius:15px;
+    padding:1.35rem;position:relative}
+  .step::before{counter-increment:paso;content:counter(paso,decimal-leading-zero);
+    font-family:var(--mono);font-size:.65rem;color:var(--teal);letter-spacing:.1em}
+  .step h3{font-family:var(--display);font-size:1rem;font-weight:600;letter-spacing:-.02em;
+    margin-top:.75rem}
+  .step p{font-size:.83rem;color:var(--sage);line-height:1.65;margin-top:.5rem}
+
+  .fgrid{display:grid;gap:1rem;margin-top:2.6rem}
+  @media(min-width:680px){.fgrid{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:1000px){.fgrid{grid-template-columns:repeat(3,1fr)}}
+  .feat{background:var(--surface);border:1px solid var(--hairline);border-radius:15px;
+    padding:1.4rem;transition:border-color .2s,transform .2s}
+  .feat:hover{border-color:#2b3d47;transform:translateY(-2px)}
+  .feat svg{width:20px;height:20px;color:var(--teal)}
+  .feat h3{font-family:var(--display);font-size:.98rem;font-weight:600;letter-spacing:-.02em;
+    margin-top:.85rem}
+  .feat p{font-size:.83rem;color:var(--sage);line-height:1.65;margin-top:.45rem}
+
+  .tech{background:var(--surface);border-top:1px solid var(--hairline);
+    border-bottom:1px solid var(--hairline)}
+  .chips{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.8rem}
+  .chip{font-family:var(--mono);font-size:.72rem;padding:.4rem .8rem;border-radius:7px;
+    background:rgba(255,255,255,.04);border:1px solid var(--hairline);color:var(--mute)}
+
+  .final{text-align:center}
+  .final h2{max-width:20ch;margin:0 auto}
+  .final .sub{margin-left:auto;margin-right:auto}
+
+  footer{border-top:1px solid var(--hairline);padding:2.2rem 0;
+    font-family:var(--mono);font-size:.66rem;color:var(--sage)}
+  .fin{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
+  .fin .r{margin-left:auto}
+
+  .reveal{opacity:0;transform:translateY(20px);
+    transition:opacity .7s ease,transform .7s cubic-bezier(.5,.1,.2,1)}
+  .reveal.on{opacity:1;transform:none}
+
+  @media(prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+    .reveal{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="mark" href="#top">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <path d="M12 21V11"/><path d="M12 11 6.5 6"/><path d="M12 11l5.5-5"/><path d="M12 15l-4-3.5"/>
+        <circle cx="6" cy="5.5" r="1.7"/><circle cx="18" cy="5.5" r="1.7"/><circle cx="7.5" cy="11" r="1.5"/>
+      </svg>Logi<em>Tree</em>
+    </a>
+    <nav class="nav-links">
+      <a href="#problema">El problema</a>
+      <a href="#como">Cómo funciona</a>
+      <a href="#que-hace">Qué hace</a>
+    </nav>
+    <a class="cta" href="index.html">Entrar a la app</a>
+  </div>
+</header>
+
+<div class="hero" id="top">
+  <canvas id="cnv" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <p class="kicker">Organiza · Conecta · Descubre conocimiento</p>
+    <h1>Tu conocimiento técnico,<br>hecho <em>árbol</em></h1>
+    <p class="lead">LogiTree lee tus contenidos técnicos, los clasifica solo, extrae de qué
+      hablan y los conecta entre sí. Lo que era una carpeta de archivos sueltos pasa a ser
+      un mapa por el que se puede navegar.</p>
+    <div class="hero-cta">
+      <a class="cta big" href="index.html">Ver el árbol</a>
+      <a class="ghost big" href="#como">Cómo funciona</a>
+    </div>
+  </div>
+  <p class="scroll-hint">Seguí bajando</p>
+</div>
+
+<section class="problem" id="problema">
+  <div class="wrap">
+    <p class="eyebrow reveal">El problema</p>
+    <h2 class="reveal">Guardar no es lo mismo que encontrar</h2>
+    <p class="sub reveal">Quien estudia o trabaja en tecnología acumula documentación,
+      apuntes y tutoriales todos los días. El problema aparece después: cuando hay que
+      volver a eso y no aparece.</p>
+    <div class="pgrid">
+      <div class="pcard reveal"><h3>Se pierde</h3>
+        <p>Guardado en cinco lugares distintos, sin un criterio que se sostenga
+          con el tiempo.</p></div>
+      <div class="pcard reveal"><h3>Cuesta catalogar</h3>
+        <p>Etiquetar a mano funciona los primeros veinte documentos. Después nadie
+          lo mantiene.</p></div>
+      <div class="pcard reveal"><h3>No se conecta</h3>
+        <p>Dos apuntes que hablan de lo mismo quedan a un clic de distancia y a la vez
+          invisibles entre sí.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="como">
+  <div class="wrap">
+    <p class="eyebrow reveal">Cómo funciona</p>
+    <h2 class="reveal">Cuatro pasos, ninguno manual</h2>
+    <div class="steps">
+      <div class="step reveal"><h3>Sumás contenido</h3>
+        <p>Pegás un texto, soltás un PDF o un DOCX, o pasás la dirección de una página.</p></div>
+      <div class="step reveal"><h3>El modelo lo lee</h3>
+        <p>Lo clasifica en una categoría y extrae las palabras que mejor lo describen.</p></div>
+      <div class="step reveal"><h3>Crece el árbol</h3>
+        <p>Cada categoría es una rama. Cada contenido, una hoja que se ubica sola.</p></div>
+      <div class="step reveal"><h3>Aparecen los vínculos</h3>
+        <p>Los contenidos que comparten palabras clave quedan unidos y se pueden recorrer.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="que-hace">
+  <div class="wrap">
+    <p class="eyebrow reveal">Qué hace</p>
+    <h2 class="reveal">Lo que ya está funcionando</h2>
+    <div class="fgrid">
+      <div class="feat reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v18"/><path d="m5 9 7-6 7 6"/></svg>
+        <h3>Clasificación automática</h3>
+        <p>Un modelo entrenado ubica cada contenido en su categoría y dice qué tan
+          seguro está de esa decisión.</p></div>
+      <div class="feat reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h7"/></svg>
+        <h3>Palabras clave</h3>
+        <p>Extrae los términos que mejor representan cada texto, sin que nadie
+          etiquete nada a mano.</p></div>
+      <div class="feat reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="9" r="2.4"/><circle cx="10" cy="18" r="2.4"/>
+          <path d="M8.2 7 16 8.6"/><path d="M16.6 11 11.5 16"/></svg>
+        <h3>Contenidos relacionados</h3>
+        <p>Descubre qué otros contenidos comparten vocabulario con el que estás
+          mirando, y los ordena por cuánto se parecen.</p></div>
+      <div class="feat reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 3v4a1 1 0 0 0 1 1h4"/>
+          <path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z"/></svg>
+        <h3>PDF, DOCX y páginas</h3>
+        <p>Suma documentos completos o el contenido de una dirección web, sin copiar
+          y pegar texto a mano.</p></div>
+      <div class="feat reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <h3>Búsqueda por palabra clave</h3>
+        <p>Buscá un término y encontrá todo lo que lo menciona, sin importar en qué
+          rama esté guardado.</p></div>
+      <div class="feat reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        <h3>Métricas del repositorio</h3>
+        <p>Cuánto creció, qué tan seguro está el modelo en cada categoría y cuál es el
+          vocabulario que domina tu base.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="tech">
+  <div class="wrap">
+    <p class="eyebrow reveal">Cómo está hecho</p>
+    <h2 class="reveal">Una API REST y un modelo entrenado</h2>
+    <p class="sub reveal">El backend expone los resultados en JSON para que cualquier otra
+      aplicación pueda consumirlos. El árbol que ves es sólo una de las formas posibles
+      de mirarlos.</p>
+    <div class="chips reveal">
+      <span class="chip">Java 21</span><span class="chip">Spring Boot 3</span>
+      <span class="chip">API REST</span><span class="chip">JPA</span>
+      <span class="chip">Python</span><span class="chip">scikit-learn</span>
+      <span class="chip">TF-IDF</span><span class="chip">Oracle Cloud</span>
+      <span class="chip">Docker</span>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2 class="reveal">Empezá con un texto.<br>El árbol crece solo.</h2>
+    <p class="sub reveal">No hace falta configurar nada ni definir categorías de antemano.</p>
+    <div class="hero-cta reveal"><a class="cta big" href="index.html">Entrar a LogiTree</a></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap fin">
+    <span>LogiTree · Hackathon ONE G9 · Equipo 34</span>
+    <span class="r"><a href="index.html">Ir a la app</a></span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  /* Constelación de fondo: el mismo lenguaje visual del mapa de la app,
+     para que la landing y el producto se lean como una sola cosa. */
+  const cv=document.getElementById('cnv'), cx=cv.getContext('2d');
+  const COLORES=['#14b8a6','#38bdf8','#fb923c','#a78bfa','#f472b6','#60a5fa','#fb7185'];
+  let W=0,H=0,t=0,nodos=[],lazos=[];
+
+  function medir(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    W=cv.clientWidth; H=cv.clientHeight;
+    cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0);
+    armar();
+  }
+
+  function armar(){
+    nodos=[]; lazos=[];
+    const cxx=W/2, cyy=H/2;
+    const radio=Math.min(W,H)*0.36;
+    for(let i=0;i<7;i++){
+      const a=(i/7)*Math.PI*2-Math.PI/2;
+      const j=[1,.84,1.1,.9,1.05,.87,1.02][i];
+      const rx=cxx+Math.cos(a)*radio*j, ry=cyy+Math.sin(a)*radio*j*.72;
+      nodos.push({x:rx,y:ry,r:5.5,c:COLORES[i],base:true,f:.6+i*.13});
+      const cuantos=3+(i%3);
+      for(let k=0;k<cuantos;k++){
+        const b=(k/cuantos)*Math.PI*2+i*1.7;
+        const d=42+((k*29)%34);
+        nodos.push({x:rx+Math.cos(b)*d, y:ry+Math.sin(b)*d*.9, r:2.1,
+                    c:COLORES[i], f:.4+k*.21, anc:nodos.length-1-k});
+      }
+    }
+    for(let i=0;i<7;i++) for(let j=i+1;j<7;j++)
+      if((i*3+j)%3===0) lazos.push([i*1,j*1]);
+  }
+
+  const basesIdx = () => nodos.map((n,i)=>n.base?i:-1).filter(i=>i>=0);
+
+  function pintar(){
+    t+=.006;
+    cx.clearRect(0,0,W,H);
+
+    const B=basesIdx();
+    lazos.forEach(([a,b])=>{
+      const na=nodos[B[a]], nb=nodos[B[b]];
+      if(!na||!nb) return;
+      const g=cx.createLinearGradient(na.x,na.y,nb.x,nb.y);
+      g.addColorStop(0,na.c+'00'); g.addColorStop(.5,na.c+'3a'); g.addColorStop(1,nb.c+'00');
+      cx.strokeStyle=g; cx.lineWidth=1;
+      cx.beginPath(); cx.moveTo(na.x,na.y); cx.lineTo(nb.x,nb.y); cx.stroke();
+    });
+
+    nodos.forEach(n=>{
+      const p=n.base?0:Math.sin(t*1.4+n.f*4)*3;
+      const x=n.x, y=n.y+p;
+      const rad=n.base?n.r*7:n.r*5;
+      const g=cx.createRadialGradient(x,y,0,x,y,rad);
+      g.addColorStop(0,n.c+(n.base?'44':'22')); g.addColorStop(1,n.c+'00');
+      cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,rad,0,7); cx.fill();
+      cx.globalAlpha=n.base?.85:.5;
+      cx.fillStyle=n.c; cx.beginPath();
+      cx.arc(x,y,n.r*(1+Math.sin(t*2+n.f*5)*.06),0,7); cx.fill();
+      cx.globalAlpha=1;
+    });
+
+    requestAnimationFrame(pintar);
+  }
+
+  addEventListener('resize',medir);
+  medir(); requestAnimationFrame(pintar);
+
+  /* Aparición progresiva al bajar. */
+  const obs=new IntersectionObserver(es=>{
+    es.forEach((e,i)=>{ if(e.isIntersecting){
+      setTimeout(()=>e.target.classList.add('on'), i*70);
+      obs.unobserve(e.target); }});
+  },{threshold:.14});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+})();
+</script>
+</body>
+</html>
