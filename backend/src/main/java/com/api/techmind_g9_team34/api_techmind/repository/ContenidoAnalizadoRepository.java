@@ -1,7 +1,9 @@
 package com.api.techmind_g9_team34.api_techmind.repository;
 
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
+import com.api.techmind_g9_team34.api_techmind.repository.projection.ConfianzaCategoria;
 import com.api.techmind_g9_team34.api_techmind.repository.projection.ConteoCategoria;
+import com.api.techmind_g9_team34.api_techmind.repository.projection.ConteoPalabraClave;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -11,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -169,4 +172,118 @@ public interface ContenidoAnalizadoRepository extends
     @Query("select c.categoria as categoria, count(c) as cantidadProcesados " +
             "from ContenidoAnalizado c group by c.categoria order by c.categoria")
     List<ConteoCategoria> contarPorCategoria();
+
+    // ══════════════════════════════════════════════════════════════════
+    //  S5-14 — Agregaciones del tablero de métricas.
+    //  El alcance sale del spike S5-15 (docs/S5-15-spike-metricas.md).
+    // ══════════════════════════════════════════════════════════════════
+
+    /**
+     * S5-14 (M3) — Confianza media del modelo sobre todo el repositorio.
+     *
+     * <p>Devuelve {@code null} si no hay contenidos: {@code avg} sobre cero
+     * filas no es cero, es ausencia de dato. El servicio decide cómo
+     * representarlo; la consulta no inventa un valor.
+     *
+     * @return media de {@code probabilidad}, o {@code null} si la base está vacía
+     */
+    @Query("select avg(c.probabilidad) from ContenidoAnalizado c")
+    Double confianzaMediaGlobal();
+
+    /**
+     * S5-14 (M4) — Confianza media agrupada por categoría, de menor a mayor.
+     *
+     * <p>El orden ascendente es deliberado: lo que interesa mirar primero es
+     * dónde el clasificador duda, no dónde acierta cómodo.
+     *
+     * <p>Los alias del {@code select} deben coincidir con los getters de
+     * {@link ConfianzaCategoria}.
+     *
+     * @return confianza y cantidad por categoría
+     */
+    @Query("""
+            select c.categoria         as categoria,
+                   avg(c.probabilidad) as confianzaMedia,
+                   count(c)            as cantidad
+            from ContenidoAnalizado c
+            group by c.categoria
+            order by avg(c.probabilidad) asc
+            """)
+    List<ConfianzaCategoria> confianzaPorCategoria();
+
+    /**
+     * S5-14 (M5) — Cantidad de contenidos cuya confianza cae en un tramo.
+     *
+     * <p>El histograma se arma llamando una vez por tramo en lugar de con una
+     * sola consulta con {@code case}: los rangos quedan definidos en Java, en
+     * un único lugar, y no dispersos dentro de una cadena JPQL.
+     *
+     * @param desde límite inferior, inclusive
+     * @param hasta límite superior, exclusive
+     * @return contenidos dentro del rango
+     */
+    @Query("""
+            select count(c) from ContenidoAnalizado c
+            where c.probabilidad >= :desde and c.probabilidad < :hasta
+            """)
+    long contarPorTramoDeConfianza(@Param("desde") double desde,
+                                   @Param("hasta") double hasta);
+
+    /**
+     * S5-14 (M7) — Palabras clave más frecuentes del repositorio.
+     *
+     * <p>Se comparan en minúsculas porque el modelo devuelve "Java" y "java"
+     * como formas distintas de lo mismo, y sin normalizar el ranking se parte
+     * en dos entradas.
+     *
+     * <p>Cuenta en cuántos contenidos aparece cada término, no cuántas veces
+     * aparece dentro de cada texto: la colección guarda un valor por contenido.
+     *
+     * @param pageable cuántas devolver
+     * @return palabras clave ordenadas por frecuencia descendente
+     */
+    @Query("""
+            select lower(p) as palabraClave, count(p) as cantidad
+            from ContenidoAnalizado c join c.palabrasClave p
+            group by lower(p)
+            order by count(p) desc, lower(p) asc
+            """)
+    List<ConteoPalabraClave> palabrasClaveMasFrecuentes(Pageable pageable);
+
+    /**
+     * S5-14 (M8) — Longitud media del texto analizado, en caracteres.
+     *
+     * <p>{@code length} es función estándar de JPQL: Hibernate la traduce a la
+     * del motor, así que la consulta sobrevive a la migración a Postgres
+     * (S5-18) sin cambios.
+     *
+     * @return media de caracteres, o {@code null} si la base está vacía
+     */
+    @Query("select avg(length(c.texto)) from ContenidoAnalizado c")
+    Double longitudMediaTexto();
+
+    /**
+     * S5-14 (M9) — Total de filas en la colección de palabras clave.
+     *
+     * <p>Dividido por el total de contenidos da el promedio de palabras que el
+     * modelo extrae por documento.
+     *
+     * @return cantidad total de palabras clave asignadas
+     */
+    @Query("select count(p) from ContenidoAnalizado c join c.palabrasClave p")
+    long totalPalabrasClave();
+
+    /**
+     * S5-14 (M6) — Fechas de procesamiento, de la más vieja a la más nueva.
+     *
+     * <p>Se traen crudas y el agrupamiento por día se hace en Java a propósito.
+     * Truncar una fecha a día dentro de JPQL obliga a funciones propias del
+     * motor, y esa consulta se rompería al pasar de H2 a Postgres (S5-18). Son
+     * pocas filas: el costo de agrupar en memoria es menor que el de atarse a
+     * la base.
+     *
+     * @return fechas ordenadas ascendentemente
+     */
+    @Query("select c.fechaProcesamiento from ContenidoAnalizado c order by c.fechaProcesamiento asc")
+    List<Instant> fechasDeProcesamiento();
 }
