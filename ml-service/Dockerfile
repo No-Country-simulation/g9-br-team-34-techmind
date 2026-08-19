@@ -13,7 +13,7 @@
 # ya no participa del build.
 
 # ---------------------------------------------------------------------------
-# Etapa 1: dependencias + reempaquetado del modelo
+# Etapa 1: dependencias + entrenamiento
 # ---------------------------------------------------------------------------
 FROM python:3.11-slim AS builder
 
@@ -31,10 +31,10 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # requirements.txt se copia solo, antes que el codigo. Es la capa mas cara de
-# reconstruir (scikit-learn, numpy, spacy y scipy pesan cientos de MB) y de esta
-# forma Docker solo la rehace cuando cambian las dependencias, no cuando cambia
-# una linea de codigo.
-COPY ml-service/requirements.txt .
+# reconstruir (scikit-learn, numpy y scipy pesan cientos de MB) y de esta forma
+# Docker solo la rehace cuando cambian las dependencias, no cuando cambia una
+# linea de codigo.
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN python -m spacy download es_core_news_sm
 

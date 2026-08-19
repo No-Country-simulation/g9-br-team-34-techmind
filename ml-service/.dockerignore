@@ -1,13 +1,8 @@
-# LEGACY: ya no se usa para el build del ml-service.
+# Todo lo que no entra al contexto de build.
 #
-# Desde que el Dockerfile reempaqueta los artefactos de Ciencia de Datos
-# (data-science/API/), la imagen se construye con contexto de la RAIZ del
-# repositorio (docker-compose.yml y los workflows usan `context: .` +
-# `dockerfile: ml-service/Dockerfile`). El contexto global lo filtra el
-# `.dockerignore` de la raiz.
-#
-# Se conserva este archivo solo por si alguien construye a mano con
-# `context: ./ml-service`, que es un caso que ya no soporta el Dockerfile.
+# Esto no es solo cosmetica: el contexto se transfiere entero al daemon de
+# Docker antes de empezar a construir, y un .venv local puede pesar mas que la
+# imagen resultante.
 
 .venv/
 venv/

@@ -30,9 +30,7 @@ import spacy
 import joblib
 import numpy as np
 from scipy.sparse import hstack
-from scipy.sparse import hstack
 
-from .preprocess import limpiar_texto
 from .settings import settings
 
 logger = logging.getLogger(__name__)
@@ -321,9 +319,7 @@ def cargar_modelo() -> ClassifierModel:
     # entrenado es la fuente de verdad, igual que en la inferencia.
     categorias = sorted(str(c) for c in modelo.classes_)
 
-    logger.info(
-        "Modelo cargado desde %s con %d categorias", origen, len(categorias)
-    )
+    logger.info("Modelo cargado desde %s con %d categorias", origen, len(categorias))
 
     return ClassifierModel(
         modelo=modelo,
