@@ -55,10 +55,13 @@ Ya existe `contarPorCategoria()` con la proyección `ConteoCategoria`, usada por
 2. **Agrupar por fecha:** `fechaProcesamiento` es un `Instant`. Truncar a día con
    funciones nativas ata la consulta al motor. M6 se resuelve trayendo las fechas y
    agrupando en Java: son pocas filas y el código no depende de la base.
-3. **Categorías duplicadas:** el modelo devuelve la misma categoría con distinta caja
-   ("Backend" y "backend") y se persisten como dos. Toda agregación por categoría las
-   cuenta separadas. El frontend lo normaliza al mostrar, pero **la causa sigue abierta**
-   y conviene resolverla en el backend o en el modelo.
+3. **Categorías duplicadas (sólo en entornos con mock):** `MockModeloInferenciaClient`
+   devuelve `"Backend"` con mayúscula, mientras que el modelo real entrega todo en
+   minúscula — los datos de entrenamiento están normalizados así. Una base que mezcla
+   contenidos creados con el perfil `mock` y con el servicio real termina con dos
+   categorías para lo mismo, y toda agregación por categoría las cuenta separadas.
+   **Con el modelo real no ocurre.** Conviene alinear el mock para que no genere datos
+   distintos a los de producción; el frontend normaliza igual, por defensa.
 4. **Base vacía:** `avg` sobre cero filas devuelve `null`, no `0`. Los DTOs usan
    envoltorios y el servicio normaliza, para que el dashboard nunca reciba `null`.
 
