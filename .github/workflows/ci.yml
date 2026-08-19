@@ -98,6 +98,9 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
 
+      - name: Descargar spacy-español
+        run: python -m spacy download es_core_news_sm
+
       - name: Lint (ruff)
         run: ruff check app train tests
 
