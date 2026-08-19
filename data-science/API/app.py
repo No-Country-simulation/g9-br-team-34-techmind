@@ -54,7 +54,7 @@ try:
 except Exception:
     modelo = vect_titulo = vect_texto = None
 
-PESO_TITULO = 2.0
+PESO_TITULO = 0.5
 
 NORMALIZACIONES = {
     r"\bc\+\+": "cplusplus",

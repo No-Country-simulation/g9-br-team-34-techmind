@@ -1,0 +1,40 @@
+# Contexto de build GLOBAL del repositorio.
+#
+# Se usa SOLO para construir la imagen del ml-service, que ahora se construye
+# desde la raiz porque su Dockerfile necesita los artefactos de Ciencia de Datos
+# en data-science/API/ (ver ml-service/Dockerfile).
+#
+# El backend sigue usando su propio contexto (./backend) y su propio
+# .dockerignore; este archivo no lo afecta. Todo lo que se excluye aqui es lo
+# que no necesita el build del ml-service, para que el contexto que viaja al
+# daemon de Docker sea chico y no filtre nada innecesario.
+
+# Control de versiones y entornos locales
+.git/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+
+# Directorios que no participan en la imagen del ml-service
+backend/
+frontend/
+docs/
+infra/
+scripts/
+caddy/
+.opencode/
+.specify/
+data-science/notebooks/
+data-science/models/
+ml-service/tests/
+ml-service/models/
+
+# Archivos de configuracion y documentacion
+.env
+.env.*
+*.md
+ml-service/requirements-dev.txt
+ml-service/.dockerignore

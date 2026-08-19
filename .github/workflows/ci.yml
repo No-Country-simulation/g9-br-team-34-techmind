@@ -75,7 +75,7 @@ jobs:
           if-no-files-found: error
 
   # =========================================================================
-  # Servicio de inferencia - lint, entrenamiento y pruebas
+  # Servicio de inferencia - lint, reempaquetado y pruebas
   # =========================================================================
   ml-service:
     name: ML Service (Python 3.11)
@@ -101,10 +101,11 @@ jobs:
       - name: Lint (ruff)
         run: ruff check app train tests
 
-      # El modelo se entrena aqui porque las pruebas necesitan un artefacto real
-      # que cargar. De paso, esto verifica en cada commit que el entrenamiento
-      # sigue siendo reproducible y que el dataset no se rompio.
-      - name: Entrenar el modelo
+      # El modelo se reempaqueta aqui porque las pruebas necesitan un artefacto
+      # real que cargar. De paso, esto verifica en cada commit que el contrato
+      # con los artefactos de data-science/ sigue intacto y que las metricas se
+      # siguen generando.
+      - name: Reempaquetar el modelo de Ciencia de Datos
         run: python -m train.train
 
       - name: Ejecutar pruebas
@@ -182,7 +183,10 @@ jobs:
       - name: Construir la imagen del ml-service
         uses: docker/build-push-action@v6
         with:
-          context: ./ml-service
+          # El Dockerfile del ml-service reempaqueta los artefactos de
+          # data-science/, asi que se construye desde la raiz del repositorio.
+          context: .
+          file: ml-service/Dockerfile
           push: false
           load: true
           tags: techmind/ml-service:ci
@@ -203,7 +207,7 @@ jobs:
       # significa "hay una actualizacion que deberias aplicar", que si merece
       # detener el pipeline.
       - name: Escanear la imagen del backend
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: techmind/backend:ci
           format: table
@@ -213,7 +217,7 @@ jobs:
           vuln-type: os,library
 
       - name: Escanear la imagen del ml-service
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: techmind/ml-service:ci
           format: table
@@ -227,7 +231,7 @@ jobs:
       # paso anterior fallo.
       - name: Informe detallado de vulnerabilidades
         if: always()
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: techmind/backend:ci
           format: table

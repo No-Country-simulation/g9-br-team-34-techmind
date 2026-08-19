@@ -1,212 +1,188 @@
-"""Entrenamiento y serializacion del modelo de clasificacion de contenido tecnico.
+"""Reempaquetado y evaluacion del modelo que entrega Ciencia de Datos.
 
     Uso:  python -m train.train   (desde ml-service/)
+
+Este script NO entrena. Toma los artefactos que produce el equipo de Ciencia de
+Datos en `data-science/API/` (modelo_clasificador.joblib, tfidf_titulo.joblib y
+tfidf_texto.joblib, generados por su notebook) y los reempaqueta en UN solo
+archivo con el contrato que sabe leer `app/model.py`, mas las metricas del
+ultimo dataset versionado.
 
 Produce dos archivos en models/:
     model.joblib   -> artefacto que carga el servicio en produccion
     metrics.json   -> metricas de la ultima corrida, para CI y para el informe
 
-ALCANCE: este script es un ANDAMIO DE DEVOPS, no el entregable de Ciencia de
-Datos. Existe para que la canalizacion completa (entrenar -> serializar ->
-publicar en Object Storage -> servir en un contenedor) se pueda ejecutar y
-demostrar de punta a punta desde el primer dia, sin quedar bloqueada esperando
-al notebook.
-
-El equipo de Ciencia de Datos deberia reemplazar dataset.csv y, si lo necesita,
-este mismo script. El unico contrato que debe respetarse es el formato del
-artefacto serializado (ver ARTEFACTO mas abajo), porque es lo que app/model.py
-sabe leer.
+ANTECEDENTE: este script nacio como andamio de DevOps (entrenaba un dataset
+sintetico de 56 filas para demostrar la canalizacion de punta a punta). El
+modelo definitivo lo entrena el equipo de Ciencia de Datos en su notebook, de
+modo que aqui ya no se entrena: se sirve exactamente lo que ellos entregan.
 """
 
 from __future__ import annotations
 
 import json
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 
 import joblib
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
-from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
-from sklearn.pipeline import Pipeline
+from scipy.sparse import hstack
+from sklearn.metrics import accuracy_score, classification_report, f1_score
+
+from app.model import (
+    KEY_CATEGORIAS,
+    KEY_MODELO,
+    KEY_PESO_TITULO,
+    KEY_VECT_TEXTO,
+    KEY_VECT_TITULO,
+)
+from app.preprocess import limpiar_texto
 
 # --- Rutas, relativas a este archivo y no al directorio de trabajo ---
 # Asi el script funciona igual invocado desde ml-service/, desde la raiz del
 # repositorio o desde un paso de CI, que es donde mas suele romperse esto.
+#
+# DS_MODEL_DIR / DS_DATASET admiten override por entorno: en el build de la
+# imagen Docker las rutas relativas no aplican (el codigo vive en /build/), y el
+# Dockerfile las fija explicitamente.
 RAIZ = Path(__file__).resolve().parent.parent
-DATASET = RAIZ / "train" / "dataset.csv"
+DS_MODEL_DIR = Path(
+    os.environ.get("DS_MODEL_DIR", RAIZ.parent / "data-science" / "API")
+)
+DS_DATASET = Path(
+    os.environ.get("DS_DATASET", RAIZ.parent / "data-science" / "data" / "v4.json")
+)
+CALCULAR_METRICAS = os.environ.get("CALCULAR_METRICAS", "1") != "0"
+
 DIRECTORIO_MODELOS = RAIZ / "models"
 ARTEFACTO = DIRECTORIO_MODELOS / "model.joblib"
 METRICAS = DIRECTORIO_MODELOS / "metrics.json"
 
-# Semilla fija: dos corridas sobre el mismo dataset deben producir el mismo
-# modelo. Sin esto, una metrica que baja entre commits no se puede distinguir de
-# ruido aleatorio.
-SEMILLA = 42
+# Nombre de cada pieza dentro de data-science/API/.
+ARTEFACTOS_DS = {
+    "modelo_clasificador.joblib": KEY_MODELO,
+    "tfidf_titulo.joblib": KEY_VECT_TITULO,
+    "tfidf_texto.joblib": KEY_VECT_TEXTO,
+}
 
-# Palabras vacias del espanol. Se listan aca en vez de depender de NLTK para no
-# arrastrar una descarga de corpus en tiempo de build de la imagen.
-STOP_WORDS_ES = [
-    "a", "al", "algo", "algunas", "algunos", "ante", "antes", "como", "con",
-    "contra", "cual", "cuando", "de", "del", "desde", "donde", "durante", "e",
-    "el", "ella", "ellas", "ellos", "en", "entre", "era", "es", "esta", "estan",
-    "este", "esto", "estos", "ha", "hasta", "hay", "la", "las", "le", "les",
-    "lo", "los", "mas", "me", "mi", "mientras", "muy", "no", "nos", "o", "otra",
-    "otras", "otro", "otros", "para", "pero", "por", "porque", "que", "se",
-    "sea", "segun", "ser", "si", "sin", "sobre", "son", "su", "sus", "tambien",
-    "te", "tiene", "todo", "todos", "tras", "un", "una", "uno", "unos", "y",
-    "ya",
-]
+# El notebook entrena con peso_titulo=0.5 (celdas de vectorizacion y de
+# validacion cruzada). Es el mismo valor que aplica `app/model.py` al predecir.
+PESO_TITULO = 0.5
 
 
-def cargar_datos() -> pd.DataFrame:
-    """Lee el dataset y verifica que sirva para entrenar."""
-    if not DATASET.exists():
-        raise FileNotFoundError(f"No existe el dataset en {DATASET}")
-
-    df = pd.read_csv(DATASET)
-
-    columnas_esperadas = {"titulo", "texto", "categoria"}
-    faltantes = columnas_esperadas - set(df.columns)
+def cargar_artefactos() -> dict:
+    """Carga las tres piezas que entrega Ciencia de Datos y las valida."""
+    faltantes = [nombre for nombre in ARTEFACTOS_DS if not (DS_MODEL_DIR / nombre).exists()]
     if faltantes:
-        raise ValueError(f"Al dataset le faltan columnas: {sorted(faltantes)}")
-
-    # Filas incompletas o duplicadas ensucian las metricas: una fila repetida
-    # que cae en entrenamiento y en prueba a la vez infla la exactitud.
-    antes = len(df)
-    df = df.dropna(subset=["titulo", "texto", "categoria"])
-    df = df.drop_duplicates(subset=["titulo", "texto"])
-    if len(df) < antes:
-        print(f"  Descartadas {antes - len(df)} filas nulas o duplicadas")
-
-    # `train_test_split` estratificado exige al menos 2 ejemplos por clase.
-    conteo = df["categoria"].value_counts()
-    escasas = conteo[conteo < 2]
-    if not escasas.empty:
-        raise ValueError(
-            f"Estas categorias tienen menos de 2 ejemplos y no permiten "
-            f"division estratificada: {escasas.to_dict()}"
+        raise FileNotFoundError(
+            f"No estan los artefactos de Ciencia de Datos en {DS_MODEL_DIR}: "
+            f"{sorted(faltantes)}. Se generan con el notebook en "
+            "data-science/notebooks/Notebook_EDA_Modelado_Metricas.ipynb."
         )
 
-    return df
+    return {clave: joblib.load(DS_MODEL_DIR / nombre) for nombre, clave in ARTEFACTOS_DS.items()}
 
 
-def construir_pipeline() -> Pipeline:
-    """Arma el pipeline TF-IDF + Regresion Logistica.
+def evaluar(modelo, vect_titulo, vect_texto, df: pd.DataFrame) -> dict:
+    """Mide al modelo sobre el dataset versionado usando la misma limpieza que
+    `app/model.py` usa al predecir (la del notebook)."""
+    df = df.copy()
+    df["titulo_limpio"] = df["titulo"].apply(limpiar_texto)
+    df["descripcion_limpia"] = df["descripcion"].apply(limpiar_texto)
 
-    Va como Pipeline y no como dos objetos sueltos porque el vectorizador tiene
-    que viajar dentro del mismo artefacto que el clasificador: si se guardaran
-    por separado, cualquier desajuste entre ambos daria predicciones silenciosa
-    y sutilmente equivocadas en lugar de un error.
-    """
-    return Pipeline(
-        [
-            (
-                "tfidf",
-                TfidfVectorizer(
-                    # Bigramas ademas de palabras sueltas: "spring boot" y
-                    # "base de datos" significan mas juntos que separados.
-                    ngram_range=(1, 2),
-                    min_df=1,
-                    max_df=0.85,
-                    sublinear_tf=True,
-                    strip_accents="unicode",
-                    lowercase=True,
-                    stop_words=STOP_WORDS_ES,
-                ),
-            ),
-            (
-                "clf",
-                LogisticRegression(
-                    max_iter=1000,
-                    # El dataset semilla esta balanceado, pero el del equipo de
-                    # Ciencia de Datos probablemente no lo este.
-                    class_weight="balanced",
-                    random_state=SEMILLA,
-                ),
-            ),
-        ]
-    )
+    X_titulo = vect_titulo.transform(df["titulo_limpio"]) * PESO_TITULO
+    X_texto = vect_texto.transform(df["descripcion_limpia"])
+    X = hstack([X_titulo, X_texto])
+
+    y = df["categoria"]
+    y_pred = modelo.predict(X)
+
+    print(classification_report(y, y_pred, zero_division=0))
+
+    return {
+        "exactitud": float(accuracy_score(y, y_pred)),
+        "f1_macro": float(f1_score(y, y_pred, average="macro", zero_division=0)),
+        "n_documentos": len(df),
+        "reporte_por_clase": classification_report(
+            y, y_pred, output_dict=True, zero_division=0
+        ),
+    }
 
 
 def main() -> None:
-    print("== Entrenamiento del clasificador TechMind ==\n")
+    print("== Reempaquetado del modelo de Ciencia de Datos ==\n")
 
-    df = cargar_datos()
-    print(f"Dataset: {len(df)} documentos, {df['categoria'].nunique()} categorias")
-    for categoria, cantidad in df["categoria"].value_counts().items():
-        print(f"  - {categoria}: {cantidad}")
+    artefactos = cargar_artefactos()
+    modelo = artefactos[KEY_MODELO]
+    vect_titulo = artefactos[KEY_VECT_TITULO]
+    vect_texto = artefactos[KEY_VECT_TEXTO]
+    categorias = sorted(modelo.classes_.tolist())
 
-    # El titulo se concatena al texto igual que en app/model.py. Entrenar sobre
-    # una composicion distinta a la que se usa al predecir es la forma mas
-    # comun de que un modelo rinda peor en produccion que en el notebook.
-    X = df["titulo"] + ". " + df["texto"]
-    y = df["categoria"]
-
-    X_entreno, X_prueba, y_entreno, y_prueba = train_test_split(
-        X, y, test_size=0.25, random_state=SEMILLA, stratify=y
-    )
-
-    pipeline = construir_pipeline()
-    pipeline.fit(X_entreno, y_entreno)
-
-    exactitud = float(pipeline.score(X_prueba, y_prueba))
-    print(f"\nExactitud sobre el conjunto de prueba: {exactitud:.3f}\n")
-
-    reporte = classification_report(
-        y_prueba, pipeline.predict(X_prueba), output_dict=True, zero_division=0
-    )
-    print(classification_report(y_prueba, pipeline.predict(X_prueba), zero_division=0))
-
-    # Con un dataset chico, una sola division puede dar un numero engañoso por
-    # puro azar. La validacion cruzada da una lectura mas honesta.
-    n_splits = min(5, int(df["categoria"].value_counts().min()))
-    if n_splits >= 2:
-        cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=SEMILLA)
-        puntajes = cross_val_score(construir_pipeline(), X, y, cv=cv, scoring="f1_macro")
-        f1_cv, f1_std = float(puntajes.mean()), float(puntajes.std())
-        print(f"F1 macro (validacion cruzada, {n_splits} particiones): "
-              f"{f1_cv:.3f} +/- {f1_std:.3f}")
-    else:
-        f1_cv, f1_std = None, None
+    print(f"Artefactos cargados desde {DS_MODEL_DIR}")
+    print(f"Categorias del modelo: {', '.join(categorias)}")
 
     # --- Serializacion ---
-    #
-    # ARTEFACTO: diccionario con estas claves. app/model.py lee 'pipeline' y
-    # 'categorias'; el resto es metadato para poder rastrear, ante una duda en
-    # produccion, que modelo exacto esta sirviendo.
+    # ARTEFACTO: diccionario con las claves que lee app/model.py (definidas ahi,
+    # para que el contrato no quede repetido en dos archivos). El resto es
+    # metadato para poder rastrear, ante una duda en produccion, que modelo
+    # exacto esta sirviendo.
     DIRECTORIO_MODELOS.mkdir(parents=True, exist_ok=True)
-
-    # El modelo final se reentrena con TODOS los datos: la division en prueba
-    # servia para medir, y ya midio. Descartar ese 25% al desplegar seria tirar
-    # informacion util sin ninguna razon.
-    modelo_final = construir_pipeline()
-    modelo_final.fit(X, y)
 
     joblib.dump(
         {
-            "pipeline": modelo_final,
-            "categorias": sorted(y.unique().tolist()),
-            "entrenado_en": datetime.now(UTC).isoformat(),
-            "n_documentos": len(df),
-            "exactitud_prueba": exactitud,
+            KEY_MODELO: modelo,
+            KEY_VECT_TITULO: vect_titulo,
+            KEY_VECT_TEXTO: vect_texto,
+            KEY_PESO_TITULO: PESO_TITULO,
+            KEY_CATEGORIAS: categorias,
+            "entrenado_por": "data-science/notebooks/Notebook_EDA_Modelado_Metricas.ipynb",
+            "artefactos_origen": {
+                nombre: str(DS_MODEL_DIR / nombre) for nombre in ARTEFACTOS_DS
+            },
+            "reempaquetado_en": datetime.now(UTC).isoformat(),
         },
         ARTEFACTO,
         compress=3,
     )
 
+    tamano_kb = ARTEFACTO.stat().st_size / 1024
+    print(f"\nModelo reempaquetado en {ARTEFACTO} ({tamano_kb:.1f} KB)")
+
+    # --- Metricas ---
+    if not CALCULAR_METRICAS:
+        print("Metricas omitidas (CALCULAR_METRICAS=0).")
+        return
+
+    if not DS_DATASET.exists():
+        raise FileNotFoundError(
+            f"No existe el dataset para evaluar en {DS_DATASET}. "
+            "Defina DS_DATASET o verifique data-science/data/."
+        )
+
+    df = pd.read_json(DS_DATASET)
+    print(f"\nEvaluando sobre {DS_DATASET} ({len(df)} documentos)")
+
+    metricas = evaluar(modelo, vect_titulo, vect_texto, df)
+    exactitud = metricas["exactitud"]
+    f1_macro = metricas["f1_macro"]
+
+    print(f"\nExactitud sobre el dataset: {exactitud:.3f}")
+    print(f"F1 macro sobre el dataset: {f1_macro:.3f}\n")
+
     METRICAS.write_text(
         json.dumps(
             {
+                # Se mantienen los nombres historicos para que los resumenes de
+                # CI/CD y el informe sigan leyendo lo mismo que antes.
                 "exactitud_prueba": round(exactitud, 4),
-                "f1_macro_cv": round(f1_cv, 4) if f1_cv is not None else None,
-                "f1_macro_cv_std": round(f1_std, 4) if f1_std is not None else None,
-                "n_documentos": len(df),
-                "categorias": sorted(y.unique().tolist()),
+                "f1_macro": round(f1_macro, 4),
+                "n_documentos": metricas["n_documentos"],
+                "categorias": categorias,
                 "entrenado_en": datetime.now(UTC).isoformat(),
-                "reporte_por_clase": reporte,
+                "reporte_por_clase": metricas["reporte_por_clase"],
+                "dataset_evaluado": str(DS_DATASET),
+                "peso_titulo": PESO_TITULO,
             },
             indent=2,
             ensure_ascii=False,
@@ -214,8 +190,6 @@ def main() -> None:
         encoding="utf-8",
     )
 
-    tamano_kb = ARTEFACTO.stat().st_size / 1024
-    print(f"\nModelo serializado en {ARTEFACTO} ({tamano_kb:.1f} KB)")
     print(f"Metricas escritas en {METRICAS}")
 
 

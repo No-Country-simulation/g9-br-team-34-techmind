@@ -1,123 +1,169 @@
-# G9-LATAM-Team-34-TechMind
+# TechMind
 
-Solución para la organización inteligente de contenido técnico mediante técnicas de Ciencia de Datos. La aplicación procesa documentos técnicos, identifica información relevante y expone los resultados a través de una API REST en formato JSON, integrándose con Oracle Cloud Infrastructure (OCI).
+**Organización inteligente de contenido técnico mediante Ciencia de Datos.**
+
+TechMind recibe contenido técnico —texto plano, PDF, DOCX o una URL— y devuelve una categoría temática, un puntaje de confianza y las palabras clave más relevantes, todo a través de una API REST en JSON. El objetivo es transformar documentación dispersa en una base de conocimiento clasificada y consultable.
+
+
+[![CI](https://github.com/No-Country-simulation/g9-br-team-34-techmind/actions/workflows/ci.yml/badge.svg)](https://github.com/No-Country-simulation/g9-br-team-34-techmind/actions/workflows/ci.yml)
+[![CD - Despliegue en OCI](https://github.com/No-Country-simulation/g9-br-team-34-techmind/actions/workflows/cd.yml/badge.svg)](https://github.com/No-Country-simulation/g9-br-team-34-techmind/actions/workflows/cd.yml)
+
+---
+
+## Tabla de contenidos
+
+- [Qué hace](#qué-hace)
+- [Arquitectura](#arquitectura)
+- [Stack tecnológico](#stack-tecnológico)
+- [Estructura del repositorio](#estructura-del-repositorio)
+- [Puesta en marcha (local)](#puesta-en-marcha-local)
+- [Comandos frecuentes](#comandos-frecuentes)
+- [API REST](#api-rest)
+- [Despliegue](#despliegue)
+- [Documentación adicional](#documentación-adicional)
+- [Estado del MVP](#estado-del-mvp)
+- [Licencia](#licencia)
 
 ---
 
-## Descripción
+## Qué hace
 
-El proyecto tiene como objetivo facilitar la organización, consulta y reutilización de contenido técnico, permitiendo transformar grandes volúmenes de información en una base de conocimiento estructurada.
+Un cliente envía contenido técnico —como texto directo, un archivo PDF/DOCX o una URL— y TechMind:
 
-La solución recibe contenido técnico como entrada y aplica técnicas de procesamiento de texto y Ciencia de Datos para generar información enriquecida que puede ser consumida por otras aplicaciones.
+1. Extrae y limpia el texto (si la entrada es un archivo o una URL).
+2. Lo clasifica en una de las **7 categorías** que predice el modelo entrenado (backend, base de datos, devops, frontend, machine learning, mobile, seguridad).
+3. Extrae sus palabras clave más representativas.
+4. Persiste el resultado y lo expone vía API REST, con búsqueda, filtros, paginación y contenidos relacionados.
 
-Entre las capacidades que puede ofrecer la solución se encuentran:
+```json
+// POST /api/v1/contenidos
+{
+  "titulo": "Introducción a Spring Boot",
+  "texto": "En este contenido se presentan los conceptos básicos para la creación de APIs REST utilizando Java y Spring Boot."
+}
+```
 
-- Clasificación temática del contenido.
-- Extracción de información relevante.
-- Identificación de palabras clave.
-- Agrupación de documentos similares.
-- Recomendación de contenidos relacionados.
-- Organización automática de bases de conocimiento.
-
-Todos los resultados son entregados mediante una API REST utilizando formato JSON.
-
----
+```json
+// 201 Created
+{
+  "id": "0f2a1c3e-...",
+  "titulo": "Introducción a Spring Boot",
+  "categoria": "Backend",
+  "probabilidad": 0.89,
+  "informacion_adicional": ["Java", "Spring Boot", "API REST"],
+  "fechaProcesamiento": "2026-08-14T10:32:00Z"
+}
+```
 
 ## Arquitectura
 
+Dos servicios con una responsabilidad cada uno, orquestados con Docker Compose y desplegados en Oracle Cloud Infrastructure (OCI):
+
 ```
-                 Documento Técnico
-                        │
-                        ▼
-                 API REST (Backend)
-                        │
-                        ▼
-           Modelo de Ciencia de Datos
-                        │
-                        ▼
-        Clasificación / Procesamiento
-                        │
-                        ▼
-                 Respuesta JSON
-                        │
-                        ▼
-              Aplicaciones Cliente
+                         ┌──────────────────────┐
+   Cliente / Frontend ──▶│  backend (Java 17)    │
+   (PDF, DOCX, URL,      │  Spring Boot 3        │
+    texto directo)       │  API REST pública      │
+                         │  Persistencia (H2)     │
+                         └──────────┬─────────────┘
+                                    │ POST /predict
+                                    │ (red interna, sin
+                                    │  exposición externa)
+                                    ▼
+                         ┌──────────────────────┐
+                         │  ml-service (Python)   │
+                         │  FastAPI + scikit-learn│
+                         │  Clasificación + kw    │
+                         └──────────┬─────────────┘
+                                    │ descarga el modelo
+                                    │ al arrancar (prod)
+                                    ▼
+                         ┌──────────────────────┐
+                         │  OCI Object Storage    │
+                         │  model.joblib          │
+                         └──────────────────────┘
 ```
 
----
+**Por qué dos servicios y no uno monolítico:** el equipo de Ciencia de Datos trabaja en Python (scikit-learn) y el equipo de Backend en Java (Spring Boot). Separar el modelo detrás de una API HTTP interna permite que ambos equipos iteren de forma independiente —reentrenar el modelo no requiere recompilar el backend, y viceversa— mientras comparten un [contrato REST/JSON versionado y acordado explícitamente](docs/contrato-backend-ds.md).
 
-## Tecnologías
+El `backend` es el único servicio expuesto a Internet. El `ml-service` solo es alcanzable desde la red interna de Docker Compose; en producción no publica ningún puerto.
 
-### Ciencia de Datos
+## Stack tecnológico
 
-- Python
-- Pandas
-- Scikit-learn
-- TF-IDF
-- Técnicas de similitud textual
-
-### Backend
-
-- API REST
-- JSON
-
-### Infraestructura
-
-- Docker y Docker Compose
-- GitHub Actions (CI/CD)
-- Oracle Cloud Infrastructure (OCI)
-
-Servicios de OCI en uso:
-
-| Servicio | Para que |
+| Capa | Tecnología |
 |---|---|
-| **Compute** (VM.Standard.A1.Flex, Always Free) | ejecuta los contenedores |
-| **Object Storage** | almacena el modelo entrenado y sus metricas |
-| **Container Registry (OCIR)** | almacena las imagenes publicadas por CI |
-| **IAM** (Dynamic Group + Policy) | permite a la VM leer el modelo sin secretos en disco |
+| **Backend / API REST** | Java 17, Spring Boot 3.3, Spring Data JPA, Bean Validation, springdoc-openapi (Swagger UI) |
+| **Persistencia** | H2 (archivo, con volumen persistente en producción) |
+| **Servicio de inferencia** | Python 3.11, FastAPI, scikit-learn (TF-IDF + Regresión Logística), Pydantic |
+| **Extracción de archivos** | Apache PDFBox, Apache POI (DOCX), jsoup (HTML/URL), Gemini API (limpieza y fallback) |
+| **Ciencia de Datos** | pandas, notebooks Jupyter (EDA, modelado, métricas) |
+| **Frontend** | HTML/CSS/JS (cliente de demostración que consume la API) |
+| **Infraestructura** | Docker, Docker Compose v2.24+, Terraform, Oracle Cloud Infrastructure (OCI) |
+| **CI/CD** | GitHub Actions (integración continua, despliegue continuo, monitoreo de salud) |
+| **Proxy / HTTPS** | Caddy (opcional, certificados automáticos vía Let's Encrypt) |
 
----
-
-## Estructura del proyecto
+## Estructura del repositorio
 
 ```
 .
 ├── backend/                    API REST en Spring Boot (Java 17)
-│   ├── src/
+│   ├── src/main/java/...       controladores, servicios, DTOs, entidades, seguridad
+│   ├── src/test/java/...       pruebas unitarias y de integración
 │   ├── pom.xml
-│   └── Dockerfile              build multi-etapa: maven -> jre-alpine
+│   └── Dockerfile              build multi-etapa: maven -> jre-jammy
 │
 ├── ml-service/                 Servicio de inferencia en FastAPI (Python 3.11)
-│   ├── app/                    API HTTP que sirve el modelo
-│   ├── train/                  entrenamiento y dataset
-│   ├── tests/
-│   └── Dockerfile              build multi-etapa: entrena y empaqueta
+│   ├── app/                    API HTTP que sirve el modelo (main, model, preprocess, schemas, settings)
+│   ├── train/                  reempaqueta los artefactos de Ciencia de Datos (train.py)
+│   ├── tests/                  pruebas de contrato HTTP
+│   └── Dockerfile              build multi-etapa: reempaqueta en build, sirve en runtime
+│
+├── data-science/                Exploración, modelado y entrega del modelo definitivo
+│   ├── notebooks/               EDA, entrenamiento y métricas en Jupyter
+│   ├── data/                    datasets versionados (v2, v3, v4)
+│   ├── models/                  copias de los artefactos entrenados por Ciencia de Datos
+│   └── API/                     artefactos entrenados (modelo_clasificador, tfidf_titulo, tfidf_texto) que consume ml-service
+│
+├── frontend/                    Cliente de demostración (HTML/CSS/JS, consume la API)
+│
+├── infra/terraform/             Infraestructura como código para OCI (VCN, Compute, IAM, Storage)
+│
+├── docs/
+│   ├── contrato-backend-ds.md   contrato REST/JSON acordado entre Backend y Ciencia de Datos
+│   ├── pruebas-aceptacion-e2e.md batería de pruebas de aceptación end-to-end
+│   └── devops/
+│       ├── despliegue-oci.md    guía completa de despliegue y runbook operativo
+│       └── informe-devops.md    informe de decisiones de infraestructura
 │
 ├── scripts/
-│   ├── provision-vm.sh         deja lista la VM de OCI (se ejecuta una vez)
-│   └── smoke-test.sh           verifica un sistema levantado
-│
-├── docs/devops/
-│   └── despliegue-oci.md       guia completa de despliegue y runbook
+│   ├── provision-vm.sh          deja lista la VM de OCI (se ejecuta una vez)
+│   ├── configurar-github.sh     carga secrets/variables del CD en GitHub (idempotente)
+│   ├── smoke-test.sh            verifica un sistema levantado, de punta a punta
+│   ├── backup-datos.sh          respaldo de la base de datos hacia Object Storage
+│   └── aceptacion/               batería de pruebas de aceptación (runner + evidencia)
 │
 ├── .github/workflows/
-│   ├── ci.yml                  pruebas, imagenes y prueba de humo
-│   └── cd.yml                  despliegue automatico en OCI
+│   ├── ci.yml                    compilación, pruebas e imágenes en cada push/PR
+│   ├── cd.yml                    reempaquetado del modelo, publicación y despliegue automático en OCI
+│   └── monitoreo.yml             chequeo de salud periódico en producción
 │
-├── docker-compose.yml          orquestacion para desarrollo local
-├── docker-compose.prod.yml     sobrescritura para produccion en OCI
-├── Makefile                    atajos de desarrollo y operacion
-└── .env.example                plantilla de variables de entorno
+├── caddy/Caddyfile               proxy inverso opcional con HTTPS automático
+├── docker-compose.yml            orquestación para desarrollo local
+├── docker-compose.prod.yml       sobrescritura para producción en OCI
+├── Makefile                      atajos de desarrollo y operación
+└── .env.example                  plantilla de variables de entorno
 ```
 
----
+> Documentación específica de cada servicio: [`backend/README.md`](backend/README.md) y [`ml-service/README.md`](ml-service/README.md).
 
 ## Puesta en marcha (local)
 
-Requisitos: **Docker** con Compose v2.24 o superior. Nada mas: ni Java, ni
-Python, ni Maven instalados en la maquina.
+**Requisitos:** Docker con Compose v2.24 o superior. No hace falta tener Java, Python ni Maven instalados en la máquina — todo corre en contenedores.
 
 ```bash
+git clone https://github.com/No-Country-simulation/g9-br-team-34-techmind.git
+cd g9-br-team-34-techmind
+
 make env      # crea el .env a partir de .env.example
 make up       # construye y levanta backend + ml-service
 ```
@@ -129,179 +175,97 @@ Al terminar quedan disponibles:
 | API REST | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger-ui/index.html |
 | Salud de la API | http://localhost:8080/actuator/health |
-| Documentacion del modelo | http://localhost:8000/docs |
+| Documentación del modelo (OpenAPI) | http://localhost:8000/docs |
 | Salud del modelo | http://localhost:8000/health |
 
-Para comprobar que todo funciona de punta a punta:
+Para comprobar que todo funciona de punta a punta con los ejemplos del brief del hackathon:
 
 ```bash
 make smoke
 ```
 
-### Comandos frecuentes
+> El puerto `8000` del `ml-service` se publica **solo en desarrollo**, para poder interrogar el modelo directamente con `curl`. En producción es estrictamente interno: solo lo alcanza el backend por la red privada del compose.
 
-`make` sin argumentos lista todos. Los mas usados:
+### Sin Docker (desarrollo de un solo servicio)
 
-| Comando | Que hace |
+Si estás trabajando exclusivamente en un servicio, cada uno documenta su arranque nativo (sin contenedores) en su propio README:
+
+- Backend Java con Maven → [`backend/README.md`](backend/README.md)
+- Servicio de inferencia con Python/uvicorn → [`ml-service/README.md`](ml-service/README.md)
+
+## Comandos frecuentes
+
+`make` sin argumentos lista todos los comandos disponibles. Los más usados:
+
+| Comando | Qué hace |
 |---|---|
-| `make up` / `make down` | levanta / detiene el sistema |
-| `make logs` | sigue los logs de ambos servicios |
-| `make ps` | estado de los contenedores |
-| `make test` | pruebas de backend y ml-service |
-| `make train` | reentrena el modelo en local |
-| `make rebuild` | reconstruye ignorando la cache de Docker |
-| `make clean-all` | borra tambien los volumenes (se pierde la base) |
+| `make up` / `make down` | Levanta / detiene el sistema |
+| `make logs` | Sigue los logs de ambos servicios |
+| `make logs-backend` / `make logs-ml` | Logs de un servicio en particular |
+| `make ps` | Estado de los contenedores |
+| `make test` | Pruebas de backend y ml-service |
+| `make train` | Reempaqueta el modelo de Ciencia de Datos en local (genera `ml-service/models/`) |
+| `make lint` | Analiza el código Python (ruff) |
+| `make shell-backend` / `make shell-ml` | Abre una shell dentro de un contenedor |
+| `make rebuild` | Reconstruye ignorando la caché de Docker |
+| `make clean` / `make clean-all` | Limpia artefactos locales (el segundo borra también la base de datos) |
 
-El puerto 8000 se publica **solo en desarrollo**, para poder interrogar el modelo
-directamente con `curl`. En produccion el ml-service es interno: solo lo alcanza
-el backend por la red privada del compose.
+## API REST
 
----
+Todos los endpoints viven bajo `/api/v1`. La referencia interactiva completa (con esquemas, ejemplos y prueba en vivo) está en Swagger UI una vez levantado el sistema: **http://localhost:8080/swagger-ui/index.html**.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/api/v1/contenidos` | Clasifica y persiste un contenido enviado como texto |
+| `POST` | `/api/v1/contenidos/archivo` | Ídem, extrayendo texto de un PDF o DOCX subido |
+| `POST` | `/api/v1/contenidos/url` | Ídem, extrayendo texto de una URL (ej. una consulta de foro) |
+| `POST` | `/api/v1/contenidos/lote` | Procesa un CSV (`titulo,texto`) en lote |
+| `GET` | `/api/v1/contenidos/{id}` | Obtiene un contenido ya procesado |
+| `GET` | `/api/v1/contenidos` | Lista contenidos, con filtro por categoría, búsqueda por palabra clave y paginación |
+| `GET` | `/api/v1/contenidos/{id}/relacionados` | Contenidos relacionados a uno dado (misma categoría + palabras clave en común) |
+| `DELETE` | `/api/v1/contenidos/{id}` | Elimina un contenido procesado |
+| `GET` | `/api/v1/categorias` | Lista las categorías presentes en el repositorio, con el conteo de contenidos procesados por cada una |
+| `GET` | `/actuator/health` | Estado de salud de la API (usado por Docker y por el CD para decidir un rollback) |
+
+Todas las respuestas de error siguen un formato uniforme (`ErrorResponseDTO`), con el código HTTP correspondiente (`400`, `404`, `413`, `422`, `503`, etc.) y el detalle de los campos inválidos cuando aplica. El detalle completo del contrato —incluyendo el conjunto de categorías y las reglas de validación— está en [`docs/contrato-backend-ds.md`](docs/contrato-backend-ds.md).
 
 ## Despliegue
 
-El despliegue en Oracle Cloud Infrastructure es automatico: cada merge a `main`
-dispara el workflow de CD, que entrena y publica el modelo en Object Storage,
-construye y sube las imagenes a OCIR, y actualiza los contenedores en la VM por
-SSH. Si los healthchecks no pasan, **revierte solo** a la version anterior.
+El despliegue en Oracle Cloud Infrastructure es **automático**: cada merge a `main` dispara el workflow de CD ([`.github/workflows/cd.yml`](.github/workflows/cd.yml)), que:
 
-La guia completa —recursos de OCI, permisos, secrets, primer despliegue y
-runbook de operacion— esta en **[docs/devops/despliegue-oci.md](docs/devops/despliegue-oci.md)**.
+1. Reempaqueta los artefactos de Ciencia de Datos (`data-science/API/`) y publica `model.joblib` en OCI Object Storage.
+2. Construye y publica las imágenes de `backend` y `ml-service` en OCIR (OCI Container Registry).
+3. Actualiza los contenedores en la VM de producción vía SSH.
+4. Si los healthchecks no pasan, **revierte automáticamente** a la versión anterior.
 
----
+La VM (`VM.Standard.A1.Flex`, capa Always Free) corre únicamente contenedores ya construidos —nunca compila código— y el `ml-service` descarga el modelo desde Object Storage en lugar de llevarlo embebido en la imagen, usando autenticación `instance_principal` (sin claves privadas en disco).
 
-## Flujo de funcionamiento
+La guía completa —aprovisionamiento con Terraform, secrets de GitHub Actions, primer despliegue, HTTPS opcional con Caddy y runbook de operación e incidentes— está en **[`docs/devops/despliegue-oci.md`](docs/devops/despliegue-oci.md)**.
 
-1. El cliente envía un contenido técnico a la API.
-2. La API valida la solicitud.
-3. El modelo procesa el texto.
-4. Se identifica información relevante.
-5. La API devuelve los resultados en formato JSON.
+## Documentación adicional
 
----
+| Documento | Contenido |
+|---|---|
+| [`backend/README.md`](backend/README.md) | Arquitectura interna del backend, capas, configuración, cómo correr sin Docker |
+| [`ml-service/README.md`](ml-service/README.md) | Servicio de inferencia, reempaquetado del modelo, contrato HTTP, cómo correr sin Docker |
+| [`docs/contrato-backend-ds.md`](docs/contrato-backend-ds.md) | Contrato REST/JSON acordado entre Backend y Ciencia de Datos: campos, categorías, convenciones de nombres |
+| [`docs/pruebas-aceptacion-e2e.md`](docs/pruebas-aceptacion-e2e.md) | Batería de pruebas de aceptación end-to-end y defectos corregidos |
+| [`docs/devops/despliegue-oci.md`](docs/devops/despliegue-oci.md) | Guía de despliegue en OCI y runbook operativo |
+| [`docs/devops/postgres.md`](docs/devops/postgres.md) | Base de datos Postgres (reemplazo de H2): qué se provisionó, credenciales y validación |
+| [`docs/devops/informe-devops.md`](docs/devops/informe-devops.md) | Decisiones de infraestructura y su justificación |
+| [`infra/terraform/README.md`](infra/terraform/README.md) | Infraestructura como código: recursos de OCI provisionados |
 
-## Endpoint principal
+## Estado del MVP
 
-### POST /contenido
+El proyecto implementa un pipeline completo y operativo:
 
-Procesa un contenido técnico y devuelve la información obtenida por el modelo.
+- ✅ Ingesta de contenido por texto, archivo (PDF/DOCX) o URL
+- ✅ Clasificación temática en 7 categorías con puntaje de confianza
+- ✅ Extracción de palabras clave (TF-IDF)
+- ✅ Persistencia, consulta individual y listado con filtros, búsqueda y paginación
+- ✅ Contenidos relacionados por similitud de categoría y palabras clave
+- ✅ Procesamiento por lote (CSV)
+- ✅ Resumen de categorías con conteo de contenidos procesados
+- ✅ Despliegue automatizado en OCI con CI/CD, rollback automático y monitoreo de salud
+- ✅ 37/37 casos de la batería de pruebas de aceptación end-to-end en verde ([detalle](docs/pruebas-aceptacion-e2e.md))
 
-### Solicitud
-
-```json
-{
-    "titulo": "Introducción a Spring Boot",
-    "texto": "En este contenido se presentan los conceptos básicos para la creación de APIs REST utilizando Java y Spring Boot."
-}
-```
-
-### Respuesta
-
-```json
-{
-    "categoria": "Backend",
-    "probabilidad": 0.89,
-    "informacion_adicional": [
-        "Java",
-        "Spring Boot",
-        "API REST"
-    ]
-}
-```
-
-La estructura de la respuesta puede variar según el enfoque implementado por el equipo.
-
----
-
-## Instalación
-
-```bash
-git clone https://github.com/No-Country-simulation/g9-br-team-34-techmind.git
-cd g9-br-team-34-techmind
-make env && make up
-```
-
-Ver [Puesta en marcha (local)](#puesta-en-marcha-local) para el detalle.
-
----
-
-## Ejemplo de uso
-
-### Clasificación de contenido
-
-Entrada
-
-```
-Tutorial de Docker
-```
-
-Salida
-
-```json
-{
-    "categoria": "DevOps"
-}
-```
-
----
-### Organización de contenido
-
-Entrada
-
-```
-Documentación técnica
-```
-
-Salida
-
-```json
-{
-    "categoria": "...",
-    "probabilidad": "...",
-    "informacion_adicional": [...]
-}
-```
-
----
-
-## Componentes del proyecto
-
-### Notebook de Ciencia de Datos
-
-Incluye:
-
-- Exploración y limpieza de datos (EDA).
-- Procesamiento de texto.
-- Transformación de datos.
-- Entrenamiento del modelo.
-- Evaluación.
-- Serialización del modelo.
-
----
-
-### API REST
-
-Incluye:
-
-- Recepción de contenido.
-- Procesamiento mediante el modelo.
-- Respuesta JSON.
-- Validación de entrada.
-- Manejo de errores.
-
----
-
-## Alcance del MVP
-
-El proyecto implementa un servicio capaz de:
-
-- Recibir contenido técnico.
-- Procesarlo mediante un modelo de Ciencia de Datos.
-- Generar información enriquecida.
-- Exponer los resultados mediante una API REST.
-
----
-
-## Licencia
-
-Este proyecto fue desarrollado con fines académicos para el Hackathon, siguiendo los requisitos establecidos en la propuesta del desafío.
