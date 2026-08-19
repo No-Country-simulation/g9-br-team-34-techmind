@@ -111,10 +111,6 @@ jobs:
         working-directory: ml-service
         run: pip install -r requirements.txt
 
-      - name: Entrenar el modelo
-        working-directory: ml-service
-        run: python -m train.train
-
       # La CLI de OCI se autentica con un archivo de configuracion y una clave
       # privada. Ambos se reconstruyen aqui desde los secrets del repositorio y
       # viven solo lo que dura el job, en un runner efimero.

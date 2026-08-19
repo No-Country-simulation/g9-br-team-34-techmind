@@ -112,7 +112,7 @@ Todas las variables entran por entorno (`app/settings.py`, vía `pydantic-settin
 | `MODEL_SOURCE` | `local` o `oci` — ver [siguiente sección](#origen-del-modelo-local-vs-oci) | `local` |
 | `MODEL_DIR` | Carpeta donde viven los 3 `.joblib` | `/app/models` |
 | `MODEL_FILE_CLASIFICADOR` / `MODEL_FILE_TFIDF_TITULO` / `MODEL_FILE_TFIDF_TEXTO` | Nombres de archivo dentro de `MODEL_DIR` | `modelo_clasificador.joblib` / `tfidf_titulo.joblib` / `tfidf_texto.joblib` |
-| `PESO_TITULO` | Peso del vector TF-IDF del título frente al del texto antes de concatenar | `2.0` |
+| `PESO_TITULO` | Peso del vector TF-IDF del título frente al del texto antes de concatenar | `0.5` |
 | `MAX_KEYWORDS` | Máximo de palabras clave devueltas en `informacion_adicional` | `5` |
 | `OCI_AUTH_METHOD` | `config_file` (dev) o `instance_principal` (producción, sin credenciales en disco) | `config_file` |
 | `OCI_NAMESPACE` / `OCI_REGION` | Namespace y región del tenancy (si se omiten, el SDK los resuelve) | *(vacío)* |

@@ -13,7 +13,7 @@
 # ya no participa del build.
 
 # ---------------------------------------------------------------------------
-# Etapa 1: dependencias + entrenamiento
+# Etapa 1: dependencias 
 # ---------------------------------------------------------------------------
 FROM python:3.11-slim AS builder
 
