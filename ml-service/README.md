@@ -26,9 +26,9 @@ Recibe un título y un texto, y devuelve:
 
 - **`categoria`** — una de las **7 categorías** que predice el modelo entrenado (Backend, Base de Datos, DevOps, Frontend, Machine Learning, Mobile, Seguridad), combinando dos vectorizadores TF-IDF (título y texto, con el título pesado x2) y una Regresión Logística.
 - **`probabilidad`** — confianza de la predicción, en `[0.0, 1.0]`.
-- **`informacion_adicional`** — las palabras clave con mayor peso TF-IDF dentro del texto (hasta `MAX_KEYWORDS`, default 5).
+- **`informacion_adicional`** — las palabras clave con mayor peso TF-IDF dentro del texto (hasta `MAX_KEYWORDS`, default 5), lematizadas como en el entrenamiento.
 
-Este servicio **no valida reglas de negocio** más allá de las cotas de longitud del propio esquema: asume que el backend ya validó la entrada. Tampoco entrena en tiempo de ejecución — el modelo se entrena una vez, en tiempo de build de la imagen, y se sirve como artefacto estático (ver [Entrenar el modelo](#entrenar-el-modelo)).
+Este servicio **no valida reglas de negocio** más allá de las cotas de longitud del propio esquema: asume que el backend ya validó la entrada. Tampoco entrena en tiempo de ejecución — el modelo se reempaqueta una vez, en tiempo de build de la imagen, y se sirve como artefacto estático (ver [Entrenar el modelo](#entrenar-el-modelo)).
 
 ## Endpoints
 
@@ -52,9 +52,9 @@ Documentación interactiva (OpenAPI/Swagger) en `http://localhost:8000/docs` una
 ```json
 // 200 OK
 {
-  "categoria": "Backend",
+  "categoria": "backend",
   "probabilidad": 0.89,
-  "informacion_adicional": ["Java", "Spring Boot", "API REST"]
+  "informacion_adicional": ["java", "spring boot", "rest"]
 }
 ```
 
@@ -137,8 +137,10 @@ Requiere que existan los 3 `.joblib` en `models/` — cópialos desde `data-scie
 
 El repositorio tiene dos carpetas relacionadas con Ciencia de Datos y conviene no confundirlas:
 
-- **[`data-science/`](../data-science/)** — el espacio de trabajo exploratorio del equipo de Ciencia de Datos: notebooks de EDA, modelado y métricas, datasets versionados (`v2`, `v3`, `v4`) y los artefactos que produjeron.
-- **`ml-service/`** (este directorio) — el servicio productivo que sirve un modelo entrenado por HTTP. Consume el contrato de artefacto descrito arriba; no reproduce el trabajo de exploración.
+- **[`data-science/`](../data-science/)** — el espacio de trabajo del equipo de Ciencia de Datos: notebooks de EDA, modelado y métricas, datasets versionados (`v2`, `v3`, `v4`) y los **artefactos entrenados** en `data-science/API/`.
+- **`ml-service/`** (este directorio) — el servicio productivo que sirve ese modelo por HTTP. `train/train.py` reempaqueta los artefactos de `data-science/API/` en el formato que lee `app/model.py`; **no reproduce el trabajo de exploración ni reentrena**.
+
+El flujo real es: el notebook de Ciencia de Datos entrena y deja `data-science/API/*.joblib` → `train.py` los reempaqueta en `model.joblib` → el CD lo publica en OCI Object Storage → el contenedor lo descarga al arrancar (`MODEL_SOURCE=oci`). Lo que se sirve en producción es, literalmente, el modelo del notebook — no una copia de un dataset semilla.
 
 ## Decisiones de diseño
 
