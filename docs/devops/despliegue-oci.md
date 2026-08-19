@@ -377,7 +377,9 @@ OCIR_REGISTRY=gru.ocir.io
 OCI_NAMESPACE=axxxxxxxxxxx
 OCI_REGION=sa-saopaulo-1
 OCI_BUCKET_NAME=techmind-models
-OCI_MODEL_OBJECT=model.joblib
+OCI_OBJECT_CLASIFICADOR=modelo_clasificador.joblib
+OCI_OBJECT_TFIDF_TITULO=tfidf_titulo.joblib
+OCI_OBJECT_TFIDF_TEXTO=tfidf_texto.joblib
 
 # --- Versión desplegada (la actualiza el workflow de CD) ---
 IMAGE_TAG=latest
@@ -530,21 +532,42 @@ Los SHA disponibles son los de los commits de `main` cuyo CD terminó en verde.
 
 ### Volver a un modelo anterior
 
-Cada corrida sube el modelo dos veces: como `model.joblib` (el que se sirve) y
-como `modelos/model-<sha>.joblib` (histórico inmutable). Para restaurar uno:
+Cada corrida sube los tres artefactos del modelo dos veces: con su nombre
+actual (el que se sirve, definido por `OCI_OBJECT_CLASIFICADOR`,
+`OCI_OBJECT_TFIDF_TITULO` y `OCI_OBJECT_TFIDF_TEXTO`) y como histórico
+inmutable bajo `modelos/<sha>/`. Los tres archivos de una misma corrida
+comparten `<sha>`, porque el clasificador y los dos vectorizadores TF-IDF
+se entrenan juntos y no son intercambiables entre corridas distintas.
 
-```bash
-oci os object copy \
-  --bucket-name techmind-models \
-  --source-object-name "modelos/model-<sha>.joblib" \
-  --destination-object-name "model.joblib" \
-  --destination-namespace <namespace> \
-  --destination-bucket techmind-models \
-  --destination-region <region>
+Para restaurar una versión, copia los tres objetos del mismo `<sha>` y
+reinicia el servicio para que los vuelva a descargar:
 
-# y reiniciar el servicio para que lo vuelva a descargar
+\`\`\`bash
+SHA=<sha>
+NAMESPACE=<namespace>
+REGION=<region>
+
+for archivo in \
+  modelo_clasificador.joblib \
+  tfidf_titulo.joblib \
+  tfidf_texto.joblib; do
+  oci os object copy \
+    --bucket-name techmind-models \
+    --source-object-name "modelos/${SHA}/${archivo}" \
+    --destination-object-name "${archivo}" \
+    --destination-namespace "$NAMESPACE" \
+    --destination-bucket techmind-models \
+    --destination-region "$REGION"
+done
+
+# y reiniciar el servicio para que los vuelva a descargar
 ssh opc@<IP> 'cd /opt/techmind && docker compose -f docker-compose.yml -f docker-compose.prod.yml restart ml-service'
-```
+\`\`\`
+
+**Importante:** no restaures un solo artefacto sin los otros dos del mismo
+`<sha>` — un clasificador de una corrida combinado con vectorizadores
+TF-IDF de otra corrida producirá predicciones incorrectas sin fallar
+explícitamente.
 
 Las métricas del modelo de cada versión quedan en `modelos/metrics-<sha>.json`.
 
@@ -755,7 +778,9 @@ Referencia rápida de dónde vive cada valor. Ninguno de estos se versiona.
 | `OCI_HOST` | | ✔ | |
 | `OCI_SSH_USER` | | ✔ | |
 | `TARGET_PLATFORM` | | ✔ | |
-| `OCI_MODEL_OBJECT` | | | ✔ |
+| `OCI_OBJECT_CLASIFICADOR` | | | ✔ |
+| `OCI_OBJECT_TFIDF_TITULO` | | | ✔ |
+| `OCI_OBJECT_TFIDF_TEXTO` | | | ✔ |
 | `IMAGE_TAG` | | | ✔ (la escribe el CD) |
 | `BACKEND_PORT` | | | ✔ |
 | `DB_USERNAME` | | | ✔ |

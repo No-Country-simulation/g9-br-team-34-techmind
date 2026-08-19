@@ -2,7 +2,7 @@
 #
 # Flujo completo:
 #
-#   1. publicar-modelo  -> entrena y sube model.joblib a OCI Object Storage
+#   1. publicar-modelo  -> entrena y sube los 3 artefactos del modelo a OCI Object Storage
 #   2. publicar-imagenes-> construye y sube las imagenes a OCIR
 #   3. desplegar        -> por SSH, actualiza los contenedores en OCI Compute
 #   4. (si falla)       -> revierte automaticamente a la version anterior
@@ -82,6 +82,9 @@ jobs:
           cache: 'pip'
           cache-dependency-path: ml-service/requirements-dev.txt
 
+      - name: Descargar spacy-español
+        run: python -m spacy download es_core_news_sm
+
       - name: Pruebas del servicio de inferencia
         working-directory: ml-service
         run: |
@@ -101,19 +104,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: ml-service/requirements.txt
+      # No hay entrenamiento aca: los 3 .joblib son el entregable real de
+      # Ciencia de Datos y viven versionados en ml-service/models/, igual que
+      # los copia el Dockerfile a la imagen. Este job solo los sincroniza con
+      # Object Storage para que MODEL_SOURCE=oci pueda descargarlos.
 
-      - name: Instalar dependencias
-        working-directory: ml-service
-        run: pip install -r requirements.txt
-
-      # La CLI de OCI se autentica con un archivo de configuracion y una clave
-      # privada. Ambos se reconstruyen aqui desde los secrets del repositorio y
-      # viven solo lo que dura el job, en un runner efimero.
       - name: Configurar credenciales de OCI
         env:
           OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
@@ -124,8 +119,6 @@ jobs:
         run: |
           mkdir -p ~/.oci
           printf '%s' "$OCI_CLI_KEY_CONTENT" > ~/.oci/key.pem
-          # 600: la CLI de OCI se niega a usar una clave privada que sea legible
-          # por otros usuarios, y con razon.
           chmod 600 ~/.oci/key.pem
           cat > ~/.oci/config <<EOF
           [DEFAULT]
@@ -137,6 +130,10 @@ jobs:
           EOF
           chmod 600 ~/.oci/config
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Instalar la CLI de OCI
         run: pip install oci-cli==3.54.4
 
@@ -144,36 +141,33 @@ jobs:
         env:
           BUCKET: ${{ vars.OCI_BUCKET_NAME }}
         run: |
-          # Se sube dos veces: una con nombre versionado por SHA, que queda como
-          # historial inmutable y permite volver a un modelo anterior; y otra
-          # como model.joblib, que es el nombre fijo que lee el servicio.
-          oci os object put \
-            --bucket-name "$BUCKET" \
-            --file ml-service/models/model.joblib \
-            --name "modelos/model-${IMAGE_TAG}.joblib" \
-            --force
+          # Se sube cada uno de los 3 artefactos ya versionados en
+          # ml-service/models/, dos veces: con nombre fijo (lo que el
+          # servicio lee) y con nombre versionado por SHA bajo modelos/<sha>/
+          # (historial inmutable para poder hacer rollback).
+          for archivo in \
+            modelo_clasificador.joblib \
+            tfidf_titulo.joblib \
+            tfidf_texto.joblib; do
+            oci os object put \
+              --bucket-name "$BUCKET" \
+              --file "ml-service/models/${archivo}" \
+              --name "modelos/${IMAGE_TAG}/${archivo}" \
+              --force
 
-          oci os object put \
-            --bucket-name "$BUCKET" \
-            --file ml-service/models/model.joblib \
-            --name "model.joblib" \
-            --force
-
-          # Las metricas viajan junto al modelo: sin ellas, dentro de un mes
-          # nadie podra decir que tan bueno era el modelo que estaba en produccion.
-          oci os object put \
-            --bucket-name "$BUCKET" \
-            --file ml-service/models/metrics.json \
-            --name "modelos/metrics-${IMAGE_TAG}.json" \
-            --force
+            oci os object put \
+              --bucket-name "$BUCKET" \
+              --file "ml-service/models/${archivo}" \
+              --name "${archivo}" \
+              --force
+          done
 
       - name: Resumen
         run: |
           echo "### Modelo publicado" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          cat ml-service/models/metrics.json >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
+          echo "- Version: \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          ls -la ml-service/models/*.joblib >> $GITHUB_STEP_SUMMARY
+          
   # =========================================================================
   # 2. Imagenes -> OCIR (Oracle Container Registry)
   # =========================================================================
@@ -200,8 +194,9 @@ jobs:
       #
       # Consecuencia a tener en cuenta: los pasos RUN corren emulados y son
       # lentos. En el ml-service, `pip install` es rapido porque descarga wheels
-      # precompiladas para aarch64, pero el entrenamiento del modelo si se
-      # ejecuta emulado y agrega un par de minutos al build.
+      # precompiladas para aarch64; el build ya no entrena (los .joblib se
+      # copian directo desde models/), asi que el costo de la emulacion aqui
+      # se limita a instalar dependencias y el modelo de spaCy.
       - name: Configurar QEMU (compilacion cruzada a ARM)
         uses: docker/setup-qemu-action@v3
 

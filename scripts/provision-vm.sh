@@ -146,7 +146,9 @@ OCIR_REGISTRY=
 OCI_NAMESPACE=
 OCI_REGION=
 OCI_BUCKET_NAME=techmind-models
-OCI_MODEL_OBJECT=model.joblib
+OCI_OBJECT_CLASIFICADOR=modelo_clasificador.joblib
+OCI_OBJECT_TFIDF_TITULO=tfidf_titulo.joblib
+OCI_OBJECT_TFIDF_TEXTO=tfidf_texto.joblib
 
 # Bucket de respaldos. Es distinto del de modelos a proposito: la VM puede
 # escribir aqui, pero sobre el de modelos es de solo lectura.

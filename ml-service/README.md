@@ -24,7 +24,7 @@ Servicio interno en FastAPI que expone el modelo de clasificación de contenido 
 
 Recibe un título y un texto, y devuelve:
 
-- **`categoria`** — una de las **7 categorías** que predice el modelo entrenado (Backend, Base de Datos, DevOps, Frontend, Machine Learning, Mobile, Seguridad), combinando dos vectorizadores TF-IDF (título y texto, con el título pesado x2) y una Regresión Logística.
+- **`categoria`** — una de las **7 categorías** que predice el modelo entrenado (Backend, Base de Datos, DevOps, Frontend, Machine Learning, Mobile, Seguridad), combinando dos vectorizadores TF-IDF (título y texto, con el título x0.5) y una Regresión Logística.
 - **`probabilidad`** — confianza de la predicción, en `[0.0, 1.0]`.
 - **`informacion_adicional`** — las palabras clave con mayor peso TF-IDF dentro del texto (hasta `MAX_KEYWORDS`, default 5).
 
@@ -81,6 +81,7 @@ Requiere Python 3.11+.
 cd ml-service
 python -m venv .venv && source .venv/bin/activate    # o el equivalente en tu shell
 pip install -r requirements-dev.txt
+python -m spacy download es_core_news_sm
 
 # El servicio necesita los 3 .joblib en models/ (ver "Artefacto del modelo"
 # abajo). Si no están, copialos desde data-science/models/:

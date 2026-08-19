@@ -27,6 +27,8 @@ venv/
 .ruff_cache/
 
 # Artefactos del modelo: ANTES no se versionaban porque se generaban en cada
+ml-service/train/artifacts/
+
 # build con un dataset semilla. Ahora ml-service/models/ contiene el
 # ENTREGABLE REAL de Ciencia de Datos (copiado de data-science/models/) y el
 # Dockerfile lo copia directo sin entrenar — por eso SI se versiona.

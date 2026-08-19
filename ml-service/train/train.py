@@ -37,7 +37,7 @@ from sklearn.pipeline import Pipeline
 # repositorio o desde un paso de CI, que es donde mas suele romperse esto.
 RAIZ = Path(__file__).resolve().parent.parent
 DATASET = RAIZ / "train" / "dataset.csv"
-DIRECTORIO_MODELOS = RAIZ / "models"
+DIRECTORIO_MODELOS = RAIZ / "train" / "artifacts"
 ARTEFACTO = DIRECTORIO_MODELOS / "model.joblib"
 METRICAS = DIRECTORIO_MODELOS / "metrics.json"
 
