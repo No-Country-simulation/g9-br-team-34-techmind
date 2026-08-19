@@ -34,7 +34,7 @@ de OCI. Los despliegues siguientes son automáticos y tardan 8–12 minutos.
 ```
    GitHub Actions (runner efímero)
      │
-     ├─ reempaqueta los artefactos de Ciencia de Datos ► OCI Object Storage
+     ├─ entrena el modelo ──────────────► OCI Object Storage
      │                                      bucket: techmind-models
      │                                      objeto: model.joblib
      │
@@ -462,7 +462,7 @@ Repositorio → **Actions → CD - Despliegue en OCI → Run workflow** → dej�
 | Job | Qué hace | Si falla |
 |---|---|---|
 | `verificar` | pruebas de backend y ml-service | no se despliega nada |
-| `publicar-modelo` | reempaqueta los artefactos de Ciencia de Datos y sube `model.joblib` al bucket | revisá las credenciales de la Parte 3.2 |
+| `publicar-modelo` | entrena y sube `model.joblib` al bucket | revisá las credenciales de la Parte 3.2 |
 | `publicar-imagenes` | construye para ARM y publica en OCIR | revisá `OCIR_USERNAME` (Parte 3.3) |
 | `desplegar` | `scp` + `ssh` a la VM, `pull` y `up --wait` | **revierte solo** a la etiqueta anterior |
 

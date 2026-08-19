@@ -12,22 +12,16 @@ pydantic==2.10.4
 pydantic-settings==2.7.1
 
 # --- Ciencia de Datos ---
-# 1.8.0 (no 1.6.0): los artefactos que entrega Ciencia de Datos en
-# data-science/API/ se serializaron con scikit-learn 1.8.0 y numpy 2.x; cargarlos
-# con una version anterior rompe (o degrada silenciosamente) la deserializacion.
+# scikit-learn fijado a la version con la que Ciencia de Datos serializo los
+# .joblib (verificar contra el entorno real del equipo si vuelven a reentrenar:
+# un desajuste de version rompe la carga del artefacto de forma sutil, no con
+# un error obvio).
 scikit-learn==1.8.0
-scipy==1.15.2
+scipy==1.16.3
 pandas==2.2.3
-numpy==2.2.1
-joblib==1.4.2
-
-# --- Preprocesado en espanol (lematizacion) ---
-# La limpieza del notebook usa spaCy: sin el mismo lematizador que se aplico al
-# entrenar, las predicciones en produccion se degradarian. El modelo de espanol
-# se instala como paquete desde el release oficial de spaCy-models (su version
-# 3.8.0 exige spaCy >=3.8.0,<3.9.0, de ahi el pin en 3.8.x).
+numpy==2.0.2
+joblib==1.5.3
 spacy==3.8.15
-es_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.8.0/es_core_news_sm-3.8.0-py3-none-any.whl
 
 # --- Integracion OCI (descarga del modelo desde Object Storage) ---
 oci==2.142.0

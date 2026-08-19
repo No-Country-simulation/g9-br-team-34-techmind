@@ -31,7 +31,7 @@ services:
 
     environment:
       MODEL_SOURCE: oci
-      MODEL_PATH: /app/models/model.joblib
+      MODEL_DIR: /app/models
 
       # instance_principal: la VM se autentica ante OCI con su propia identidad,
       # mediante un dynamic group y una policy. No hay claves privadas en disco
@@ -40,7 +40,13 @@ services:
       OCI_NAMESPACE: ${OCI_NAMESPACE}
       OCI_BUCKET_NAME: ${OCI_BUCKET_NAME:-techmind-models}
       OCI_REGION: ${OCI_REGION}
-      OCI_OBJECT_NAME: ${OCI_MODEL_OBJECT:-model.joblib}
+
+      # Los tres objetos deben existir en el bucket con estos nombres (o los
+      # que se sobrescriban aca). Suben los .joblib tal cual los entrega
+      # Ciencia de Datos, sin renombrar.
+      OCI_OBJECT_CLASIFICADOR: ${OCI_OBJECT_CLASIFICADOR:-modelo_clasificador.joblib}
+      OCI_OBJECT_TFIDF_TITULO: ${OCI_OBJECT_TFIDF_TITULO:-tfidf_titulo.joblib}
+      OCI_OBJECT_TFIDF_TEXTO: ${OCI_OBJECT_TFIDF_TEXTO:-tfidf_texto.joblib}
 
       LOG_LEVEL: info
 

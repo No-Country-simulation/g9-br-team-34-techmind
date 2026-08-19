@@ -1,22 +1,19 @@
 # Servicio de inferencia TechMind - imagen de produccion.
 #
-# Construccion en dos etapas. La etapa `builder` instala las dependencias y
-# reempaqueta el modelo de Ciencia de Datos; la etapa final se queda solo con el
-# entorno virtual, el codigo del servicio y el artefacto servible.
+# Construccion en dos etapas. La etapa `builder` instala las dependencias; la
+# etapa final se queda solo con el entorno virtual, el codigo del servicio y
+# los artefactos del modelo que entrega Ciencia de Datos.
 #
-# CONTEXTO: esta imagen se construye desde la RAIZ del repositorio (no desde
-# ml-service/) porque el reempaquetado necesita los artefactos de
-# data-science/API/. El `.dockerignore` de la raiz excluye todo lo demas del
-# contexto. En docker-compose.yml y en los workflows se indica
-# `context: .` + `dockerfile: ml-service/Dockerfile`; el backend sigue usando su
-# propio contexto.
-#
-# El reempaquetado ocurre en tiempo de BUILD y no en tiempo de ARRANQUE a
-# proposito: el arranque del contenedor debe ser rapido y deterministico, y dos
-# replicas del mismo servicio tienen que servir exactamente el mismo modelo.
+# NO se entrena en tiempo de build: los tres .joblib (clasificador +
+# vectorizadores de titulo y texto) son el entregable real de Ciencia de
+# Datos y viven versionados en `models/`, tal cual los produjo el equipo. El
+# contenedor de produccion solo los sirve, nunca los genera -- asi dos
+# replicas del mismo servicio garantizan servir exactamente el mismo modelo.
+# `train/` sigue existiendo como andamio de referencia (ver su README) pero
+# ya no participa del build.
 
 # ---------------------------------------------------------------------------
-# Etapa 1: dependencias + reempaquetado del modelo
+# Etapa 1: dependencias + entrenamiento
 # ---------------------------------------------------------------------------
 FROM python:3.11-slim AS builder
 
@@ -34,32 +31,12 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # requirements.txt se copia solo, antes que el codigo. Es la capa mas cara de
-# reconstruir (scikit-learn, numpy, spacy y scipy pesan cientos de MB) y de esta
-# forma Docker solo la rehace cuando cambian las dependencias, no cuando cambia
-# una linea de codigo.
-COPY ml-service/requirements.txt .
+# reconstruir (scikit-learn, numpy y scipy pesan cientos de MB) y de esta forma
+# Docker solo la rehace cuando cambian las dependencias, no cuando cambia una
+# linea de codigo.
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-COPY ml-service/app/ ./app/
-COPY ml-service/train/ ./train/
-
-# Artefactos del modelo que entrega Ciencia de Datos (un .joblib por pieza) y el
-# dataset versionado. Se copian bajo /build/data-science/ para replicar la
-# estructura del repositorio; el Dockerfile fija DS_MODEL_DIR/DS_DATASET porque
-# dentro de /build las rutas relativas al codigo no apuntan ahi.
-COPY data-science/API/ ./data-science/API/
-COPY data-science/data/ ./data-science/data/
-
-# Genera /build/models/model.joblib a partir de los artefactos de DS.
-#
-# CALCULAR_METRICAS=0: la evaluacion sobre el dataset completo lematiza miles de
-# documentos y solo la necesitan CI y el CD (son quienes suben metrics.json). El
-# build solo necesita el artefacto servible; evaluar aca duplicaria ese trabajo
-# y, al construirse la imagen emulada en el CD, sumaria minutos a cada build.
-ENV DS_MODEL_DIR=/build/data-science/API \
-    DS_DATASET=/build/data-science/data/v4.json \
-    CALCULAR_METRICAS=0
-RUN python -m train.train
+RUN python -m spacy download es_core_news_sm
 
 # ---------------------------------------------------------------------------
 # Etapa 2: imagen final
@@ -84,8 +61,8 @@ RUN groupadd --system --gid 1000 techmind \
 WORKDIR /app
 
 COPY --from=builder /opt/venv /opt/venv
-COPY --from=builder --chown=techmind:techmind /build/models/ /app/models/
-COPY --chown=techmind:techmind ml-service/app/ /app/app/
+COPY --chown=techmind:techmind models/ /app/models/
+COPY --chown=techmind:techmind app/ /app/app/
 
 # `train/` NO se copia: la imagen de produccion no entrena, y todo lo que no
 # entra reduce la superficie de ataque y el tamano final.
