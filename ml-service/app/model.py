@@ -26,9 +26,9 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-import spacy
 import joblib
 import numpy as np
+import spacy
 from scipy.sparse import hstack
 
 from .settings import settings
