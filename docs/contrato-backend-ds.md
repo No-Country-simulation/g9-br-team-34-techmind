@@ -210,3 +210,78 @@ POST /predict
 | Área             | Responsable    | Fecha       | Estado     |
 | Backend          | Esteban        | 2026-07-28  | Aprobado   |
 | Ciencia de Datos | [Luigi Huánuco ,Sofia Alferez, JorgeM ] | 2026-07-28  | Aprobado   |
+
+## 11. POST /api/v1/contenidos/lote-pdf (S5-09)
+
+Procesa un lote de archivos PDF en una sola operación. Reutiliza la
+extracción existente (Apache PDFBox + fallback/limpieza con Gemini,
+ver `ExtraccionArchivoService`) y el mismo camino de clasificación que
+`POST /api/v1/contenidos` — el lote es, en esencia, N llamadas a ese
+mismo flujo, con manejo de errores independiente por archivo.
+
+### Request
+
+```
+POST /api/v1/contenidos/lote-pdf
+Content-Type: multipart/form-data
+
+archivos: [archivo1.pdf, archivo2.pdf, ...]   (campo repetido, uno por archivo)
+```
+
+### Response 200
+
+```json
+{
+  "totalArchivos": 3,
+  "procesadosExitosos": 2,
+  "procesadosConError": 1,
+  "resultados": [
+    {
+      "nombreArchivo": "guia-spring-boot.pdf",
+      "estado": "PROCESADO",
+      "resultado": {
+        "id": "...",
+        "titulo": "...",
+        "categoria": "Backend",
+        "probabilidad": 0.89,
+        "informacion_adicional": ["Java", "Spring Boot"]
+      },
+      "mensajeError": null
+    },
+    {
+      "nombreArchivo": "documento-corrupto.pdf",
+      "estado": "ERROR",
+      "resultado": null,
+      "mensajeError": "No se pudo extraer contenido suficiente del archivo"
+    }
+  ]
+}
+```
+
+### Procesamiento independiente por archivo
+
+Si un archivo falla (extracción y fallback de Gemini agotados,
+archivo no es PDF, o el resultado final no pasa validación), el resto
+del lote se sigue procesando igual — no se aborta la operación
+completa por un solo archivo problemático. El detalle del error queda
+en el campo `mensajeError` de ese archivo específico.
+
+### Límites
+
+| Límite | Valor por defecto | Property |
+|---|---|---|
+| Archivos por lote | 20 | `techmind.pdf-lote.max-archivos` (env: `PDF_LOTE_MAX_ARCHIVOS`) |
+| Tamaño por archivo | 20MB | `spring.servlet.multipart.max-file-size` |
+| Tamaño total de la request | 100MB | `spring.servlet.multipart.max-request-size` |
+
+Un lote que exceda el máximo de archivos se rechaza completo con
+`400 Bad Request`, sin procesar ninguno — a diferencia del caso de un
+archivo individual fallido dentro de un lote válido, que sí se reporta
+por separado sin afectar a los demás.
+
+### Errores
+
+| Status | Causa |
+|---|---|
+| 400 | Lote vacío, o supera el máximo de archivos permitido |
+| 200 (con detalle por archivo) | Archivo no es PDF, extracción/clasificación fallida para ese archivo puntual |
