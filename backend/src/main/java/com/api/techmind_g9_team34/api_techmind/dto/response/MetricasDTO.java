@@ -34,6 +34,18 @@ public record MetricasDTO(
         /** M9 — Palabras clave que el modelo extrae por contenido, en promedio. */
         double palabrasClavePorContenido,
 
+        /** M10 — Términos distintos en todo el repositorio. */
+        long palabrasClaveUnicas,
+
+        /**
+         * M11 — Pares de contenidos relacionados entre sí.
+         *
+         * <p>Aplica el mismo criterio que {@code GET /contenidos/{id}/relacionados}:
+         * misma categoría y al menos una palabra clave en común. Cada par se
+         * cuenta una sola vez.
+         */
+        long totalRelaciones,
+
         /** M4 — Confianza por categoría, de la más dudosa a la más firme. */
         List<ConfianzaPorCategoria> confianzaPorCategoria,
 

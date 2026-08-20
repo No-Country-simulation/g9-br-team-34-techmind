@@ -210,3 +210,92 @@ POST /predict
 | Área             | Responsable    | Fecha       | Estado     |
 | Backend          | Esteban        | 2026-07-28  | Aprobado   |
 | Ciencia de Datos | [Luigi Huánuco ,Sofia Alferez, JorgeM ] | 2026-07-28  | Aprobado   |
+
+---
+
+## 11. Contrato del endpoint de métricas (S5-14)
+
+A diferencia del resto del documento, esta sección describe un contrato
+**Backend → cliente**, no Backend ↔ Servicio de Inferencia. Se documenta acá por
+pedido del criterio de aceptación de S5-14, para que todos los contratos del
+proyecto queden en un solo archivo.
+
+### 11.1 Endpoint
+
+| Atributo | Valor |
+|---|---|
+| Método / Ruta | `GET /api/v1/metricas` |
+| Parámetros | ninguno |
+| `Accept` | `application/json` |
+| Respuesta | siempre `200 OK` |
+
+Con la base vacía devuelve el tablero en ceros y las listas vacías, no un 404:
+un repositorio sin contenidos es un estado válido del producto.
+
+### 11.2 Respuesta
+
+```json
+{
+  "totalContenidos": 42,
+  "totalCategorias": 5,
+  "confianzaMedia": 0.83,
+  "longitudMediaTexto": 3210,
+  "palabrasClavePorContenido": 4.2,
+  "palabrasClaveUnicas": 87,
+  "totalRelaciones": 63,
+  "confianzaPorCategoria": [
+    { "categoria": "mobile", "confianzaMedia": 0.61, "cantidad": 4 },
+    { "categoria": "backend", "confianzaMedia": 0.91, "cantidad": 18 }
+  ],
+  "distribucionConfianza": [
+    { "etiqueta": "Menos de 50%", "desde": 0.0,  "hasta": 0.5,  "cantidad": 2 },
+    { "etiqueta": "50% a 70%",    "desde": 0.5,  "hasta": 0.7,  "cantidad": 6 },
+    { "etiqueta": "70% a 85%",    "desde": 0.7,  "hasta": 0.85, "cantidad": 14 },
+    { "etiqueta": "85% o más",    "desde": 0.85, "hasta": 1.01, "cantidad": 20 }
+  ],
+  "procesadosPorDia": [
+    { "fecha": "2026-08-09", "cantidad": 12 },
+    { "fecha": "2026-08-10", "cantidad": 30 }
+  ],
+  "palabrasClaveTop": [
+    { "palabraClave": "java", "cantidad": 15 },
+    { "palabraClave": "api rest", "cantidad": 11 }
+  ],
+  "calculadoEn": "2026-08-11T03:20:00Z"
+}
+```
+
+### 11.3 Campos
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `totalContenidos` | number | Contenidos analizados |
+| `totalCategorias` | number | Categorías distintas con al menos un contenido |
+| `confianzaMedia` | number | Rango [0, 1], dos decimales |
+| `longitudMediaTexto` | number | Caracteres, redondeado |
+| `palabrasClavePorContenido` | number | Promedio, dos decimales |
+| `palabrasClaveUnicas` | number | Términos distintos, comparados en minúsculas |
+| `totalRelaciones` | number | Pares de contenidos relacionados; cada par cuenta una vez |
+| `confianzaPorCategoria` | array | Ordenado de menor a mayor confianza |
+| `distribucionConfianza` | array | Siempre 4 tramos, incluso con la base vacía |
+| `procesadosPorDia` | array | `fecha` en `yyyy-MM-dd`, UTC, orden ascendente |
+| `palabrasClaveTop` | array | Máximo 12, orden descendente por frecuencia |
+| `calculadoEn` | string | ISO-8601 en UTC |
+
+**Ningún campo llega nulo.** Las agregaciones SQL devuelven `null` sobre conjunto
+vacío; el servicio las normaliza a cero antes de responder, para que el cliente no
+tenga que defenderse de ausencias.
+
+### 11.4 Criterio de `totalRelaciones`
+
+Dos contenidos están relacionados si comparten **categoría** y **al menos una
+palabra clave** (comparada en minúsculas). Es el mismo criterio de
+`GET /api/v1/contenidos/{id}/relacionados`, de modo que ambos números son
+coherentes entre sí.
+
+### 11.5 Fuera de alcance
+
+**Documentos exitosos frente a documentos con error** no se expone: la entidad
+sólo se persiste cuando el análisis salió bien, así que no hay estado ni registro
+de intentos fallidos del cual derivarlo. Requiere un campo nuevo o una tabla de
+auditoría; queda registrado en el spike S5-15 como descartado.
