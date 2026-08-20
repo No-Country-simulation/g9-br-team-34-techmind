@@ -196,6 +196,15 @@
     letter-spacing:-.04em;line-height:1.1;margin-top:.95rem}
   .d-text{font-size:.93rem;color:var(--mute);line-height:1.72;margin-top:1rem;max-width:62ch;
     white-space:pre-wrap;max-height:16em;overflow-y:auto}
+  /* S5-06 — resumen con acento a la izquierda, para distinguirlo del texto crudo */
+  .d-resumen{border-left:2px solid var(--teal);padding-left:.9rem}
+  /* S5-06 — bloque colapsable del texto original */
+  .d-meta{font-family:var(--mono);font-size:.68rem;color:var(--sage);margin-top:1rem}
+  .d-collapse{position:relative}
+  .d-original{max-height:6.8em;overflow:hidden;margin-top:.5rem}
+  .d-original.expandido{max-height:16em}
+  .d-fade{position:absolute;bottom:0;left:0;right:0;height:3em;
+    background:linear-gradient(transparent,var(--void))}
   .d-facts{display:flex;flex-wrap:wrap;gap:2rem;margin-top:1.6rem}
   .fact .n{font-family:var(--mono);font-size:1.3rem;letter-spacing:-.03em}
   .fact .l{font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;
@@ -1125,6 +1134,14 @@ async function abrirDetalle(id){
         </div>
         <button class="danger" id="del" title="Borra este contenido de la base. No se puede deshacer.">Eliminar contenido</button>
       </section>
+      <section style="grid-column:1/-1">
+        <p class="sec-label" title="Generado automáticamente por Gemini a partir del texto completo">Resumen generado por IA</p>
+        <p class="d-text d-resumen" style="max-width:none">${esc(c.resumen || 'Sin resumen disponible.')}</p>
+      </section>
+      <section style="grid-column:1/-1">
+        <p class="sec-label" title="El contenido completo que se envió a analizar">Contenido original</p>
+        ${textoColapsable(c.texto)}
+      </section>
       <div>
         <p class="sec-label" title="Clic en cualquiera para buscar otros contenidos que la compartan">Palabras clave extraídas</p>
         <div class="chips">${claves.length?claves.map(k=>
@@ -1139,6 +1156,14 @@ async function abrirDetalle(id){
             <span>${esc(o.titulo)}<span class="why">${esc(o.categoria)}</span></span></button>`;}).join('')
           :'<p class="empty">Ningún contenido de esta categoría comparte palabras clave con este. La lista vacía es una respuesta válida, no un error.</p>'}</div>
       </aside>`;
+    const elVerMas=document.getElementById('verMas');
+    if(elVerMas) elVerMas.addEventListener('click',()=>{
+      const t=document.getElementById('textoOriginal'), f=document.getElementById('textoFade');
+      const abierto = t.classList.toggle('expandido');
+      f.style.display = abierto ? 'none' : '';
+      t.style.overflowY = abierto ? 'auto' : 'hidden';
+      elVerMas.textContent = abierto ? 'Ver menos' : 'Ver contenido completo';
+    });
     elDWrap.querySelectorAll('.rel button').forEach(b=>
       b.addEventListener('click',()=>abrirDetalle(b.dataset.id)));
     elDWrap.querySelectorAll('.kw').forEach(b=>
@@ -1484,6 +1509,32 @@ function avisarError(e, claveHint, alActuar){
     accion: t.accion,
     alActuar: alActuar || (t.accion === 'Volver al inicio' ? irACopa : undefined)
   });
+}
+
+/**
+ * S5-06 — Bloque colapsable para el texto original.
+ *
+ * <p>El backend puede devolver hasta MAX_CARACTERES_TEXTO (10.000, ver
+ * Constants.java), que a longitud máxima son ~1700 palabras. Mostrarlo
+ * siempre completo empujaría el resto del detalle (palabras clave,
+ * relacionados) muy abajo. Arranca colapsado a ~4 líneas con degradado;
+ * "Ver contenido completo" lo expande con scroll interno, igual que ya
+ * hace .d-text por defecto.
+ *
+ * <p>No sabe nada de dónde viene el límite de 10.000: si el backend lo
+ * cambia, esto se adapta solo porque mide el texto que realmente llegó.
+ */
+function textoColapsable(texto){
+  const t = texto || 'Sin texto disponible.';
+  const palabras = t.trim() ? t.trim().split(/\s+/).length : 0;
+  const minutos = Math.max(1, Math.round(palabras/200));
+  return `
+    <p class="d-meta">${palabras.toLocaleString('es')} palabras · ${minutos} min de lectura</p>
+    <div class="d-collapse">
+      <p class="d-text d-original" id="textoOriginal" style="max-width:none">${esc(t)}</p>
+      <div class="d-fade" id="textoFade"></div>
+    </div>
+    <button class="ghost" id="verMas">Ver contenido completo</button>`;
 }
 
 /* ---------- utilidades ---------- */
