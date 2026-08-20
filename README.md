@@ -251,6 +251,7 @@ La guía completa —aprovisionamiento con Terraform, secrets de GitHub Actions,
 | [`docs/contrato-backend-ds.md`](docs/contrato-backend-ds.md) | Contrato REST/JSON acordado entre Backend y Ciencia de Datos: campos, categorías, convenciones de nombres |
 | [`docs/pruebas-aceptacion-e2e.md`](docs/pruebas-aceptacion-e2e.md) | Batería de pruebas de aceptación end-to-end y defectos corregidos |
 | [`docs/devops/despliegue-oci.md`](docs/devops/despliegue-oci.md) | Guía de despliegue en OCI y runbook operativo |
+| [`docs/devops/postgres.md`](docs/devops/postgres.md) | Base de datos Postgres (reemplazo de H2): qué se provisionó, credenciales y validación |
 | [`docs/devops/informe-devops.md`](docs/devops/informe-devops.md) | Decisiones de infraestructura y su justificación |
 | [`infra/terraform/README.md`](infra/terraform/README.md) | Infraestructura como código: recursos de OCI provisionados |
 
