@@ -27,8 +27,8 @@ import java.util.UUID;
  * TM-024 — Entidad de persistencia del resultado de un análisis.
  *
  * <p>Representa un contenido técnico que ya fue procesado por el servicio de
- * inferencia: guarda el texto original junto con la categoría predicha, su
- * confianza y las palabras clave extraídas.
+ * inferencia: guarda el texto original junto con el resumen generado,
+ * la categoría predicha, su confianza y las palabras clave extraídas.
  *
  * <p><b>Sobre el identificador:</b> se usa {@link UUID} y no un autoincremental.
  * La decisión está tomada a nivel proyecto: {@code ContenidoResponseDTO} ya
@@ -77,6 +77,19 @@ public class ContenidoAnalizado {
      */
     @Column(name = "texto", nullable = false, length = 10_000)
     private String texto;
+
+    /**
+     * Resumen generado por Gemini a partir del texto completo del contenido.
+     *
+     * <p>TM-05 — Se persiste para poder exponerlo posteriormente mediante
+     * {@code ContenidoResponseDTO}.
+     *
+     * <p>La longitud máxima de 2000 caracteres es provisoria hasta confirmar
+     * el contrato definitivo con Ciencia de Datos.
+     */
+    // TODO S5-05: confirmar longitud máxima con Ciencia de Datos (2000 es provisorio)
+    @Column(name = "resumen", nullable = false, length = 2000)
+    private String resumen;
 
     /**
      * Categoría predicha por el modelo.

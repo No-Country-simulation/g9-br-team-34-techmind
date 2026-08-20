@@ -54,6 +54,14 @@ public class RestGeminiExtractionClient implements GeminiExtractionClient {
         return llamarConReintentos(request);
     }
 
+    @Override
+    public String resumir(String texto) {
+        GeminiGenerateContentRequestDto request = GeminiGenerateContentRequestDto.deTexto(
+                Constants.PROMPT_RESUMEN_GEMINI, texto
+        );
+        return llamarConReintentos(request);
+    }
+
     private String llamarConReintentos(GeminiGenerateContentRequestDto request) {
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {

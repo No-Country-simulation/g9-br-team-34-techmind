@@ -26,12 +26,14 @@ public class ContenidoMapper {
      *
      * @param request        solicitud del cliente
      * @param clientResponse respuesta del servicio de inferencia
+     * @param resumen        resumen generado por Gemini a partir del texto
      * @return entidad sin persistir
      */
-    public ContenidoAnalizado toEntity(ContenidoRequestDTO request, ModelPredictClientResponseDto clientResponse) {
+    public ContenidoAnalizado toEntity(ContenidoRequestDTO request, ModelPredictClientResponseDto clientResponse, String resumen) {
         return ContenidoAnalizado.builder()
                 .titulo(request.titulo())
                 .texto(request.texto())
+                .resumen(resumen)
                 .categoria(clientResponse.categoria())
                 .probabilidad(clientResponse.probabilidad())
                 .palabrasClave(new ArrayList<>(clientResponse.informacionAdicional()))
@@ -48,6 +50,8 @@ public class ContenidoMapper {
         return new ContenidoResponseDTO(
                 entity.getId(),
                 entity.getTitulo(),
+                entity.getTexto(),
+                entity.getResumen(),
                 entity.getCategoria(),
                 entity.getProbabilidad(),
                 entity.getPalabrasClave(),
@@ -55,10 +59,15 @@ public class ContenidoMapper {
         );
     }
 
+    // TODO: revisar - toResponse() no persiste, así que no hay resumen generado
+    // todavía en este punto. Queda en null hasta que se defina cuándo se llama
+    // a Gemini en este flujo (antes o después de este método).
     public ContenidoResponseDTO toResponse(ContenidoRequestDTO request, ModelPredictClientResponseDto clientResponse) {
         return new ContenidoResponseDTO(
                 null,
                 request.titulo(),
+                request.texto(),
+                null,
                 clientResponse.categoria(),
                 clientResponse.probabilidad(),
                 clientResponse.informacionAdicional(),
