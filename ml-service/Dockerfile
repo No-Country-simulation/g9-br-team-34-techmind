@@ -82,4 +82,4 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
 # Un solo worker: el modelo se carga entero en memoria por proceso y la VM
 # Always Free de OCI tiene RAM acotada. Si hiciera falta mas capacidad, conviene
 # escalar con mas replicas del contenedor antes que con mas workers.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
