@@ -1,5 +1,6 @@
 package com.api.techmind_g9_team34.api_techmind.service;
 
+import com.api.techmind_g9_team34.api_techmind.client.GeminiExtractionClient;
 import com.api.techmind_g9_team34.api_techmind.client.ModeloInferenciaClient;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientRequestDto;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -32,6 +34,9 @@ class ContenidoServiceImplTest {
 
     @Mock
     private ModeloInferenciaClient client;
+
+    @Mock
+    private GeminiExtractionClient geminiExtractionClient;
 
     @Mock
     private ContenidoAnalizadoRepository repository;
@@ -45,7 +50,7 @@ class ContenidoServiceImplTest {
     @BeforeEach
     void setUp() {
         mapper = new ContenidoMapper();
-        service = new ContenidoServiceImpl(client, mapper, repository, validator);
+        service = new ContenidoServiceImpl(client, geminiExtractionClient, mapper, repository, validator);
     }
 
     @Test
@@ -59,6 +64,8 @@ class ContenidoServiceImplTest {
         );
         given(client.predecir(any(ModelPredictClientRequestDto.class)))
                 .willReturn(clientResponse);
+        given(geminiExtractionClient.resumir(anyString()))
+                .willReturn("Resumen generado de prueba.");
         given(repository.save(any(ContenidoAnalizado.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
 
@@ -67,6 +74,7 @@ class ContenidoServiceImplTest {
         assertThat(response.titulo()).isEqualTo("Introducción a Spring Boot");
         assertThat(response.categoria()).isEqualTo("Backend");
         assertThat(response.probabilidad()).isEqualTo(0.89);
+        assertThat(response.resumen()).isEqualTo("Resumen generado de prueba.");
         assertThat(response.informacionAdicional())
                 .containsExactly("Java", "Spring Boot", "API REST");
         verify(repository).save(any(ContenidoAnalizado.class));
@@ -93,6 +101,7 @@ class ContenidoServiceImplTest {
                 .id(id)
                 .titulo("Título")
                 .texto("Texto con más de veinte caracteres.")
+                .resumen("Resumen de prueba.")
                 .categoria("Backend")
                 .probabilidad(0.9)
                 .palabrasClave(List.of("Java"))

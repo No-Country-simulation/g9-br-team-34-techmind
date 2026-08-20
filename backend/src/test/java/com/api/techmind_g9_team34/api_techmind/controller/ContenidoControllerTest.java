@@ -1,5 +1,6 @@
 package com.api.techmind_g9_team34.api_techmind.controller;
 
+import com.api.techmind_g9_team34.api_techmind.client.GeminiExtractionClient;
 import com.api.techmind_g9_team34.api_techmind.client.ModeloInferenciaClient;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
 import com.api.techmind_g9_team34.api_techmind.exception.ModeloServiceException;
@@ -24,6 +25,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -49,11 +51,16 @@ class ContenidoControllerTest {
     @MockBean
     private ModeloInferenciaClient modeloInferenciaClient;
 
+    @MockBean
+    private GeminiExtractionClient geminiExtractionClient;
+
     @BeforeEach
     void configurarMock() {
         when(modeloInferenciaClient.predecir(any()))
                 .thenReturn(new ModelPredictClientResponseDto(
                         "Backend", 0.89, List.of("Java", "Spring Boot", "API REST")));
+        when(geminiExtractionClient.resumir(anyString()))
+                .thenReturn("Resumen generado de prueba.");
     }
 
     @BeforeEach
@@ -112,6 +119,7 @@ class ContenidoControllerTest {
         ContenidoAnalizado entity = repository.save(ContenidoAnalizado.builder()
                 .titulo("Título")
                 .texto("Texto con más de veinte caracteres.")
+                .resumen("Resumen de prueba.")
                 .categoria("Backend")
                 .probabilidad(0.95)
                 .palabrasClave(List.of("Java", "SPRING"))
@@ -399,6 +407,7 @@ class ContenidoControllerTest {
         return repository.save(ContenidoAnalizado.builder()
                 .titulo(titulo)
                 .texto("Texto de prueba con más de veinte caracteres válidos.")
+                .resumen("Resumen de prueba.")
                 .categoria(categoria)
                 .probabilidad(0.9)
                 .palabrasClave(palabras)
@@ -458,6 +467,7 @@ class ContenidoControllerTest {
         return repository.save(ContenidoAnalizado.builder()
                 .titulo(titulo)
                 .texto(texto)
+                .resumen("Resumen de prueba.")
                 .categoria(categoria)
                 .probabilidad(probabilidad)
                 .palabrasClave(List.of("Java"))
