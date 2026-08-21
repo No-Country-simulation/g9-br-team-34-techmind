@@ -6,6 +6,7 @@ import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLoteResultadoDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLotePdfResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.exception.ExtraccionException;
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
 import com.api.techmind_g9_team34.api_techmind.service.ExtraccionArchivoService;
@@ -73,6 +74,22 @@ public class ContenidoController {
 
         ContenidoLoteResultadoDTO response =
                 contenidoService.procesarLote(archivo);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Procesa un lote de PDFs en una sola operación (S5-09). Cada archivo
+     * se extrae (PDFBox + fallback/limpieza Gemini) y clasifica de forma
+     * independiente: si uno falla, los demás se siguen procesando, y el
+     * detalle de cada uno queda en la respuesta.
+     */
+    @PostMapping("/lote-pdf")
+    public ResponseEntity<ContenidoLotePdfResultadoDTO> procesarLotePdf(
+            @RequestParam("archivos") List<MultipartFile> archivos) {
+
+        ContenidoLotePdfResultadoDTO response =
+                contenidoService.procesarLotePdf(archivos);
 
         return ResponseEntity.ok(response);
     }

@@ -45,6 +45,7 @@ class MetricaControllerTest {
         repository.save(ContenidoAnalizado.builder()
                 .titulo(titulo)
                 .texto("Texto de prueba con más de veinte caracteres válidos.")
+                .resumen("Resumen de prueba.")
                 .categoria(categoria)
                 .probabilidad(probabilidad)
                 .palabrasClave(claves)

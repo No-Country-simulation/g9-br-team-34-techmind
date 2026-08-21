@@ -10,6 +10,7 @@ import com.api.techmind_g9_team34.api_techmind.exception.ModeloServiceException;
 import com.api.techmind_g9_team34.api_techmind.mapper.ContenidoMapper;
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
 import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
+import com.api.techmind_g9_team34.api_techmind.service.ExtraccionArchivoService;
 import com.api.techmind_g9_team34.api_techmind.service.impl.ContenidoServiceImpl;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,13 +45,16 @@ class ContenidoServiceImplTest {
     @Mock
     private Validator validator;
 
+    @Mock
+    private ExtraccionArchivoService extraccionArchivoService;
+
     private ContenidoMapper mapper;
     private ContenidoService service;
 
     @BeforeEach
     void setUp() {
         mapper = new ContenidoMapper();
-        service = new ContenidoServiceImpl(client, geminiExtractionClient, mapper, repository, validator);
+        service = new ContenidoServiceImpl(client, geminiExtractionClient, mapper, repository, validator, extraccionArchivoService);
     }
 
     @Test

@@ -5,18 +5,24 @@ import com.api.techmind_g9_team34.api_techmind.client.ModeloInferenciaClient;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientRequestDto;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.ArchivoResultadoDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLotePdfResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLoteResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.FilaResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.PaginaDTO;
 import com.api.techmind_g9_team34.api_techmind.exception.ContenidoNoEncontradoException;
+import com.api.techmind_g9_team34.api_techmind.exception.ExtraccionException;
 import com.api.techmind_g9_team34.api_techmind.exception.ValidacionException;
 import com.api.techmind_g9_team34.api_techmind.exception.ModeloServiceException;
 import com.api.techmind_g9_team34.api_techmind.mapper.ContenidoMapper;
 import com.api.techmind_g9_team34.api_techmind.model.ContenidoAnalizado;
 import com.api.techmind_g9_team34.api_techmind.repository.ContenidoAnalizadoRepository;
 import com.api.techmind_g9_team34.api_techmind.service.ContenidoService;
+import com.api.techmind_g9_team34.api_techmind.service.ExtraccionArchivoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,27 +51,35 @@ import java.util.stream.Collectors;
 @Service
 public class ContenidoServiceImpl implements ContenidoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ContenidoServiceImpl.class);
+
     @Value("${techmind.csv.max-rows:100}")
     private int maxRows;
+
+    @Value("${techmind.pdf-lote.max-archivos:20}")
+    private int maxArchivosPdf;
 
     private final ModeloInferenciaClient modeloClient;
     private final GeminiExtractionClient geminiExtractionClient;
     private final ContenidoMapper mapper;
     private final ContenidoAnalizadoRepository contenidoRepository;
     private final Validator validator;
+    private final ExtraccionArchivoService extraccionArchivoService;
 
     public ContenidoServiceImpl(
             ModeloInferenciaClient modeloClient,
             GeminiExtractionClient geminiExtractionClient,
             ContenidoMapper mapper,
             ContenidoAnalizadoRepository contenidoRepository,
-            Validator validator) {
+            Validator validator,
+            ExtraccionArchivoService extraccionArchivoService) {
 
         this.modeloClient = modeloClient;
         this.geminiExtractionClient = geminiExtractionClient;
         this.mapper = mapper;
         this.contenidoRepository = contenidoRepository;
         this.validator = validator;
+        this.extraccionArchivoService = extraccionArchivoService;
     }
 
     @Override
@@ -288,6 +302,103 @@ public class ContenidoServiceImpl implements ContenidoService {
 
         return new ContenidoLoteResultadoDTO(
                 totalFilas,
+                procesadosExitosos,
+                procesadosConError,
+                resultados
+        );
+    }
+
+    @Override
+    public ContenidoLotePdfResultadoDTO procesarLotePdf(List<MultipartFile> archivos) {
+
+        if (archivos == null || archivos.isEmpty()) {
+            throw new ValidacionException("Debe subir al menos un archivo PDF.");
+        }
+
+        if (archivos.size() > maxArchivosPdf) {
+            throw new ValidacionException(
+                    "El lote supera el máximo permitido de "
+                            + maxArchivosPdf
+                            + " archivos.");
+        }
+
+        List<ArchivoResultadoDTO> resultados = new ArrayList<>();
+        int procesadosExitosos = 0;
+        int procesadosConError = 0;
+
+        for (MultipartFile archivo : archivos) {
+
+            String nombreArchivo = archivo.getOriginalFilename();
+
+            if (nombreArchivo == null
+                    || !nombreArchivo.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+
+                resultados.add(new ArchivoResultadoDTO(
+                        nombreArchivo == null ? "(sin nombre)" : nombreArchivo,
+                        "ERROR",
+                        null,
+                        "El archivo debe ser un PDF (extensión .pdf)."
+                ));
+                procesadosConError++;
+                continue;
+            }
+
+            try {
+                ContenidoRequestDTO datosExtraidos =
+                        extraccionArchivoService.extraerDesdeArchivo(
+                                archivo.getBytes(), nombreArchivo);
+
+                ContenidoResponseDTO resultado = procesarContenido(datosExtraidos);
+
+                resultados.add(new ArchivoResultadoDTO(
+                        nombreArchivo,
+                        "PROCESADO",
+                        resultado,
+                        null
+                ));
+                procesadosExitosos++;
+
+            } catch (ExtraccionException | ModeloServiceException e) {
+                // Errores esperables del pipeline (extracción/clasificación
+                // fallida para ESTE archivo puntual) — no deben abortar el
+                // resto del lote, por eso se capturan aquí y no se relanzan.
+                logger.warn("No se pudo procesar '{}' dentro del lote: {}",
+                        nombreArchivo, e.getMessage());
+                resultados.add(new ArchivoResultadoDTO(
+                        nombreArchivo,
+                        "ERROR",
+                        null,
+                        e.getMessage()
+                ));
+                procesadosConError++;
+
+            } catch (IOException e) {
+                logger.warn("No se pudo leer el archivo '{}' dentro del lote.", nombreArchivo);
+                resultados.add(new ArchivoResultadoDTO(
+                        nombreArchivo,
+                        "ERROR",
+                        null,
+                        "No fue posible leer el archivo."
+                ));
+                procesadosConError++;
+
+            } catch (Exception e) {
+                // Red de seguridad: cualquier error no anticipado tampoco
+                // debe tumbar el lote completo.
+                logger.warn("Error inesperado al procesar '{}' dentro del lote: {}",
+                        nombreArchivo, e.getMessage());
+                resultados.add(new ArchivoResultadoDTO(
+                        nombreArchivo,
+                        "ERROR",
+                        null,
+                        "No fue posible procesar el archivo."
+                ));
+                procesadosConError++;
+            }
+        }
+
+        return new ContenidoLotePdfResultadoDTO(
+                archivos.size(),
                 procesadosExitosos,
                 procesadosConError,
                 resultados
