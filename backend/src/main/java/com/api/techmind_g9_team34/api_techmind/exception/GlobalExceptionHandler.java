@@ -1,11 +1,15 @@
 package com.api.techmind_g9_team34.api_techmind.exception;
 
 import com.api.techmind_g9_team34.api_techmind.dto.response.ErrorResponseDTO;
+import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -218,6 +222,53 @@ public class GlobalExceptionHandler {
                         "El recurso solicitado no existe.",
                         "La dirección a la que entraste no existe.",
                         "Volvé al inicio.",
+                        request.getRequestURI()));
+    }
+
+    /**
+     * Errores durante el commit de la transacción (p. ej. violación de
+     * constraint única, FK, NOT NULL). Se desenrolla la causa raíz para
+     * devolver un error semántico en lugar de 500 genérico.
+     */
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<ErrorResponseDTO> handleTransactionSystem(
+            TransactionSystemException ex, HttpServletRequest request) {
+
+        Throwable cause = ex.getRootCause();
+
+        if (cause instanceof DataIntegrityViolationException dive) {
+            logger.warn("Violación de integridad de datos en commit: {}", dive.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(ErrorResponseDTO.of(
+                            HttpStatus.CONFLICT,
+                            "Violación de integridad de datos: " + dive.getMostSpecificCause().getMessage(),
+                            "Los datos enviados entran en conflicto con registros existentes.",
+                            "Revisá los valores únicos y referencias antes de reenviar.",
+                            request.getRequestURI()));
+        }
+
+        if (cause instanceof PersistenceException pe) {
+            logger.warn("Error de persistencia en commit: {}", pe.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ErrorResponseDTO.of(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Error al persistir los datos.",
+                            "Ocurrió un problema al guardar la información.",
+                            "Intentá de nuevo en unos minutos.",
+                            request.getRequestURI()));
+        }
+
+        // Cualquier otro error de transacción: loggear y devolver 503
+        logger.error("Error de transacción no controlado: {}", cause != null ? cause.getMessage() : ex.getMessage(), ex);
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponseDTO.of(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "El servicio de análisis no está disponible en este momento.",
+                        "Algo salió mal de nuestro lado.",
+                        "Ya quedó registrado. Volvé a intentarlo en unos minutos.",
                         request.getRequestURI()));
     }
 
