@@ -250,6 +250,20 @@
   .drop svg{width:26px;height:26px;color:var(--sage);margin-bottom:.55rem}
   .drop b{display:block;font-family:var(--display);font-size:.92rem;font-weight:600}
   .drop span{display:block;font-family:var(--mono);font-size:.63rem;color:var(--sage);margin-top:.35rem}
+  .batch-list{display:grid;gap:.4rem;margin-top:1rem;max-height:190px;overflow-y:auto}
+  .batch-item{display:grid;grid-template-columns:auto 1fr auto;gap:.6rem;align-items:center;
+    background:var(--void);border:1px solid var(--hairline);border-radius:9px;padding:.55rem .7rem}
+  .batch-item .name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem}
+  .batch-item .status{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--sage)}
+  .batch-item .status.processing{color:var(--teal)}
+  .batch-item .status.success{color:#8bd5a8}
+  .batch-item .status.error{color:#fb7185}
+  .batch-item .message{grid-column:2/-1;color:#fb7185;font-size:.67rem;line-height:1.35}
+  .batch-dot{width:7px;height:7px;border-radius:50%;background:var(--sage)}
+  .batch-dot.processing{background:var(--teal);box-shadow:0 0 8px var(--teal)}
+  .batch-dot.success{background:#8bd5a8}.batch-dot.error{background:#fb7185}
+  .batch-summary{font-family:var(--mono);font-size:.68rem;color:var(--bone);line-height:1.5;margin-top:.8rem}
+  .batch-summary:empty{display:none}
   .field{margin-top:1.1rem}
   .field label{font-family:var(--mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;
     color:var(--sage);display:block;margin-bottom:.45rem}
@@ -457,14 +471,16 @@
     <div class="sow-box">
       <h2 class="sow-title">Analizar contenido</h2>
       <p class="sow-sub">Pegá un texto técnico o soltá un PDF. El modelo lo clasifica y extrae sus palabras clave.</p>
-      <div class="drop" id="drop" title="Se lee el texto del PDF en tu navegador; el archivo no se sube a ningún lado">
+      <div class="drop" id="drop" title="Seleccioná uno o varios archivos PDF para analizarlos">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
           <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/>
         </svg>
-        <b>Soltá un PDF acá</b>
-        <span id="dropHint">o hacé clic para elegirlo · se leen las primeras páginas</span>
-        <input type="file" id="file" accept="application/pdf" hidden>
+        <b>Soltá tus PDFs acá</b>
+        <span id="dropHint">o hacé clic para elegir uno o varios archivos</span>
+        <input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>
       </div>
+      <div class="batch-list" id="batchList" aria-live="polite"></div>
+      <p class="batch-summary" id="batchSummary" aria-live="polite"></p>
       <div class="field">
         <label for="tit" title="Cómo vas a reconocer este contenido después. Máximo 200 caracteres.">Título</label>
         <input id="tit" maxlength="200" placeholder="Introducción a Spring Boot">
@@ -672,6 +688,11 @@ const api = {
   relacionados: (id, limite=5) => pedir(`/api/v1/contenidos/${id}/relacionados?limite=${limite}`),
   crear: body => pedir('/api/v1/contenidos', {
     method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }),
+  lotePdf: archivos => {
+    const cuerpo = new FormData();
+    archivos.forEach(archivo => cuerpo.append('archivos', archivo));
+    return pedir('/api/v1/contenidos/lote-pdf', { method:'POST', body:cuerpo });
+  },
   borrar: id => pedir('/api/v1/contenidos/' + id, { method:'DELETE' }),
   metricas: () => pedir('/api/v1/metricas')   // S5-14
 };
@@ -1372,13 +1393,17 @@ const elTit=document.getElementById('tit'), elTxt=document.getElementById('txt')
       elDrop=document.getElementById('drop'), elFile=document.getElementById('file'),
       elDropHint=document.getElementById('dropHint');
 const LIMITE=10000;
+const MAX_LOTE=20;
+const elBatchList=document.getElementById('batchList'), elBatchSummary=document.getElementById('batchSummary');
+let batchFiles=[];
 
 function medirTexto(){
   const n=elTxt.value.length;
   elCount.textContent=`${n} / ${LIMITE}`;
-  const ok=n>=20&&n<=LIMITE&&elTit.value.trim().length>0;
+  const okLote=batchFiles.length>1;
+  const okTexto=n>=20&&n<=LIMITE&&elTit.value.trim().length>0;
   elMeter.classList.toggle('bad', n>0&&n<20);
-  elGo.disabled=!ok;}
+  elGo.disabled=!(okLote||okTexto);}
 elTxt.addEventListener('input',medirTexto); elTit.addEventListener('input',medirTexto);
 
 function abrirSow(){ elSow.classList.add('open'); elMsg.textContent=''; elMsg.classList.remove('err');
@@ -1392,8 +1417,42 @@ elDrop.addEventListener('click',()=>elFile.click());
 elDrop.addEventListener('dragover',e=>{e.preventDefault();elDrop.classList.add('hot');});
 elDrop.addEventListener('dragleave',()=>elDrop.classList.remove('hot'));
 elDrop.addEventListener('drop',e=>{e.preventDefault();elDrop.classList.remove('hot');
-  const f=e.dataTransfer.files[0]; if(f) leerPdf(f);});
-elFile.addEventListener('change',e=>{ const f=e.target.files[0]; if(f) leerPdf(f); });
+  seleccionarArchivos([...e.dataTransfer.files]);});
+elFile.addEventListener('change',e=>{ seleccionarArchivos([...e.target.files]); elFile.value=''; });
+
+function esPdf(file){ return file.type==='application/pdf' || /\.pdf$/i.test(file.name); }
+
+function seleccionarArchivos(files){
+  const validos=files.filter(esPdf).slice(0,MAX_LOTE);
+  if(files.some(file=>!esPdf(file))){
+    elDropHint.textContent='Solo se aceptan archivos PDF';
+    avisar({titulo:'Archivo no válido',detalle:'Quitamos los archivos que no tienen formato PDF.'});
+  }
+  if(files.filter(esPdf).length>MAX_LOTE)
+    avisar({titulo:'Lote demasiado grande',detalle:`Podés enviar hasta ${MAX_LOTE} PDFs por lote.`});
+  batchFiles=validos; elGo.textContent='Analizar';
+  pintarCola(batchFiles.map(file=>({file,estado:'pendiente'})));
+  if(batchFiles.length===1) leerPdf(batchFiles[0]);
+  if(batchFiles.length>1){
+    elTit.value=''; elTxt.value=''; elDropHint.textContent=`${batchFiles.length} PDFs listos para enviar`;
+    elGo.textContent='Procesar lote'; medirTexto();
+  }
+}
+
+function pintarCola(items){
+  const etiquetas={pending:'pendiente',processing:'procesando',success:'exito',error:'error'};
+  elBatchList.innerHTML=items.map(item=>`<div class="batch-item">
+    <i class="batch-dot ${item.estado}"></i>
+    <span class="name" title="${esc(item.file.name)}">${esc(item.file.name)}</span>
+    <span class="status ${item.estado}">${etiquetas[item.estado]||item.estado}</span>
+    ${item.mensaje?`<span class="message">${esc(item.mensaje)}</span>`:''}
+  </div>`).join('');
+}
+
+function reiniciarCola(){
+  batchFiles=[]; elBatchList.innerHTML=''; elBatchSummary.textContent='';
+  elGo.textContent='Analizar'; elDropHint.textContent='o hacé clic para elegirlo · se leen las primeras páginas';
+}
 
 /**
  * Extrae texto de las primeras páginas hasta llenar el límite del backend.
@@ -1401,7 +1460,7 @@ elFile.addEventListener('change',e=>{ const f=e.target.files[0]; if(f) leerPdf(f
  * a que el usuario crea que se analizó el documento entero.
  */
 async function leerPdf(file){
-  if(file.type!=='application/pdf'){ elDropHint.textContent='Ese archivo no es un PDF'; return; }
+  if(!esPdf(file)){ elDropHint.textContent='Ese archivo no es un PDF'; return; }
   elDropHint.textContent='Leyendo…';
   try{
     const buf=await file.arrayBuffer();
@@ -1431,9 +1490,25 @@ async function leerPdf(file){
 }
 
 elGo.addEventListener('click',async()=>{
+  if(elGo.textContent==='Cerrar'){
+    cerrarSow(); reiniciarCola();
+    return;
+  }
   elGo.disabled=true; elMsg.classList.remove('err'); elMsg.textContent='Analizando…';
   try{
+    if(batchFiles.length>1){ await procesarLote(); return; }
     const c=await api.crear({ titulo:elTit.value.trim(), texto:elTxt.value.trim() });
+    await agregarContenidoAlArbol(c);
+    cerrarSow(); elTit.value=''; elTxt.value=''; medirTexto(); reiniciarCola();
+    abrirDetalle(c.id);
+  }catch(e){
+    const t = traducirError(e, 'datos_invalidos');
+    elMsg.classList.add('err');
+    elMsg.textContent = t.detalle;
+    elGo.disabled=false;}
+});
+
+async function agregarContenidoAlArbol(c){
     S.contenidos.push({ id:c.id, titulo:c.titulo, categoria:c.categoria,
                         fechaProcesamiento:c.fechaProcesamiento });
     if(!ramaDe(c.categoria)){
@@ -1448,15 +1523,37 @@ elGo.addEventListener('click',async()=>{
 
     pintarChip(); pintarHearth();
     if(S.modo==='rama' && S.rama && S.rama.clave===claveCat(c.categoria)) pintarShelf(S.rama);
-    cerrarSow(); elTit.value=''; elTxt.value=''; medirTexto();
-    elDropHint.textContent='o hacé clic para elegirlo · se leen las primeras páginas';
-    abrirDetalle(c.id);
+}
+
+async function procesarLote(){
+  const items=batchFiles.map(file=>({file,estado:'processing'}));
+  pintarCola(items); elGo.disabled=true; elMsg.classList.remove('err');
+  elMsg.textContent='Enviando lote…';
+  try{
+    const respuesta=await api.lotePdf(batchFiles);
+    const resultados=respuesta.resultados||[];
+    let exitos=0;
+    for(let i=0;i<items.length;i++){
+      const r=resultados[i];
+      if(r && r.estado==='PROCESADO' && r.resultado){
+        items[i].estado='success'; exitos++;
+        await agregarContenidoAlArbol(r.resultado);
+      }else{
+        items[i].estado='error';
+        items[i].mensaje='No pudimos procesar este PDF. '+(r?.mensajeError||'Revisá el archivo e intentá nuevamente.');
+      }
+      pintarCola(items);
+    }
+    elBatchSummary.textContent=`${exitos} de ${items.length} procesados correctamente`;
+    elMsg.textContent=exitos===items.length?'Lote procesado correctamente':'El lote terminó con algunos errores';
+    elGo.textContent='Cerrar'; elGo.disabled=false;
   }catch(e){
-    const t = traducirError(e, 'datos_invalidos');
-    elMsg.classList.add('err');
-    elMsg.textContent = t.detalle;
-    elGo.disabled=false;}
-});
+    const t=traducirError(e,'archivo_invalido');
+    items.forEach(item=>{item.estado='error';item.mensaje=t.detalle;});
+    pintarCola(items); elBatchSummary.textContent=`0 de ${items.length} procesados correctamente`;
+    elMsg.classList.add('err'); elMsg.textContent=t.detalle; elGo.disabled=false;
+  }
+}
 
 /* ══════════════════════════════════════════════════════════
    S5-16 · Dashboard de métricas
