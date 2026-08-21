@@ -1,6 +1,10 @@
 {
   "cleanUrls": true,
-  "rewrites": [
-    { "source": "/", "destination": "/landing.html" }
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/landing",
+      "permanent": false
+    }
   ]
 }
