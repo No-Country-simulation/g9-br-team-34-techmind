@@ -85,25 +85,36 @@ public class ContenidoServiceImpl implements ContenidoService {
     @Override
     @Transactional
     public ContenidoResponseDTO procesarContenido(ContenidoRequestDTO request) {
-        ModelPredictClientRequestDto clientRequest = mapper.toClientRequest(request);
-        ModelPredictClientResponseDto clientResponse;
         try {
-            clientResponse = modeloClient.predecir(clientRequest);
+            ModelPredictClientRequestDto clientRequest = mapper.toClientRequest(request);
+            ModelPredictClientResponseDto clientResponse;
+            try {
+                clientResponse = modeloClient.predecir(clientRequest);
+            } catch (Exception e) {
+                throw new ModeloServiceException(
+                        "El servicio de análisis no está disponible en este momento.", e);
+            }
+
+            String resumen = null;
+            try {
+                resumen = geminiExtractionClient.resumir(request.texto());
+            } catch (Exception e) {
+                logger.warn("No se pudo generar el resumen con Gemini: {}. Continuando sin resumen.", e.getMessage());
+            }
+
+            ContenidoAnalizado entity = mapper.toEntity(request, clientResponse, resumen);
+            ContenidoAnalizado persistido = contenidoRepository.save(entity);
+            return mapper.toResponseDTO(persistido);
+
+        } catch (ModeloServiceException | ValidacionException | ExtraccionException e) {
+            // Excepciones de negocio conocidas: relanzar para que el handler específico las maneje
+            throw e;
         } catch (Exception e) {
+            // Cualquier otra excepción inesperada: loggear y convertir a error de servicio
+            logger.error("Error inesperado procesando contenido: {}", e.getMessage(), e);
             throw new ModeloServiceException(
                     "El servicio de análisis no está disponible en este momento.", e);
         }
-
-        String resumen = null;
-        try {
-            resumen = geminiExtractionClient.resumir(request.texto());
-        } catch (Exception e) {
-            logger.warn("No se pudo generar el resumen con Gemini: {}. Continuando sin resumen.", e.getMessage());
-        }
-
-        ContenidoAnalizado entity = mapper.toEntity(request, clientResponse, resumen);
-        ContenidoAnalizado persistido = contenidoRepository.save(entity);
-        return mapper.toResponseDTO(persistido);
     }
 
     @Override
