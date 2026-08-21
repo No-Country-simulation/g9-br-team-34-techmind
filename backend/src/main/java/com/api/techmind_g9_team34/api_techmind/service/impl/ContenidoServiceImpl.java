@@ -94,7 +94,12 @@ public class ContenidoServiceImpl implements ContenidoService {
                     "El servicio de análisis no está disponible en este momento.", e);
         }
 
-        String resumen = geminiExtractionClient.resumir(request.texto());
+        String resumen = null;
+        try {
+            resumen = geminiExtractionClient.resumir(request.texto());
+        } catch (Exception e) {
+            logger.warn("No se pudo generar el resumen con Gemini: {}. Continuando sin resumen.", e.getMessage());
+        }
 
         ContenidoAnalizado entity = mapper.toEntity(request, clientResponse, resumen);
         ContenidoAnalizado persistido = contenidoRepository.save(entity);
