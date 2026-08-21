@@ -21,7 +21,9 @@
   html,body{height:100%;overflow:hidden}
   body{background:var(--void);color:var(--bone);font-family:var(--body);-webkit-font-smoothing:antialiased}
   #stage{position:fixed;inset:0}
-  #map{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 1.4s ease .2s}
+  /* S5-04: sin esto el navegador se queda con el gesto y nunca llega al lienzo. */
+  #map{position:absolute;inset:0;width:100%;height:100%;opacity:0;
+    transition:opacity 1.4s ease .2s;touch-action:none}
   #map.live{opacity:1}
   ::-webkit-scrollbar{width:9px}
   ::-webkit-scrollbar-track{background:transparent}
@@ -298,6 +300,17 @@
   .alert.ok .alert-act{border-color:#265049;color:#8fd8ce}
   .alert.ok .alert-act:hover{border-color:var(--teal);color:var(--teal)}
 
+  /* S5-02 — Error de quien usa la aplicación: algo que puede corregir.
+     Ámbar, no rojo: no está roto nada, falta ajustar un dato. */
+  .alert.user{border-color:#3d3320;border-left-color:#fbbf24;
+    background:linear-gradient(165deg,#191408,#141005)}
+  .alert.user .alert-ico{color:#fbbf24}
+  .alert.user .alert-act{border-color:#4d4028;color:#e7c67a}
+  .alert.user .alert-act:hover{border-color:#fbbf24;color:#fbbf24}
+  /* El sistema queda con el rojo por defecto: es un fallo, no una corrección. */
+  .alert-kind{font-family:var(--mono);font-size:.54rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--sage);display:block;margin-top:.15rem}
+
   /* ---------- S5-04 · Controles de zoom ---------- */
   #zoomctl{position:absolute;right:clamp(.85rem,2.4vw,1.4rem);bottom:clamp(.85rem,2.4vw,1.4rem);
     z-index:15;display:flex;flex-direction:column;gap:.35rem;opacity:0;pointer-events:none;
@@ -477,53 +490,70 @@ const API_KEY  = '';   // TM-039: cuando el filtro X-API-Key esté activo, poner
    Traduce fallos técnicos a algo que una persona pueda leer y accionar.
    Documentado en docs/S5-01-catalogo-errores.md
    ══════════════════════════════════════════════════════════ */
+/**
+ * S5-02 — Cada entrada declara de quién es el error:
+ *  'usuario' → algo que la persona puede corregir (dato mal, archivo grande)
+ *  'sistema' → un fallo del que no es responsable y no puede resolver
+ * La interfaz los distingue visualmente además del texto.
+ */
 const CATALOGO_ERRORES = {
   sin_conexion: {
+    tipo: 'sistema',
     titulo: 'No se pudo conectar',
     detalle: 'El navegador no pudo alcanzar la API. Puede estar apagada, o tu origen no está permitido en CORS.',
     accion: 'Reintentar'
   },
   datos_invalidos: {
+    tipo: 'usuario',
     titulo: 'Revisá los datos',
     detalle: 'Alguno de los campos no cumple con lo que la API espera.'
   },
   id_invalido: {
+    tipo: 'usuario',
     titulo: 'Identificador con formato inválido',
     detalle: 'El id de la dirección no tiene forma de UUID.',
     accion: 'Volver al inicio'
   },
   archivo_invalido: {
+    tipo: 'usuario',
     titulo: 'No se pudo leer el archivo',
     detalle: 'El archivo no llegó completo o el formato no está soportado. Se aceptan PDF y DOCX.'
   },
   no_encontrado: {
+    tipo: 'usuario',
     titulo: 'No encontramos ese contenido',
     detalle: 'Puede haber sido eliminado, o el enlace apunta a algo que ya no existe.',
     accion: 'Volver al inicio'
   },
   archivo_muy_grande: {
+    tipo: 'usuario',
     titulo: 'El archivo pesa demasiado',
     detalle: 'Supera el tamaño máximo que acepta el servidor.'
   },
   no_procesable: {
+    tipo: 'usuario',
     titulo: 'No pudimos analizar este contenido',
     detalle: 'El texto llegó bien, pero el modelo no encontró suficiente contenido útil. Suele pasar con textos muy cortos o muy repetitivos.'
   },
   extraccion_fallida: {
+    tipo: 'usuario',
     titulo: 'No pudimos extraer el texto',
     detalle: 'El archivo o la página no tienen texto legible. Los PDF escaneados necesitan OCR, que todavía no está disponible.'
   },
   servicio_caido: {
+    tipo: 'sistema',
     titulo: 'El clasificador no está disponible',
     detalle: 'El servicio que analiza los contenidos no está respondiendo. Es temporal.',
     accion: 'Reintentar'
   },
   error_interno: {
+    tipo: 'sistema',
     titulo: 'Algo salió mal de nuestro lado',
     detalle: 'Ocurrió un error inesperado. Ya quedó registrado para que lo revisemos.',
     accion: 'Reintentar'
   },
   desconocido: {
+    tipo: 'sistema',
     titulo: 'No pudimos completar la operación',
     detalle: 'Ocurrió algo que no esperábamos.',
     accion: 'Reintentar'
@@ -546,6 +576,23 @@ const POR_STATUS = { 404:'no_encontrado', 413:'archivo_muy_grande',
 function traducirError(e, claveHint){
   if(e && String(e.message||'').includes('Failed to fetch'))
     return { ...CATALOGO_ERRORES.sin_conexion, clave:'sin_conexion' };
+
+  // S5-01: si el backend manda mensajeUsuario y sugerencia, esos mandan sobre
+  // el catálogo. El catálogo cubre lo que la red no dejó llegar.
+  const delBackend = e && e.cuerpo;
+  if(delBackend && delBackend.mensajeUsuario){
+    const claveB = (e.status === 400 && claveHint) ? claveHint
+                 : (POR_STATUS[e.status] || claveHint || 'desconocido');
+    const baseB = CATALOGO_ERRORES[claveB] || CATALOGO_ERRORES.desconocido;
+    return {
+      clave: claveB,
+      tipo: baseB.tipo,
+      titulo: baseB.titulo,
+      detalle: delBackend.mensajeUsuario,
+      sugerencia: delBackend.sugerencia || null,
+      accion: baseB.accion
+    };
+  }
 
   const clave = (e && e.status === 400 && claveHint) ? claveHint
               : (e && POR_STATUS[e.status]) || claveHint || 'desconocido';
@@ -860,8 +907,11 @@ function nodoEn(mx,my){
    S5-03 · Arrastre de nodos   |   S5-04 · Zoom y desplazamiento
    ══════════════════════════════════════════════════════════ */
 const ZOOM_MIN=.35, ZOOM_MAX=3.2;
-let arrastre=null;     // {nodo, dx, dy, movido}
+/** Píxeles de tolerancia antes de considerar que hubo arrastre y no un clic. */
+const UMBRAL=3;
+let arrastre=null;     // {nodo, dx, dy, px, py, movido}
 let paneo=null;        // {x, y, camX, camY, movido}
+let pellizco=null;     // S5-04 táctil: {dist, z}
 
 /** Convierte coordenadas de pantalla al plano del mapa. */
 function aPlano(px,py){
@@ -878,7 +928,7 @@ cv.addEventListener('mousedown',e=>{
   if(nd){
     // Se guarda el desfase entre el cursor y el centro del nodo para que no
     // salte al empezar a arrastrar.
-    arrastre={ nodo:nd, dx:nd.x-wx, dy:nd.y-wy, movido:false };
+    arrastre={ nodo:nd, dx:nd.x-wx, dy:nd.y-wy, px:mx, py:my, movido:false };
   }else{
     paneo={ x:mx, y:my, camX:cam.tx, camY:cam.ty, movido:false };
     cv.style.cursor='grabbing';
@@ -891,9 +941,13 @@ addEventListener('mousemove',e=>{
 
   if(arrastre){
     const [wx,wy]=aPlano(mx,my);
+    // S5-03: se exige el mismo umbral que el paneo. Sin él, un clic con
+    // un temblor de un píxel movía el nodo y lo dejaba fijo en vez de
+    // abrir el detalle.
+    if(!arrastre.movido && Math.hypot(mx-arrastre.px, my-arrastre.py) <= UMBRAL) return;
     const nd=arrastre.nodo;
     nd.fijo=true; nd.x=wx+arrastre.dx; nd.y=wy+arrastre.dy;
-    // Si es una rama, sus cursos la siguen: cuelgan de ella.
+    // Si es una rama, sus contenidos la siguen: cuelgan de ella.
     if(nd.tipo==='rama'){ nd.rama.x=nd.x; nd.rama.y=nd.y; }
     arrastre.movido=true;
     cv.style.cursor='grabbing';
@@ -905,7 +959,7 @@ addEventListener('mousemove',e=>{
     // posición: así el suavizado del frame sigue funcionando.
     cam.tx=paneo.camX-(mx-paneo.x)/cam.z;
     cam.ty=paneo.camY-(my-paneo.y)/cam.z;
-    if(Math.hypot(mx-paneo.x,my-paneo.y)>3) paneo.movido=true;
+    if(Math.hypot(mx-paneo.x,my-paneo.y)>UMBRAL) paneo.movido=true;
     return;
   }
 
@@ -954,6 +1008,94 @@ cv.addEventListener('wheel',e=>{
   cam.ty=wy-(wy-cam.ty)/real;
   cam.tz=nuevo;
 },{passive:false});
+
+/* ---------- S5-04 · Gestos táctiles ----------
+   Un dedo desplaza o arrastra un nodo; dos dedos hacen zoom. Se reutiliza la
+   misma lógica del mouse en lugar de duplicarla: cambia de dónde salen las
+   coordenadas, no qué se hace con ellas. */
+
+/** Distancia entre dos toques, para medir el pellizco. */
+function separacion(t){
+  return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+}
+/** Punto medio entre dos toques, en coordenadas del lienzo. */
+function centro(t,b){
+  return [ (t[0].clientX+t[1].clientX)/2-b.left, (t[0].clientY+t[1].clientY)/2-b.top ];
+}
+
+cv.addEventListener('touchstart',e=>{
+  const b=cv.getBoundingClientRect();
+  if(e.touches.length===1){
+    const t=e.touches[0];
+    const mx=t.clientX-b.left, my=t.clientY-b.top;
+    const nd=nodoEn(mx,my);
+    const [wx,wy]=aPlano(mx,my);
+    if(nd) arrastre={ nodo:nd, dx:nd.x-wx, dy:nd.y-wy, px:mx, py:my, movido:false };
+    else   paneo={ x:mx, y:my, camX:cam.tx, camY:cam.ty, movido:false };
+  }else if(e.touches.length===2){
+    // Con dos dedos manda el pellizco: se cancela lo que hubiera empezado
+    // con uno, o el mapa haría dos cosas a la vez.
+    arrastre=null; paneo=null;
+    pellizco={ dist:separacion(e.touches), z:cam.tz };
+  }
+},{passive:true});
+
+cv.addEventListener('touchmove',e=>{
+  const b=cv.getBoundingClientRect();
+
+  if(pellizco && e.touches.length===2){
+    e.preventDefault();
+    const nueva=separacion(e.touches);
+    if(pellizco.dist>0){
+      const [mx,my]=centro(e.touches,b);
+      const [wx,wy]=aPlano(mx,my);
+      const objetivo=Math.min(ZOOM_MAX,Math.max(ZOOM_MIN,pellizco.z*(nueva/pellizco.dist)));
+      const real=objetivo/cam.tz;
+      if(real!==1){
+        // Igual que con la rueda: el punto entre los dedos no se mueve.
+        cam.tx=wx-(wx-cam.tx)/real;
+        cam.ty=wy-(wy-cam.ty)/real;
+        cam.tz=objetivo;
+      }
+    }
+    return;
+  }
+
+  if(e.touches.length!==1) return;
+  const t=e.touches[0];
+  const mx=t.clientX-b.left, my=t.clientY-b.top;
+
+  if(arrastre){
+    e.preventDefault();
+    if(!arrastre.movido && Math.hypot(mx-arrastre.px,my-arrastre.py)<=UMBRAL) return;
+    const [wx,wy]=aPlano(mx,my);
+    const nd=arrastre.nodo;
+    nd.fijo=true; nd.x=wx+arrastre.dx; nd.y=wy+arrastre.dy;
+    if(nd.tipo==='rama'){ nd.rama.x=nd.x; nd.rama.y=nd.y; }
+    arrastre.movido=true;
+    return;
+  }
+
+  if(paneo){
+    e.preventDefault();
+    cam.tx=paneo.camX-(mx-paneo.x)/cam.z;
+    cam.ty=paneo.camY-(my-paneo.y)/cam.z;
+    if(Math.hypot(mx-paneo.x,my-paneo.y)>UMBRAL) paneo.movido=true;
+  }
+},{passive:false});
+
+cv.addEventListener('touchend',e=>{
+  // Un toque sin desplazamiento es un clic, igual que con el mouse.
+  if(arrastre && !arrastre.movido){
+    const nd=arrastre.nodo;
+    if(nd.tipo==='rama') irARama(nd.rama); else abrirDetalle(nd.cont.id);
+  }
+  if(paneo && !paneo.movido && S.modo==='rama') irACopa();
+  arrastre=null; paneo=null;
+  if(e.touches.length<2) pellizco=null;
+},{passive:true});
+
+cv.addEventListener('touchcancel',()=>{ arrastre=null; paneo=null; pellizco=null; },{passive:true});
 
 /** Doble clic en el vacío: vuelve al encuadre inicial. */
 cv.addEventListener('dblclick',e=>{
@@ -1339,6 +1481,11 @@ async function abrirDash(){
         <div class="kpi"><div class="n">${(m.confianzaMedia*100).toFixed(0)}%</div>
           <div class="l">Confianza media</div>
           <div class="h">Qué tan seguro está el modelo, en promedio</div></div>
+        <div class="kpi"><div class="n">${m.totalRelaciones}</div>
+          <div class="l">Relaciones</div>
+          <div class="h">Pares de contenidos conectados por palabras en común</div></div>
+        <div class="kpi"><div class="n">${m.palabrasClaveUnicas}</div>
+          <div class="l">Términos distintos</div></div>
         <div class="kpi"><div class="n">${m.palabrasClavePorContenido}</div>
           <div class="l">Palabras clave por contenido</div></div>
         <div class="kpi"><div class="n">${Math.round(m.longitudMediaTexto).toLocaleString('es')}</div>
@@ -1394,7 +1541,9 @@ async function abrirDash(){
         </div>
       </div>
 
-      <p class="dash-foot">Calculado el ${fecha(m.calculadoEn)} · GET /api/v1/metricas</p>`;
+      <p class="dash-foot">Calculado el ${fecha(m.calculadoEn)} · GET /api/v1/metricas<br>
+        La tasa de éxito frente a error no se muestra: sólo se guardan los análisis que
+        salieron bien, así que no hay dato de los intentos fallidos.</p>`;
 
     elDashWrap.querySelectorAll('.cloud button').forEach(b=>
       b.addEventListener('click',()=>{
@@ -1432,12 +1581,19 @@ const elAlerts = document.getElementById('alerts');
  */
 function avisar(cfg){
   const el = document.createElement('div');
-  el.className = 'alert' + (cfg.ok ? ' ok' : '');
+  // S5-02: 'usuario' se ve distinto de 'sistema'. Un dato mal cargado no
+  // merece el mismo rojo que un servicio caído.
+  const tipo = cfg.ok ? 'ok' : (cfg.tipo === 'usuario' ? 'user' : 'sys');
+  el.className = 'alert' + (tipo === 'ok' ? ' ok' : tipo === 'user' ? ' user' : '');
   el.setAttribute('role', cfg.ok ? 'status' : 'alert');
 
   const ico = cfg.ok
     ? '<path d="M20 6 9 17l-5-5"/>'
-    : '<circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/>';
+    : tipo === 'user'
+      // Triángulo para lo corregible, círculo para el fallo del sistema:
+      // se distinguen aunque alguien no perciba el color.
+      ? '<path d="M12 4 2.5 20h19z"/><path d="M12 10v4"/><path d="M12 17.5v.01"/>'
+      : '<circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/>';
 
   el.innerHTML = `
     <div class="alert-head">
@@ -1446,7 +1602,8 @@ function avisar(cfg){
       <span class="alert-title">${esc(cfg.titulo)}</span>
       <button class="alert-x" aria-label="Cerrar aviso">&times;</button>
     </div>
-    ${cfg.detalle ? `<p class="alert-body">${esc(cfg.detalle)}</p>` : ''}
+    ${cfg.detalle ? `<p class="alert-body">${esc(cfg.detalle)}
+      ${cfg.sugerencia ? `<span class="alert-kind">${esc(cfg.sugerencia)}</span>` : ''}</p>` : ''}
     ${cfg.accion ? `<button class="alert-act">${esc(cfg.accion)}</button>` : ''}`;
 
   const cerrar = () => {
@@ -1481,6 +1638,8 @@ function avisarError(e, claveHint, alActuar){
   return avisar({
     titulo: t.titulo,
     detalle: t.detalle,
+    sugerencia: t.sugerencia,
+    tipo: t.tipo,
     accion: t.accion,
     alActuar: alActuar || (t.accion === 'Volver al inicio' ? irACopa : undefined)
   });
