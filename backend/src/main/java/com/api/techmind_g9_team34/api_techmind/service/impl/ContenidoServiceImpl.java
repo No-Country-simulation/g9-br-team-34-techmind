@@ -1,5 +1,6 @@
 package com.api.techmind_g9_team34.api_techmind.service.impl;
 
+import com.api.techmind_g9_team34.api_techmind.client.GeminiExtractionClient;
 import com.api.techmind_g9_team34.api_techmind.client.ModeloInferenciaClient;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientRequestDto;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
@@ -48,17 +49,20 @@ public class ContenidoServiceImpl implements ContenidoService {
     private int maxRows;
 
     private final ModeloInferenciaClient modeloClient;
+    private final GeminiExtractionClient geminiExtractionClient;
     private final ContenidoMapper mapper;
     private final ContenidoAnalizadoRepository contenidoRepository;
     private final Validator validator;
 
     public ContenidoServiceImpl(
             ModeloInferenciaClient modeloClient,
+            GeminiExtractionClient geminiExtractionClient,
             ContenidoMapper mapper,
             ContenidoAnalizadoRepository contenidoRepository,
             Validator validator) {
 
         this.modeloClient = modeloClient;
+        this.geminiExtractionClient = geminiExtractionClient;
         this.mapper = mapper;
         this.contenidoRepository = contenidoRepository;
         this.validator = validator;
@@ -75,7 +79,10 @@ public class ContenidoServiceImpl implements ContenidoService {
             throw new ModeloServiceException(
                     "El servicio de análisis no está disponible en este momento.", e);
         }
-        ContenidoAnalizado entity = mapper.toEntity(request, clientResponse);
+
+        String resumen = geminiExtractionClient.resumir(request.texto());
+
+        ContenidoAnalizado entity = mapper.toEntity(request, clientResponse, resumen);
         ContenidoAnalizado persistido = contenidoRepository.save(entity);
         return mapper.toResponseDTO(persistido);
     }

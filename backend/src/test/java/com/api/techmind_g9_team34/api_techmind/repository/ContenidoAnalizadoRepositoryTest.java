@@ -33,6 +33,7 @@ class ContenidoAnalizadoRepositoryTest {
         return ContenidoAnalizado.builder()
                 .titulo(titulo)
                 .texto("Texto de prueba con más de veinte caracteres válidos.")
+                .resumen("Resumen de prueba.")
                 .categoria(categoria)
                 .probabilidad(0.9)
                 .palabrasClave(List.of("Java"))
