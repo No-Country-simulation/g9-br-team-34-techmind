@@ -1,5 +1,6 @@
 package com.api.techmind_g9_team34.api_techmind.controller;
 
+import com.api.techmind_g9_team34.api_techmind.client.GeminiExtractionClient;
 import com.api.techmind_g9_team34.api_techmind.client.ModeloInferenciaClient;
 import com.api.techmind_g9_team34.api_techmind.dto.client.ModelPredictClientResponseDto;
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
@@ -61,11 +63,16 @@ class ContenidoControllerLotePdfTest {
     @MockBean
     private ModeloInferenciaClient modeloInferenciaClient;
 
+    @MockBean
+    private GeminiExtractionClient geminiExtractionClient;
+
     @BeforeEach
     void configurarMocks() {
         given(modeloInferenciaClient.predecir(any()))
                 .willReturn(new ModelPredictClientResponseDto(
                         "Backend", 0.89, List.of("Java", "Spring Boot")));
+        given(geminiExtractionClient.resumir(anyString()))
+                .willReturn("Resumen generado de prueba.");
     }
 
     @BeforeEach
