@@ -20,7 +20,7 @@ public class RestModeloInferenciaClient implements ModeloInferenciaClient {
     private static final Logger logger =
             LoggerFactory.getLogger(RestModeloInferenciaClient.class);
 
-    private static final int MAX_ATTEMPTS = 2;
+    private static final int MAX_ATTEMPTS = 3;
 
     private final RestClient restClient;
     private final String baseUrl;

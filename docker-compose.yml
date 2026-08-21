@@ -62,7 +62,7 @@ services:
       # compose. Nunca localhost: dentro de un contenedor, localhost es ese
       # mismo contenedor, no la maquina anfitriona.
       INFERENCE_SERVICE_URL: http://ml-service:8000
-      INFERENCE_SERVICE_TIMEOUT_MS: ${INFERENCE_SERVICE_TIMEOUT_MS:-5000}
+      INFERENCE_SERVICE_TIMEOUT_MS: ${INFERENCE_SERVICE_TIMEOUT_MS:-60000}
 
       DB_USERNAME: ${DB_USERNAME:-sa}
       DB_PASSWORD: ${DB_PASSWORD:-}
