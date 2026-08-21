@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
 @Component
 @Profile("!mock")
@@ -38,19 +37,21 @@ public class RestModeloInferenciaClient implements ModeloInferenciaClient {
             try {
                 return ejecutarLlamada(request);
 
-            } catch (RestClientException e) {
+            } catch (ResourceAccessException e) {
+
                 logger.warn(
-                        "Intento {} de {} fallo al conectar con el servicio de inferencia: {}",
-                        attempt, MAX_ATTEMPTS, e.getMessage());
+                        "Intento {} de {} falló al conectar con el servicio de inferencia.",
+                        attempt,
+                        MAX_ATTEMPTS);
 
                 if (attempt == MAX_ATTEMPTS) {
                     throw new ModeloServiceException(
-                            "El servicio de analisis no esta disponible en este momento.", e);
+                            "El servicio de análisis no está disponible en este momento.", e);
                 }
             }
         }
 
-        throw new IllegalStateException("No deberia alcanzarse");
+        throw new IllegalStateException("No debería alcanzarse");
     }
 
     private ModelPredictClientResponseDto ejecutarLlamada(ModelPredictClientRequestDto request) {
@@ -62,11 +63,12 @@ public class RestModeloInferenciaClient implements ModeloInferenciaClient {
                     .body(ModelPredictClientResponseDto.class);
 
         } catch (HttpStatusCodeException e) {
+
             logger.warn(
-                    "El servicio de inferencia respondio con un error HTTP: {}",
-                    e.getStatusCode());
+                    "El servicio de inferencia respondió con un error HTTP.");
+
             throw new ModeloServiceException(
-                    "El servicio de analisis no esta disponible en este momento.", e);
+                    "El servicio de análisis no está disponible en este momento.", e);
         }
     }
 }
