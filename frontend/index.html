@@ -59,10 +59,24 @@
     transition:border-color .2s}
   .ghost:hover{border-color:#3a505a}
   .big{font-size:.95rem;padding:.85rem 1.9rem}
-  .scroll-hint{position:absolute;bottom:1.6rem;left:50%;transform:translateX(-50%);
+  /* Completamente quieto: sin animación de ningún tipo.
+     Tres intentos con movimiento fallaron por lo mismo. El culpable no era la
+     curva sino el centrado: `left:50%` + `translateX(-50%)` cae en medio píxel
+     cuando el ancho es impar, y cada repintado redondea para un lado distinto.
+     Con una animación corriendo eso se repinta sesenta veces por segundo, y el
+     temblor de un píxel se vuelve visible.
+     La solución es no depender del translate: se estira de borde a borde y el
+     texto se centra dentro, así no hay fracción que redondear. */
+  .scroll-hint{position:absolute;bottom:1.6rem;left:0;right:0;
     font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--sage);z-index:2;animation:bob 2.6s ease-in-out infinite}
-  @keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,6px)}}
+    color:var(--sage);z-index:2;display:flex;flex-direction:column;align-items:center;gap:.55rem;
+    opacity:.7;transition:opacity .5s ease,visibility .5s;
+    /* Ubicarlo en su propia capa evita que el navegador lo vuelva a componer
+       junto con el lienzo animado del fondo. */
+    will-change:opacity}
+  .scroll-hint i{display:block;width:1px;height:22px;
+    background:linear-gradient(var(--sage),transparent)}
+  .scroll-hint.ido{opacity:0;visibility:hidden}
 
   /* ---------- secciones ---------- */
   section{padding:clamp(4rem,10vw,7rem) 0}
@@ -160,7 +174,7 @@
       <a class="ghost big" href="#como">Cómo funciona</a>
     </div>
   </div>
-  <p class="scroll-hint">Seguí bajando</p>
+  <p class="scroll-hint" id="scrollHint">Seguí bajando<i></i></p>
 </div>
 
 <section class="problem" id="problema">
@@ -381,6 +395,15 @@
 
   addEventListener('resize',medir);
   medir(); requestAnimationFrame(pintar);
+
+  /* El indicador se retira apenas se empieza a bajar. */
+  const hint=document.getElementById('scrollHint');
+  addEventListener('scroll',()=>{
+    // Umbral alto: con 60 px se iba apenas rozabas la rueda, y el corte se
+    // notaba. Recién a un tercio de la portada ya está claro que se bajó.
+    if(scrollY > innerHeight * 0.3) hint.classList.add('ido');
+    else hint.classList.remove('ido');
+  },{passive:true});
 
   /* Aparición progresiva al bajar. */
   const obs=new IntersectionObserver(es=>{
