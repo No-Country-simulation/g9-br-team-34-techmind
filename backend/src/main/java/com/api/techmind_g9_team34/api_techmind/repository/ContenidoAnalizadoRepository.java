@@ -286,4 +286,32 @@ public interface ContenidoAnalizadoRepository extends
      */
     @Query("select c.fechaProcesamiento from ContenidoAnalizado c order by c.fechaProcesamiento asc")
     List<Instant> fechasDeProcesamiento();
+
+    /**
+     * S5-14 (M10) — Cantidad de términos distintos en todo el repositorio.
+     *
+     * <p>Distinta de {@link #palabrasClaveMasFrecuentes}: aquélla devuelve el
+     * ranking de los más usados, ésta cuenta cuántos términos diferentes
+     * existen. Se normaliza a minúsculas para no contar "Java" y "java" como
+     * dos vocablos.
+     *
+     * @return cantidad de palabras clave únicas
+     */
+    @Query("select count(distinct lower(p)) from ContenidoAnalizado c join c.palabrasClave p")
+    long palabrasClaveUnicas();
+
+    /**
+     * S5-14 (M11) — Contenidos con sus palabras clave, para contar relaciones.
+     *
+     * <p>El conteo de pares relacionados se hace en Java sobre este resultado.
+     * Expresarlo en JPQL exigiría un producto cartesiano de la entidad consigo
+     * misma cruzando además la colección de palabras clave, una consulta cara y
+     * difícil de leer; y hacerlo con N llamadas a {@link #findIdsRelacionados}
+     * sería peor todavía. Con una sola lectura y el cruce en memoria alcanza,
+     * porque el volumen de contenidos es chico.
+     *
+     * @return todos los contenidos con la colección ya cargada
+     */
+    @Query("select distinct c from ContenidoAnalizado c left join fetch c.palabrasClave")
+    List<ContenidoAnalizado> findAllConPalabrasClave();
 }

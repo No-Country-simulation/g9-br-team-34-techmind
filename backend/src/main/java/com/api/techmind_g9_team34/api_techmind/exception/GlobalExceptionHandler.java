@@ -26,6 +26,10 @@ import java.util.List;
  * {@link ErrorResponseDTO} para mantener un formato uniforme.
  *
  * TM-020 - GlobalExceptionHandler base con @ControllerAdvice.
+ *
+ * <p>S5-01 — Cada respuesta suma {@code mensajeUsuario} y {@code sugerencia}.
+ * El texto que la interfaz muestra ya no sale de {@code message}, que queda
+ * reservado para registros y depuración.
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -45,6 +49,8 @@ public class GlobalExceptionHandler {
                 .badRequest()
                 .body(ErrorResponseDTO.deValidacion(
                         "Error de validación en los campos de la solicitud.",
+                        "Algunos datos no cumplen con lo que la API espera.",
+                        "Revisá los campos señalados y volvé a enviarlo.",
                         request.getRequestURI(),
                         errores));
     }
@@ -57,6 +63,10 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.BAD_REQUEST,
                         ex.getMessage(),
+                        // Estas excepciones ya se lanzan con texto pensado para
+                        // quien usa la API, así que se reutiliza tal cual.
+                        ex.getMessage(),
+                        "Corregí el valor y volvé a intentarlo.",
                         request.getRequestURI()));
     }
 
@@ -72,6 +82,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.BAD_REQUEST,
                         "El valor proporcionado no tiene el formato esperado.",
+                        "El identificador de la dirección no tiene el formato correcto.",
+                        "Volvé al listado y entrá de nuevo al contenido.",
                         request.getRequestURI()));
     }
 
@@ -83,6 +95,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.NOT_FOUND,
                         ex.getMessage(),
+                        "No encontramos ese contenido.",
+                        "Puede haber sido eliminado. Volvé al listado para ver los disponibles.",
                         request.getRequestURI()));
     }
 
@@ -94,6 +108,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.UNPROCESSABLE_ENTITY,
                         ex.getMessage(),
+                        "No pudimos analizar este contenido.",
+                        "Probá con un texto más largo o con más variedad de palabras.",
                         request.getRequestURI()));
     }
 
@@ -105,6 +121,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.UNPROCESSABLE_ENTITY,
                         ex.getMessage(),
+                        "El contenido llegó bien, pero no se pudo procesar.",
+                        "Revisá que el texto tenga contenido técnico reconocible.",
                         request.getRequestURI()));
     }
 
@@ -116,6 +134,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.SERVICE_UNAVAILABLE,
                         ex.getMessage(),
+                        "El servicio que clasifica los contenidos no está disponible.",
+                        "Es temporal. Esperá un momento y volvé a intentarlo.",
                         request.getRequestURI()));
     }
 
@@ -127,6 +147,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.UNPROCESSABLE_ENTITY,
                         ex.getMessage(),
+                        "No pudimos extraer el texto del archivo o la página.",
+                        "Verificá que el documento tenga texto seleccionable; los PDF escaneados todavía no se pueden leer.",
                         request.getRequestURI()));
     }
 
@@ -138,6 +160,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.PAYLOAD_TOO_LARGE,
                         "El archivo supera el tamaño máximo permitido.",
+                        "El archivo pesa demasiado.",
+                        "Probá con un documento más liviano o subilo por partes.",
                         request.getRequestURI()));
     }
 
@@ -155,6 +179,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.BAD_REQUEST,
                         "La solicitud debe incluir el campo 'archivo' en formato multipart/form-data.",
+                        "No se pudo leer el archivo enviado.",
+                        "Seleccioná el archivo de nuevo y volvé a enviarlo.",
                         request.getRequestURI()));
     }
 
@@ -171,6 +197,7 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.BAD_REQUEST,
                         "El Content-Type de la solicitud debe ser application/json.",
+                        "El formato de la solicitud no es el esperado.",
                         request.getRequestURI()));
     }
 
@@ -189,9 +216,19 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.NOT_FOUND,
                         "El recurso solicitado no existe.",
+                        "La dirección a la que entraste no existe.",
+                        "Volvé al inicio.",
                         request.getRequestURI()));
     }
 
+    /**
+     * Cualquier fallo no contemplado (TM-034).
+     *
+     * <p>{@code message} lleva un texto fijo y no {@code ex.getMessage()}: el
+     * mensaje de una excepción no controlada puede contener rutas de archivos,
+     * nombres de tablas o direcciones de servicios internos. La traza completa
+     * se registra con nivel ERROR y no sale nunca en la respuesta.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneral(
             Exception ex, HttpServletRequest request) {
@@ -206,6 +243,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDTO.of(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "Ocurrió un error inesperado.",
+                        "Algo salió mal de nuestro lado.",
+                        "Ya quedó registrado. Volvé a intentarlo en unos minutos.",
                         request.getRequestURI()));
     }
 }
