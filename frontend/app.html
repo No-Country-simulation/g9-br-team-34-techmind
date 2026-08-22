@@ -400,6 +400,53 @@
   .dash-foot{font-family:var(--mono);font-size:.62rem;color:var(--sage);margin-top:2rem;
     padding-top:1.1rem;border-top:1px solid var(--hairline)}
 
+  /* ---------- Panel colapsable y barra en pantallas chicas ---------- */
+
+  /* La cabecera del panel es el control de plegado: toda la fila responde,
+     no sólo un icono de 20 px que en un teléfono cuesta acertar. */
+  .h-head{display:flex;align-items:center;gap:.6rem;width:100%;background:none;border:0;
+    padding:0;cursor:pointer;color:var(--bone);text-align:left}
+  .h-head:focus-visible{outline:2px solid var(--teal);outline-offset:4px;border-radius:6px}
+  .h-chevron{margin-left:auto;color:var(--sage);transition:transform .3s cubic-bezier(.5,.1,.2,1)}
+  .h-chevron svg{width:15px;height:15px;display:block}
+  #hearth.plegado .h-chevron{transform:rotate(-90deg)}
+
+  /* Se pliega con grid-template-rows y no con display:none para que la
+     transición exista: de otro modo el panel desaparece de golpe. */
+  .h-body{display:grid;grid-template-rows:1fr;transition:grid-template-rows .34s cubic-bezier(.5,.1,.2,1)}
+  .h-body>div{overflow:hidden;min-height:0}
+  #hearth.plegado .h-body{grid-template-rows:0fr}
+
+  /* Plegado, el panel deja de tapar el mapa pero sigue diciendo cuánto hay. */
+  .h-resumen{font-family:var(--mono);font-size:.62rem;color:var(--sage);
+    opacity:0;max-height:0;overflow:hidden;transition:opacity .28s,max-height .28s,margin .28s}
+  #hearth.plegado .h-resumen{opacity:1;max-height:2em;margin-top:.55rem}
+
+  /* Acciones dentro del panel: en pantallas chicas la barra no da para más
+     botones, así que viven acá (observación de Sofía). */
+  .h-acciones{display:flex;gap:.5rem;margin-top:1.1rem;flex-wrap:wrap}
+  .h-acciones button{flex:1;min-width:120px;font-family:var(--display);font-size:.82rem;
+    font-weight:500;border-radius:100px;padding:.6rem .9rem;cursor:pointer;
+    border:1px solid var(--hairline);background:none;color:var(--bone);
+    transition:border-color .2s,background .2s,filter .2s}
+  .h-acciones .analizar{background:var(--teal);color:#04070a;border-color:var(--teal)}
+  .h-acciones .analizar:hover{filter:brightness(1.12)}
+  .h-acciones .secundario:hover{border-color:#3a505a;background:rgba(255,255,255,.03)}
+  .h-acciones button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+  @media(max-width:720px){
+    /* El buscador estaba centrado con left:50% y se montaba sobre el logo.
+       Acá pasa a ocupar el espacio que queda a su derecha. */
+    #seek{left:auto;right:clamp(.85rem,2.4vw,1.4rem);transform:none;
+      width:calc(100% - 9.5rem);max-width:none}
+    /* Los botones de la barra se mudan al panel: en 390 px no entran. */
+    #sowBtn,#dashBtn,#landingBtn{display:none}
+    #hearth{width:calc(100% - 1.7rem);top:4rem}
+    /* Con el panel abierto el mapa queda tapado; arranca plegado y se despliega
+       cuando la persona lo pide. */
+    .hint{display:none}
+  }
+
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
   }
@@ -446,6 +493,7 @@
     </button>
     <button class="pill hide" id="back" title="Volver a la vista anterior">← Volver</button>
     <div class="spacer"></div>
+    <a class="pill hide" id="landingBtn" href="index.html" title="Volver a la página de inicio">Inicio</a>
     <button class="pill hide" id="dashBtn" title="Ver métricas del repositorio">Métricas</button>
     <button class="pill solid" id="sowBtn" title="Analizar un texto o un PDF y sumarlo a tu árbol">+ Analizar contenido</button>
     <div class="chip" id="chip" title="Resumen de lo que hay en tu árbol"></div>
@@ -1241,28 +1289,64 @@ function pintarChip(){
     elHint.textContent='Clic en el vacío para volver a la copa';}
   elHint.classList.remove('gone');}
 
+/** En pantallas chicas el panel tapa el mapa, así que arranca plegado. */
+let hearthPlegado = window.matchMedia('(max-width: 720px)').matches;
+
 function pintarHearth(){
   const recientes=[...S.contenidos]
     .sort((a,b)=>new Date(b.fechaProcesamiento)-new Date(a.fechaProcesamiento)).slice(0,3);
   const mayor=[...S.ramas].sort((a,b)=>porRama(b.clave).length-porRama(a.clave).length)[0];
   elHearth.innerHTML=`
     <div class="box">
-      <p class="eyebrow">Tu árbol</p>
+      <button class="h-head" id="hToggle" aria-expanded="true" aria-controls="hBody"
+              title="Mostrar u ocultar el detalle del árbol">
+        <span class="eyebrow">Tu árbol</span>
+        <span class="h-chevron">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </span>
+      </button>
       <div class="h-big"><span class="n">${S.contenidos.length}</span><span class="u">contenidos</span></div>
-      <div class="h-row">
-        <div><div class="n">${S.ramas.length}</div><div class="l">ramas</div></div>
-        <div><div class="n">${mayor?porRama(mayor.clave).length:0}</div><div class="l">mayor rama</div></div>
-        <div><div class="n">${S.aristas.length}</div><div class="l">conexiones</div></div>
-      </div>
-      <p class="h-label">Últimos analizados</p>
-      <div class="mini">${recientes.length?recientes.map(c=>{
-        const r=ramaDe(c.categoria)||{color:'#14b8a6'};
-        return `<button data-id="${c.id}"><span class="dot" style="background:${r.color}"></span>
-          <span><span class="t">${esc(c.titulo)}</span><span class="s">${esc(c.categoria)}</span></span>
-        </button>`;}).join(''):'<p class="empty">Todavía no hay nada. Analizá tu primer contenido.</p>'}</div>
+      <p class="h-resumen">${S.ramas.length} ramas · ${S.aristas.length} conexiones</p>
+      <div class="h-body" id="hBody"><div>
+        <div class="h-row">
+          <div><div class="n">${S.ramas.length}</div><div class="l">ramas</div></div>
+          <div><div class="n">${mayor?porRama(mayor.clave).length:0}</div><div class="l">mayor rama</div></div>
+          <div><div class="n">${S.aristas.length}</div><div class="l">conexiones</div></div>
+        </div>
+        <p class="h-label">Últimos analizados</p>
+        <div class="mini">${recientes.length?recientes.map(c=>{
+          const r=ramaDe(c.categoria)||{color:'#14b8a6'};
+          return `<button data-id="${c.id}"><span class="dot" style="background:${r.color}"></span>
+            <span><span class="t">${esc(c.titulo)}</span><span class="s">${esc(c.categoria)}</span></span>
+          </button>`;}).join(''):'<p class="empty">Todavía no hay nada. Analizá tu primer contenido.</p>'}</div>
+        <div class="h-acciones">
+          <button class="analizar" id="hAnalizar">+ Analizar contenido</button>
+          <button class="secundario" id="hMetricas">Métricas</button>
+          <button class="secundario" id="hInicio">Inicio</button>
+        </div>
+      </div></div>
     </div>`;
+
   elHearth.querySelectorAll('.mini button').forEach(b=>
-    b.addEventListener('click',()=>abrirDetalle(b.dataset.id)));}
+    b.addEventListener('click',()=>abrirDetalle(b.dataset.id)));
+
+  // Las acciones del panel hacen lo mismo que las de la barra; en pantallas
+  // chicas la barra las esconde y éstas quedan como único acceso.
+  document.getElementById('hAnalizar').addEventListener('click',abrirSow);
+  document.getElementById('hMetricas').addEventListener('click',abrirDash);
+  document.getElementById('hInicio').addEventListener('click',()=>{ location.href='index.html'; });
+
+  const bt=document.getElementById('hToggle');
+  bt.addEventListener('click',()=>{
+    hearthPlegado=elHearth.classList.toggle('plegado');
+    bt.setAttribute('aria-expanded', String(!hearthPlegado));
+  });
+  // Se conserva el estado entre repintados: el panel se rearma cada vez que
+  // cambia el árbol, y sin esto volvería a abrirse solo después de cada alta.
+  if(hearthPlegado) elHearth.classList.add('plegado');
+  bt.setAttribute('aria-expanded', String(!elHearth.classList.contains('plegado')));
+}
 
 function pintarShelf(r){
   const items=porRama(r.clave);
@@ -1407,6 +1491,9 @@ const elTit=document.getElementById('tit'), elTxt=document.getElementById('txt')
       elDrop=document.getElementById('drop'), elFile=document.getElementById('file'),
       elDropHint=document.getElementById('dropHint');
 const LIMITE=10000;
+const MAX_LOTE=20;
+const elBatchList=document.getElementById('batchList'), elBatchSummary=document.getElementById('batchSummary');
+let batchFiles=[];
 
 const elDropTitle=document.getElementById('dropTitle'), elModePdf=document.getElementById('modePdf'),
       elModeCsv=document.getElementById('modeCsv'), elBatchList=document.getElementById('batchList'),
@@ -1497,7 +1584,7 @@ function reiniciarCola(){
  * a que el usuario crea que se analizó el documento entero.
  */
 async function leerPdf(file){
-  if(file.type!=='application/pdf'){ elDropHint.textContent='Ese archivo no es un PDF'; return; }
+  if(!esPdf(file)){ elDropHint.textContent='Ese archivo no es un PDF'; return; }
   elDropHint.textContent='Leyendo…';
   try{
     const buf=await file.arrayBuffer();
@@ -1535,6 +1622,7 @@ elGo.addEventListener('click',async()=>{
   if(batchFiles.length>1){ await procesarPdf(); return; }
   elGo.disabled=true; elMsg.classList.remove('err'); elMsg.textContent='Analizando…';
   try{
+    if(batchFiles.length>1){ await procesarLote(); return; }
     const c=await api.crear({ titulo:elTit.value.trim(), texto:elTxt.value.trim() });
     await agregarContenidoAlArbol(c);
     cerrarSow(); elTit.value=''; elTxt.value=''; reiniciarCola(); medirTexto();
@@ -1862,7 +1950,8 @@ elEnter.addEventListener('click',()=>{
   cv.classList.add('live'); document.getElementById('topbar').classList.add('live');
   setTimeout(()=>{ elHearth.classList.add('show'); elSeek.classList.add('show');
     elZoomCtl.classList.add('show');
-    document.getElementById('dashBtn').classList.remove('hide'); },700);
+    document.getElementById('dashBtn').classList.remove('hide');
+    document.getElementById('landingBtn').classList.remove('hide'); },700);
   cam.tz=1.12; pintarChip(); pintarHearth();
   setTimeout(()=>{ document.getElementById('germination').style.display='none';
     if(!S.contenidos.length) abrirSow(); },1400);});
