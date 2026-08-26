@@ -83,12 +83,14 @@ shell-backend: ## Abre una shell dentro del contenedor del backend
 
 test: test-ml test-backend ## Ejecuta todas las pruebas
 
-test-ml: train ## Pruebas del servicio de inferencia
+test-ml: ## Pruebas del servicio de inferencia
+	@test -f ml-service/models/modelo_clasificador.joblib || \
+		(echo "Faltan los .joblib de Ciencia de Datos en ml-service/models/. " \
+		      "Copialos desde data-science/models/ antes de correr las pruebas." && exit 1)
 	cd ml-service && pytest -v
 
-# Depende de `train` porque las pruebas cargan el artefacto real: sin
-# ml-service/models/model.joblib, todas fallan con un 503 que no dice nada sobre
-# el codigo. Entrenar tarda segundos con el dataset semilla.
+# Ya NO depende de `train`: los .joblib son el entregable real de Ciencia de
+# Datos y viven versionados en ml-service/models/, no se generan en cada corrida.
 
 test-backend: ## Pruebas del backend
 	cd backend && ./mvnw -B test
@@ -124,7 +126,9 @@ prod-logs: ## [en la VM] Logs de produccion
 
 clean: ## Detiene los contenedores y borra los artefactos locales
 	$(COMPOSE) down --remove-orphans
-	rm -rf ml-service/models ml-service/.pytest_cache ml-service/.ruff_cache
+	# ml-service/models/ NO se borra: contiene el modelo real de Ciencia de
+	# Datos, versionado, no generado por `train`.
+	rm -rf ml-service/.pytest_cache ml-service/.ruff_cache
 	find ml-service -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	cd backend && ./mvnw -B clean -q || true
 

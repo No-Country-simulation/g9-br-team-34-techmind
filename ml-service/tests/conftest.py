@@ -17,7 +17,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 
-os.environ["MODEL_PATH"] = str(RAIZ / "models" / "model.joblib")
+os.environ["MODEL_DIR"] = str(RAIZ / "models")
 os.environ["MODEL_SOURCE"] = "local"
 
 import pytest  # noqa: E402  (debe ir despues de fijar el entorno)

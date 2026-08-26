@@ -19,4 +19,9 @@ public class MockGeminiExtractionClient implements GeminiExtractionClient {
         return """
                 {"titulo": "%s", "texto": "%s"}""".formatted(tituloCrudo, textoCrudo);
     }
+
+    @Override
+    public String resumir(String texto) {
+        return "Resumen simulado para pruebas locales.";
+    }
 }

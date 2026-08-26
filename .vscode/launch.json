@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ApiTechmindApplication<api-techmind>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.api.techmind_g9_team34.api_techmind.ApiTechmindApplication",
+            "projectName": "api-techmind",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

@@ -26,11 +26,12 @@ venv/
 .pytest_cache/
 .ruff_cache/
 
-# Artefactos del modelo. NO se versionan: son binarios que cambian en cada
-# entrenamiento y harian crecer el repositorio sin aportar nada revisable.
-# El modelo de produccion vive en OCI Object Storage; el de local se genera
-# con `make train`.
-/ml-service/models/
+# Artefactos del modelo: ANTES no se versionaban porque se generaban en cada
+# build con un dataset semilla. Ahora ml-service/models/ contiene el
+# ENTREGABLE REAL de Ciencia de Datos (copiado de data-science/models/) y el
+# Dockerfile lo copia directo sin entrenar — por eso SI se versiona.
+# El modelo de produccion en OCI Object Storage es una copia de estos mismos
+# archivos, no un artefacto distinto.
 
 # Variantes del .env por entorno (.env.prod, .env.local, ...). El patron `.env`
 # de arriba no las cubre.

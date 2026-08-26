@@ -37,7 +37,21 @@ class Settings(BaseSettings):
     # El default es "local" para que el servicio arranque sin credenciales de
     # nube: quien clona el repo debe poder levantarlo con un solo comando.
     model_source: Literal["local", "oci"] = "local"
-    model_path: Path = Path("/app/models/model.joblib")
+
+    # El artefacto real que entrega Ciencia de Datos NO es un unico .joblib:
+    # son tres archivos independientes (clasificador + dos vectorizadores TF-IDF,
+    # uno por titulo y otro por texto). Se referencian por directorio + nombre de
+    # archivo en vez de por ruta completa para que MODEL_DIR sea el unico valor
+    # que cambia entre local/CI/OCI.
+    model_dir: Path = Path("/app/models")
+    model_file_clasificador: str = "modelo_clasificador.joblib"
+    model_file_tfidf_titulo: str = "tfidf_titulo.joblib"
+    model_file_tfidf_texto: str = "tfidf_texto.joblib"
+
+    # Peso relativo del titulo frente al texto al combinar ambos vectores
+    # TF-IDF antes de clasificar. Viene del entrenamiento de Ciencia de Datos:
+    # cambiarlo aca sin reentrenar el modelo desalinea inferencia de entrenamiento.
+    peso_titulo: float = 0.5
 
     # --- OCI Object Storage (solo si model_source="oci") ---
     # auth_method:
@@ -47,7 +61,14 @@ class Settings(BaseSettings):
     oci_namespace: str = ""
     oci_bucket_name: str = "techmind-models"
     oci_region: str = ""
-    oci_object_name: str = "model.joblib"
+
+    # Nombres de los tres objetos dentro del bucket. Por defecto iguales a los
+    # nombres de archivo locales, para que el equipo de Ciencia de Datos pueda
+    # subir el mismo artefacto que produce sin renombrar nada.
+    oci_object_clasificador: str = "modelo_clasificador.joblib"
+    oci_object_tfidf_titulo: str = "tfidf_titulo.joblib"
+    oci_object_tfidf_texto: str = "tfidf_texto.joblib"
+
     oci_config_file: str = "~/.oci/config"
     oci_config_profile: str = "DEFAULT"
 

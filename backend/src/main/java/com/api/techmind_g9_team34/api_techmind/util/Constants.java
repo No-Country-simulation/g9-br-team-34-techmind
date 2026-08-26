@@ -43,6 +43,14 @@ public class Constants {
     public static final int MAX_CARACTERES_TITULO = 200;
 
     /**
+     * Igual que {@link #MAX_CARACTERES_TEXTO}/{@link #MAX_CARACTERES_TITULO}
+     * pero para el resumen, replicando el {@code length = 2000} de
+     * {@code ContenidoAnalizado.resumen} (TM-05 / S5-05, valor provisorio
+     * hasta confirmar el contrato definitivo).
+     */
+    public static final int MAX_CARACTERES_RESUMEN = 2000;
+
+    /**
      * Prompt para cuando la extracción determinística falló por completo
      * y hay que extraer título/texto directamente desde el archivo.
      */
@@ -86,4 +94,25 @@ public class Constants {
             Responde ÚNICAMENTE con un JSON válido, sin texto adicional, \
             con este formato exacto:
             {"titulo": "...", "texto": "..."}""";
+
+    /**
+     * PROVISORIO — pendiente de revisión contra el criterio exacto de S5-05.
+     * No confirmar longitud, tono ni formato de salida sin cotejar el issue.
+     *
+     * <p>Prompt de resumen: se usa sobre el texto ya limpio (post
+     * PROMPT_LIMPIEZA_GEMINI) para generar el campo {@code resumen} de
+     * {@code ContenidoAnalizado}.
+     */
+    public static final String PROMPT_RESUMEN_GEMINI = """
+            Genera un resumen claro y conciso del siguiente contenido técnico.
+
+            No inventes información que no esté en el texto original. \
+            Conserva los conceptos técnicos, nombres propios y datos \
+            relevantes. No agregues opiniones ni valoraciones.
+
+            IMPORTANTE sobre longitud: el resumen no debe superar \
+            aproximadamente 2000 caracteres.
+
+            Responde ÚNICAMENTE con el texto del resumen, sin JSON, \
+            sin comillas y sin texto adicional.""";
 }

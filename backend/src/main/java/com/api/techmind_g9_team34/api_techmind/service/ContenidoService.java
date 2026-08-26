@@ -1,6 +1,7 @@
 package com.api.techmind_g9_team34.api_techmind.service;
 
 import com.api.techmind_g9_team34.api_techmind.dto.request.ContenidoRequestDTO;
+import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLotePdfResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoLoteResultadoDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResponseDTO;
 import com.api.techmind_g9_team34.api_techmind.dto.response.ContenidoResumenDTO;
@@ -16,6 +17,30 @@ public interface ContenidoService {
     ContenidoResponseDTO procesarContenido(ContenidoRequestDTO request);
 
     ContenidoLoteResultadoDTO procesarLote(MultipartFile archivo);
+
+     /**
+     * Procesa un lote de archivos PDF en una sola operación (S5-09).
+     *
+     * <p>Reutiliza {@code ExtraccionArchivoService} (extracción con
+     * PDFBox + limpieza/fallback con Gemini) y luego el mismo
+     * {@link #procesarContenido(ContenidoRequestDTO)} que usa el
+     * endpoint individual — el lote es, en esencia, N llamadas a ese
+     * mismo camino, con manejo de errores por archivo.
+     *
+     * <p>Cada archivo se procesa de forma independiente: si uno falla
+     * (parser y fallback de Gemini agotados, o el resultado no pasa
+     * validación), los demás se siguen procesando igual, y el detalle
+     * del error de ese archivo específico se reporta en su
+     * {@link com.api.techmind_g9_team34.api_techmind.dto.response.ArchivoResultadoDTO}
+     * — no se aborta el lote completo por un solo archivo problemático.
+     *
+     * @param archivos lista de archivos PDF subidos en la misma request
+     * @return resultado agregado con el detalle de cada archivo
+     * @throws com.api.techmind_g9_team34.api_techmind.exception.ValidacionException
+     *         si la lista está vacía, contiene un archivo que no es
+     *         PDF, o excede el máximo de archivos permitido por lote
+     */
+    ContenidoLotePdfResultadoDTO procesarLotePdf(List<MultipartFile> archivos);
 
     /**
      * Obtiene un contenido previamente procesado por su id.

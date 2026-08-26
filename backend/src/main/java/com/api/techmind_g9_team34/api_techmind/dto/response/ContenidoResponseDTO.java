@@ -30,6 +30,12 @@ public record ContenidoResponseDTO(
         /** Título original enviado por el cliente, devuelto para trazabilidad. */
         String titulo,
 
+        /** Texto original enviado por el cliente, devuelto para trazabilidad. */
+        String texto,
+
+        /** Resumen generado por Gemini a partir del texto completo. */
+        String resumen,
+
         /** Categoría temática predicha por el modelo (una de las 7 de TM-006 §0). */
         String categoria,
 

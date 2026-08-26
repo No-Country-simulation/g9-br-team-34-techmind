@@ -2,8 +2,7 @@
 #
 # Flujo completo:
 #
-#   1. publicar-modelo  -> reempaqueta los artefactos de Ciencia de Datos y
-#                          sube model.joblib a OCI Object Storage
+#   1. publicar-modelo  -> entrena y sube model.joblib a OCI Object Storage
 #   2. publicar-imagenes-> construye y sube las imagenes a OCIR
 #   3. desplegar        -> por SSH, actualiza los contenedores en OCI Compute
 #   4. (si falla)       -> revierte automaticamente a la version anterior
@@ -112,7 +111,7 @@ jobs:
         working-directory: ml-service
         run: pip install -r requirements.txt
 
-      - name: Reempaquetar el modelo de Ciencia de Datos
+      - name: Entrenar el modelo
         working-directory: ml-service
         run: python -m train.train
 
@@ -189,17 +188,8 @@ jobs:
 
     strategy:
       # Las dos imagenes se construyen en paralelo, en runners distintos.
-      # Cada servicio define su propio contexto y Dockerfile: el ml-service se
-      # construye desde la raiz (su Dockerfile reempaqueta los artefactos de
-      # data-science/), el backend desde su propio directorio.
       matrix:
-        include:
-          - servicio: backend
-            context: ./backend
-            dockerfile: backend/Dockerfile
-          - servicio: ml-service
-            context: .
-            dockerfile: ml-service/Dockerfile
+        servicio: [backend, ml-service]
       # fail-fast desactivado: si una falla, interesa ver tambien el resultado
       # de la otra en la misma corrida en vez de tener que relanzar.
       fail-fast: false
@@ -214,7 +204,7 @@ jobs:
       #
       # Consecuencia a tener en cuenta: los pasos RUN corren emulados y son
       # lentos. En el ml-service, `pip install` es rapido porque descarga wheels
-      # precompiladas para aarch64, pero el reempaquetado del modelo si se
+      # precompiladas para aarch64, pero el entrenamiento del modelo si se
       # ejecuta emulado y agrega un par de minutos al build.
       - name: Configurar QEMU (compilacion cruzada a ARM)
         uses: docker/setup-qemu-action@v3
@@ -235,8 +225,7 @@ jobs:
       - name: Construir y publicar
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
+          context: ./${{ matrix.servicio }}
           push: true
           tags: |
             ${{ vars.OCIR_REGISTRY }}/${{ vars.OCI_NAMESPACE }}/techmind/${{ matrix.servicio }}:${{ env.IMAGE_TAG }}

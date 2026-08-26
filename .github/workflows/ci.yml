@@ -75,7 +75,7 @@ jobs:
           if-no-files-found: error
 
   # =========================================================================
-  # Servicio de inferencia - lint, reempaquetado y pruebas
+  # Servicio de inferencia - lint, entrenamiento y pruebas
   # =========================================================================
   ml-service:
     name: ML Service (Python 3.11)
@@ -98,14 +98,16 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
 
+      - name: Descargar spacy-español
+        run: python -m spacy download es_core_news_sm
+
       - name: Lint (ruff)
         run: ruff check app train tests
 
-      # El modelo se reempaqueta aqui porque las pruebas necesitan un artefacto
-      # real que cargar. De paso, esto verifica en cada commit que el contrato
-      # con los artefactos de data-science/ sigue intacto y que las metricas se
-      # siguen generando.
-      - name: Reempaquetar el modelo de Ciencia de Datos
+      # El modelo se entrena aqui porque las pruebas necesitan un artefacto real
+      # que cargar. De paso, esto verifica en cada commit que el entrenamiento
+      # sigue siendo reproducible y que el dataset no se rompio.
+      - name: Entrenar el modelo
         run: python -m train.train
 
       - name: Ejecutar pruebas
@@ -183,10 +185,7 @@ jobs:
       - name: Construir la imagen del ml-service
         uses: docker/build-push-action@v6
         with:
-          # El Dockerfile del ml-service reempaqueta los artefactos de
-          # data-science/, asi que se construye desde la raiz del repositorio.
-          context: .
-          file: ml-service/Dockerfile
+          context: ./ml-service
           push: false
           load: true
           tags: techmind/ml-service:ci

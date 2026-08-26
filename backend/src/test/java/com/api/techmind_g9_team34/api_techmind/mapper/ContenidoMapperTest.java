@@ -37,10 +37,12 @@ class ContenidoMapperTest {
         );
         ContenidoResponseDTO response = mapper.toResponse(request, clientResponse);
         assertThat(response.titulo()).isEqualTo("Título original");
+        assertThat(response.texto()).isEqualTo("Texto con más de veinte caracteres.");
         assertThat(response.categoria()).isEqualTo("Backend");
         assertThat(response.probabilidad()).isEqualTo(0.95);
         assertThat(response.informacionAdicional()).containsExactly("Java", "API");
         assertThat(response.id()).isNull();
+        assertThat(response.resumen()).isNull();
         assertThat(response.fechaProcesamiento()).isNull();
     }
 
@@ -53,10 +55,11 @@ class ContenidoMapperTest {
                 "DevOps", 0.80, List.of("Docker", "Kubernetes")
         );
 
-        ContenidoAnalizado entity = mapper.toEntity(request, clientResponse);
+        ContenidoAnalizado entity = mapper.toEntity(request, clientResponse, "Resumen de prueba.");
 
         assertThat(entity.getTitulo()).isEqualTo("Título original");
         assertThat(entity.getTexto()).isEqualTo("Texto con más de veinte caracteres.");
+        assertThat(entity.getResumen()).isEqualTo("Resumen de prueba.");
         assertThat(entity.getCategoria()).isEqualTo("DevOps");
         assertThat(entity.getProbabilidad()).isEqualTo(0.80);
         assertThat(entity.getPalabrasClave()).containsExactly("Docker", "Kubernetes");
@@ -72,6 +75,7 @@ class ContenidoMapperTest {
                 .id(id)
                 .titulo("Título")
                 .texto("Texto con más de veinte caracteres.")
+                .resumen("Resumen de prueba.")
                 .categoria("Backend")
                 .probabilidad(0.9)
                 .palabrasClave(List.of("Java"))
@@ -82,6 +86,8 @@ class ContenidoMapperTest {
 
         assertThat(response.id()).isEqualTo(id);
         assertThat(response.titulo()).isEqualTo("Título");
+        assertThat(response.texto()).isEqualTo("Texto con más de veinte caracteres.");
+        assertThat(response.resumen()).isEqualTo("Resumen de prueba.");
         assertThat(response.categoria()).isEqualTo("Backend");
         assertThat(response.probabilidad()).isEqualTo(0.9);
         assertThat(response.informacionAdicional()).containsExactly("Java");
