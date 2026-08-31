@@ -82,7 +82,7 @@ jobs:
       # --------------------------------------------------------------------
       - name: Abrir issue si esta caido
         if: steps.salud.outputs.estado == 'caido'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const etiqueta = 'incidente-produccion';
@@ -164,7 +164,7 @@ jobs:
       # --------------------------------------------------------------------
       - name: Cerrar el issue si volvio
         if: steps.salud.outputs.estado == 'arriba'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const etiqueta = 'incidente-produccion';
